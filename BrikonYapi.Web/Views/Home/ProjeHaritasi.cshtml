@@ -1,0 +1,600 @@
+@model List<BrikonYapi.Web.Data.Entities.Project>
+@using BrikonYapi.Web.Data.Entities
+@{
+    bool isEn = ViewBag.IsEn == true;
+    ViewData["Title"] = isEn ? "Project Map" : "Proje Haritası";
+}
+
+@section Styles {
+<style>
+/* ── Harita sayfası tam ekran ── */
+.map-page {
+    position:relative;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+}
+
+.map-page-hero {
+    position:relative; z-index:2;
+    background:#fff;
+    padding:.9rem 2rem;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid #eee;
+    margin-top:80px;
+    flex-shrink:0;
+}
+.map-page-title {
+    font-family:'Inter',sans-serif; font-size:1rem; font-weight:700;
+    color:var(--c-dark); letter-spacing:.02em; text-transform:uppercase;
+}
+.map-legend {
+    display:flex; align-items:center; gap:1.4rem;
+}
+.legend-item {
+    display:flex; align-items:center; gap:.45rem;
+    font-family:'Inter',sans-serif; font-size:.72rem; color:#555;
+}
+.legend-pin {
+    width:11px; height:14px;
+    border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg);
+    flex-shrink:0;
+}
+.legend-pin.ongoing   { background:#0082B4; }
+.legend-pin.completed { background:#1E293B; }
+
+/* Map container */
+#project-map-full {
+    flex:1; width:100%;
+    min-height:0;
+}
+
+/* ── Custom Pin (SVG) ── */
+.bk-pin-svg {
+    cursor:pointer; overflow:visible;
+    display:block;
+    transition:transform .2s ease;
+}
+.bk-pin-svg:hover { transform:translateY(-3px); }
+
+/* Devam Eden – dalgalanan turuncu halkalar */
+.bk-ring-1 {
+    transform-box:fill-box; transform-origin:center;
+    animation:bk-ring-out 2.4s ease-out infinite;
+}
+.bk-ring-2 {
+    transform-box:fill-box; transform-origin:center;
+    animation:bk-ring-out 2.4s ease-out 1.2s infinite;
+}
+@@keyframes bk-ring-out {
+    0%   { transform:scale(1);   opacity:.45; }
+    100% { transform:scale(2.6); opacity:0;   }
+}
+
+/* ── Modal ── */
+.prj-modal-overlay {
+  position:fixed; inset:0; z-index:2000;
+  background:rgba(0,0,0,.72); backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  padding:1.5rem;
+  opacity:0; pointer-events:none;
+  transition:opacity .3s;
+}
+.prj-modal-overlay.open { opacity:1; pointer-events:all; }
+.prj-modal {
+  position:relative; display:flex;
+  width:min(1060px,92vw); height:min(640px,86vh);
+  background:#fff; border-radius:16px; overflow:hidden;
+  transform:translateY(24px) scale(.97);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 32px 80px rgba(0,0,0,.45);
+}
+.prj-modal-overlay.open .prj-modal { transform:none; }
+.prj-modal-gallery {
+  position:relative; flex:0 0 60%; overflow:hidden; background:#111;
+}
+.prj-modal-media-wrap { width:100%; height:100%; position:relative; }
+.prj-modal-media-wrap img,
+.prj-modal-media-wrap video { width:100%; height:100%; object-fit:cover; display:block; }
+.prj-modal-nav {
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:40px; height:40px; border-radius:50%;
+  background:rgba(0,0,0,.45); border:none; cursor:pointer;
+  color:#fff; font-size:1.5rem; line-height:1;
+  display:flex; align-items:center; justify-content:center;
+  z-index:5; transition:background .2s;
+}
+.prj-modal-nav:hover { background:rgba(0,0,0,.75); }
+.prj-modal-prev { left:14px; }
+.prj-modal-next { right:14px; }
+.prj-modal-dots {
+  position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+  display:flex; gap:6px;
+}
+.prj-modal-dot {
+  width:8px; height:8px; border-radius:50%;
+  background:rgba(255,255,255,.45); border:none; cursor:pointer; padding:0;
+  transition:background .2s, transform .2s;
+}
+.prj-modal-dot.active { background:#fff; transform:scale(1.2); }
+.prj-modal-info {
+  flex:1; display:flex; flex-direction:column;
+  padding:2rem 2rem 1.8rem; overflow-y:auto; min-width:0;
+}
+.prj-modal-close {
+  position:absolute; top:14px; right:14px; z-index:20;
+  width:36px; height:36px; border-radius:50%;
+  background:rgba(0,0,0,.55); border:none; cursor:pointer;
+  font-size:1.4rem; line-height:1; color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .2s; backdrop-filter:blur(4px);
+}
+.prj-modal-close:hover { background:rgba(0,0,0,.8); }
+.prj-modal-badge {
+  display:inline-block; padding:.28rem .9rem;
+  border-radius:20px; font-size:.62rem; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; margin-bottom:1rem;
+}
+.prj-modal-badge.ongoing   { background:rgba(0,130,180,.12); color:#0082B4; }
+.prj-modal-badge.completed { background:rgba(0,0,0,.08); color:#555; }
+.prj-modal-title {
+  font-family:'Inter',sans-serif; font-size:1.55rem; font-weight:800;
+  color:#0f1724; line-height:1.25; margin:0 0 .7rem;
+}
+.prj-modal-loc {
+  display:flex; align-items:center; gap:.35rem;
+  font-size:.8rem; color:#888; margin-bottom:1.3rem;
+}
+.prj-modal-stats {
+  display:flex; gap:2rem; padding:1.1rem 0;
+  border-top:1px solid #eee; border-bottom:1px solid #eee; margin-bottom:1.2rem;
+}
+.prj-mstat-val {
+  font-family:'Inter',sans-serif; font-size:1.4rem; font-weight:900;
+  color:#0f1724; line-height:1; display:block;
+}
+.prj-mstat-lbl {
+  font-size:.5rem; font-weight:700; letter-spacing:.15em;
+  text-transform:uppercase; color:#aaa; margin-top:.2rem; display:block;
+}
+.prj-modal-desc {
+  font-size:.85rem; color:#666; line-height:1.75; margin:0 0 1.6rem;
+  overflow:hidden; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical;
+}
+.prj-modal-btn {
+  display:block; text-align:center;
+  background:var(--c-primary); color:#fff;
+  padding:.9rem 1.5rem; border-radius:6px;
+  font-family:'Inter',sans-serif; font-size:.7rem;
+  font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  transition:background .2s; text-decoration:none; margin-top:auto;
+}
+.prj-modal-btn:hover { background:var(--c-secondary); color:#fff; }
+/* Tablet */
+@@media (max-width:900px) {
+  .prj-modal-overlay { padding:.8rem; }
+  .prj-modal { flex-direction:column; width:96vw; height:88vh; border-radius:12px; }
+  .prj-modal-gallery { flex:0 0 42%; }
+  .prj-modal-info { flex:1; padding:1.4rem 1.6rem 1.4rem; overflow-y:auto; }
+  .prj-modal-title { font-size:1.2rem; margin-bottom:.45rem; }
+  .prj-modal-badge { margin-bottom:.7rem; }
+  .prj-modal-stats { gap:1.4rem; padding:.9rem 0; margin-bottom:.9rem; }
+  .prj-mstat-val { font-size:1.2rem; }
+  .prj-modal-desc { -webkit-line-clamp:4; }
+  .prj-modal-close { top:10px; right:10px; width:32px; height:32px; font-size:1.2rem; }
+}
+/* Mobil */
+@@media (max-width:540px) {
+  .prj-modal-overlay { padding:0; align-items:flex-end; }
+  .prj-modal { width:100vw; height:95svh; border-radius:18px 18px 0 0; flex-direction:column; }
+  .prj-modal-gallery { flex:0 0 46%; }
+  .prj-modal-info { padding:1rem 1.2rem 1.2rem; }
+  .prj-modal-title { font-size:1rem; }
+  .prj-modal-stats { gap:1rem; padding:.7rem 0; margin-bottom:.7rem; }
+  .prj-mstat-val { font-size:1rem; }
+  .prj-modal-desc { -webkit-line-clamp:3; margin-bottom:.6rem; }
+  .prj-modal-btn { padding:.7rem 1rem; font-size:.65rem; }
+}
+
+@@media (max-width:768px) {
+    .map-panel { width:100%; height:auto; max-height:92vh; top:auto; bottom:0; border-radius:16px 16px 0 0; }
+    .map-page-hero {
+        padding:.7rem 1rem;
+        flex-wrap:wrap;
+        gap:.5rem;
+        margin-top:60px;
+    }
+    .map-top-controls { flex-wrap:wrap; gap:.4rem; }
+    .map-legend { gap:.8rem; }
+    .legend-item { font-size:.65rem; }
+}
+@@media (max-width:480px) {
+    .map-page-title { font-size:.85rem; }
+    .mp-filter-btn, .mp-tile-btn { font-size:.55rem; padding:.22rem .42rem; }
+}
+
+/* ── Üst kontrol grubu ── */
+.map-top-controls {
+    display:flex; align-items:center; gap:.8rem; flex-wrap:wrap;
+}
+
+/* ── Filtre ── */
+.mp-filter-row { display:flex; gap:.3rem; }
+.mp-filter-btn {
+    padding:.28rem .55rem;
+    border:1.5px solid #ddd; background:#fff;
+    border-radius:3px; font-size:.6rem; font-weight:700;
+    letter-spacing:.07em; text-transform:uppercase;
+    cursor:pointer; color:#999; transition:all .18s;
+    font-family:'Inter',sans-serif;
+}
+.mp-filter-btn:hover { border-color:#aaa; color:#555; }
+.mp-filter-btn.active { border-color:#0082B4; background:#0082B4; color:#fff; }
+
+/* ── Tile ── */
+.mp-tile-row { display:flex; gap:.3rem; }
+.mp-tile-btn {
+    display:flex; align-items:center; gap:.25rem;
+    padding:.28rem .5rem;
+    border:1.5px solid #ddd; background:#fff;
+    border-radius:3px; font-size:.6rem; font-weight:700;
+    letter-spacing:.07em; text-transform:uppercase;
+    cursor:pointer; color:#999; transition:all .18s;
+    font-family:'Inter',sans-serif;
+}
+.mp-tile-btn:hover { border-color:#aaa; color:#555; }
+.mp-tile-btn.active { border-color:#333; background:#333; color:#fff; }
+.mp-tile-btn.active svg { stroke:#fff; }
+
+/* ── Cluster ── */
+.bk-cluster-full {
+    width:42px; height:42px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    border:3px solid #fff;
+    box-shadow:0 2px 12px rgba(0,0,0,.32);
+    font-family:'Inter',sans-serif;
+    transition:transform .15s ease;
+}
+.bk-cluster-full:hover { transform:scale(1.1); }
+.bk-cluster-full span { color:#fff; font-size:.78rem; font-weight:700; }
+.bk-cluster-full.ongoing   { background:#0082B4; }
+.bk-cluster-full.completed { background:#4a4a4a; }
+.bk-cluster-full.mixed     { background:linear-gradient(135deg,#0082B4 50%,#4a4a4a 50%); }
+</style>
+}
+
+<div class="map-page">
+    <!-- Üst bar: başlık + filtre + tile + legend -->
+    <div class="map-page-hero">
+        <div class="map-page-title">
+            @(isEn ? "Project Map" : "Proje Haritası")
+        </div>
+        <div class="map-top-controls">
+            <!-- Filtre -->
+            <div class="mp-filter-row">
+                <button class="mp-filter-btn active" data-filter="all">@(isEn?"All":"Tümü")</button>
+                <button class="mp-filter-btn" data-filter="Ongoing">@(isEn?"Ongoing":"Devam Eden")</button>
+                <button class="mp-filter-btn" data-filter="Completed">@(isEn?"Completed":"Tamamlanan")</button>
+            </div>
+            <!-- Tile -->
+            <div class="mp-tile-row">
+                <button class="mp-tile-btn" data-tile="street" title="@(isEn?"Street":"Sokak")">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    @(isEn?"Street":"Sokak")
+                </button>
+                <button class="mp-tile-btn active" data-tile="light" title="@(isEn?"Light":"Açık")">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                    @(isEn?"Light":"Açık")
+                </button>
+                <button class="mp-tile-btn" data-tile="dark" title="@(isEn?"Dark":"Koyu")">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    @(isEn?"Dark":"Koyu")
+                </button>
+                <button class="mp-tile-btn" data-tile="sat" title="@(isEn?"Satellite":"Uydu")">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="8" height="8" rx="1"/></svg>
+                    @(isEn?"Satellite":"Uydu")
+                </button>
+            </div>
+        </div>
+        <div class="map-legend">
+            <div class="legend-item">
+                <div class="legend-pin ongoing"></div>
+                <span>@(isEn ? "Ongoing" : "Devam Eden")</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-pin completed"></div>
+                <span>@(isEn ? "Completed" : "Tamamlanan")</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Harita -->
+    <div id="project-map-full"></div>
+</div>
+
+<!-- Modal -->
+<div id="prj-modal-overlay" class="prj-modal-overlay" aria-hidden="true">
+  <div class="prj-modal" role="dialog">
+    <button class="prj-modal-close" id="prj-modal-close" aria-label="Kapat">&times;</button>
+    <div class="prj-modal-gallery">
+      <div id="prj-modal-media" class="prj-modal-media-wrap"></div>
+      <button class="prj-modal-nav prj-modal-prev" id="prj-modal-prev">&#8249;</button>
+      <button class="prj-modal-nav prj-modal-next" id="prj-modal-next">&#8250;</button>
+      <div class="prj-modal-dots" id="prj-modal-dots"></div>
+    </div>
+    <div class="prj-modal-info">
+      <span class="prj-modal-badge" id="prj-modal-badge"></span>
+      <h2 class="prj-modal-title" id="prj-modal-title"></h2>
+      <div class="prj-modal-loc" id="prj-modal-loc"></div>
+      <div class="prj-modal-stats" id="prj-modal-stats"></div>
+      <p class="prj-modal-desc" id="prj-modal-desc"></p>
+      <a id="prj-modal-btn" href="#" class="prj-modal-btn">@(isEn ? "View Details" : "Detayları İncele")</a>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+(function(){
+  var isEn = @(isEn ? "true" : "false");
+
+  var allProjects = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    Model.Select(p => new {
+      name        = p.Name,
+      slug        = p.Slug,
+      lat         = p.Latitude,
+      lng         = p.Longitude,
+      image       = p.MainImagePath,
+      video       = p.VideoPath,
+      images      = p.Images.Where(i => !i.IsPlan).Select(i => i.ImagePath).ToList(),
+      location    = p.Location,
+      district    = p.District,
+      city        = p.City,
+      unitCount   = p.UnitCount,
+      floorCount  = p.FloorCount,
+      totalArea   = p.TotalArea,
+      desc        = p.ShortDescription,
+      status      = p.Status.ToString()
+    })
+  ));
+
+  /* ── Tile katmanları ── */
+  var tileLayers = {
+    street: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution:'© <a href="https://carto.com/">CARTO</a>', subdomains:'abcd', maxZoom:19
+    }),
+    light: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution:'© <a href="https://carto.com/">CARTO</a>', subdomains:'abcd', maxZoom:19
+    }),
+    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution:'© <a href="https://carto.com/">CARTO</a>', subdomains:'abcd', maxZoom:19
+    }),
+    sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution:'© Esri', maxZoom:18
+    })
+  };
+
+  var currentTile = 'light';
+  var map = L.map('project-map-full', { zoomControl:true, scrollWheelZoom:false });
+  tileLayers.light.addTo(map);
+
+  // Harita container boyutunu doğru hesapla (mobil dahil)
+  setTimeout(function(){ map.invalidateSize(); }, 200);
+  window.addEventListener('resize', function(){ map.invalidateSize(); });
+
+  map.getContainer().addEventListener('mouseenter', function(){ map.scrollWheelZoom.enable(); });
+  map.getContainer().addEventListener('mouseleave', function(){ map.scrollWheelZoom.disable(); });
+
+  /* ── Özel pin ikonu ── */
+  function makePinIcon(status, selected) {
+    var isOngoing = status === 'Ongoing';
+    if (isOngoing) {
+      var selRing = selected
+        ? '<circle cx="15" cy="15" r="8.5" fill="none" stroke="white" stroke-width="2.5" opacity=".95"/>'
+        : '';
+      return L.divIcon({
+        html: '<svg class="bk-pin-svg" width="30" height="38" viewBox="0 0 30 38"' +
+              ' xmlns="http://www.w3.org/2000/svg" style="overflow:visible">' +
+              '<circle class="bk-ring-1" cx="15" cy="15" r="14" fill="#0082B4"/>' +
+              '<circle class="bk-ring-2" cx="15" cy="15" r="14" fill="#0082B4"/>' +
+              '<path d="M15 38C15 38 0 24 0 15A15 15 0 1 1 30 15C30 24 15 38 15 38Z"' +
+              ' fill="#0082B4" style="filter:drop-shadow(0 3px 7px rgba(0,130,180,.55))"/>' +
+              '<circle cx="15" cy="15" r="5.5" fill="white" opacity=".95"/>' +
+              selRing +
+              '</svg>',
+        className:'', iconSize:[30,38], iconAnchor:[15,38], popupAnchor:[0,-40]
+      });
+    } else {
+      var filt = selected
+        ? 'drop-shadow(0 0 6px rgba(255,210,0,.95))'
+        : 'drop-shadow(0 3px 6px rgba(0,0,0,.45))';
+      return L.divIcon({
+        html: '<svg class="bk-pin-svg" width="26" height="34" viewBox="0 0 26 34"' +
+              ' xmlns="http://www.w3.org/2000/svg" style="filter:' + filt + '">' +
+              '<path d="M13 34C13 34 0 22 0 13A13 13 0 1 1 26 13C26 22 13 34 13 34Z" fill="#1E293B"/>' +
+              '<circle cx="13" cy="13" r="4.5" fill="white" opacity=".78"/>' +
+              '</svg>',
+        className:'', iconSize:[26,34], iconAnchor:[13,34], popupAnchor:[0,-36]
+      });
+    }
+  }
+
+  /* ── Cluster grubu ── */
+  var currentFilter = 'all';
+  var activeMarker  = null;
+
+  function buildClusterIcon(cluster) {
+    var children     = cluster.getAllChildMarkers();
+    var hasOngoing   = children.some(function(m){ return m._projStatus === 'Ongoing'; });
+    var hasCompleted = children.some(function(m){ return m._projStatus === 'Completed'; });
+    var cls = hasOngoing && hasCompleted ? 'mixed' : (hasOngoing ? 'ongoing' : 'completed');
+    return L.divIcon({
+      html:'<div class="bk-cluster-full ' + cls + '"><span>' + cluster.getChildCount() + '</span></div>',
+      className:'', iconSize:[42,42], iconAnchor:[21,21]
+    });
+  }
+
+  var clusterGroup = L.markerClusterGroup({
+    maxClusterRadius:70,
+    spiderfyOnMaxZoom:true,
+    showCoverageOnHover:false,
+    zoomToBoundsOnClick:true,
+    iconCreateFunction:buildClusterIcon,
+    animate:true
+  });
+
+  /* ── Modal ── */
+  var modalOverlay = document.getElementById('prj-modal-overlay');
+  var mediaWrap    = document.getElementById('prj-modal-media');
+  var dotsEl       = document.getElementById('prj-modal-dots');
+  var prevBtn      = document.getElementById('prj-modal-prev');
+  var nextBtn      = document.getElementById('prj-modal-next');
+  var slides = [], cur = 0;
+
+  function renderSlide(slide) {
+    mediaWrap.innerHTML = '';
+    var el;
+    if (slide.type === 'video') {
+      el = document.createElement('video');
+      el.src = slide.src; el.autoplay = true; el.muted = true; el.loop = true; el.setAttribute('playsinline','');
+    } else {
+      el = document.createElement('img');
+      el.src = slide.src; el.alt = '';
+    }
+    mediaWrap.appendChild(el);
+  }
+
+  function showSlide(i) {
+    cur = (i + slides.length) % slides.length;
+    renderSlide(slides[cur]);
+    dotsEl.querySelectorAll('.prj-modal-dot').forEach(function(d, idx){ d.classList.toggle('active', idx === cur); });
+    prevBtn.style.display = slides.length > 1 ? '' : 'none';
+    nextBtn.style.display = slides.length > 1 ? '' : 'none';
+  }
+
+  function buildDots() {
+    dotsEl.innerHTML = '';
+    slides.forEach(function(_, i){
+      var d = document.createElement('button');
+      d.className = 'prj-modal-dot' + (i===0?' active':'');
+      d.addEventListener('click', function(){ showSlide(i); });
+      dotsEl.appendChild(d);
+    });
+  }
+
+  function openModal(p, marker) {
+    if (activeMarker && activeMarker !== marker) {
+      activeMarker.setIcon(makePinIcon(activeMarker._projStatus, false));
+    }
+    activeMarker = marker;
+    marker.setIcon(makePinIcon(p.status, true));
+    marker._projStatus = p.status;
+
+    slides = [];
+    if (p.video) slides.push({ type:'video', src: p.video });
+    if (p.image) slides.push({ type:'img',   src: p.image });
+    if (p.images) p.images.forEach(function(img){ if (img && img !== p.image) slides.push({ type:'img', src: img }); });
+    if (!slides.length) slides.push({ type:'img', src:'' });
+
+    cur = 0; buildDots(); renderSlide(slides[0]);
+
+    var badge = document.getElementById('prj-modal-badge');
+    badge.textContent = p.status === 'Ongoing' ? (isEn?'ONGOING':'DEVAM EDİYOR') : (isEn?'COMPLETED':'TAMAMLANDI');
+    badge.className   = 'prj-modal-badge ' + (p.status === 'Ongoing' ? 'ongoing' : 'completed');
+
+    document.getElementById('prj-modal-title').textContent = p.name;
+
+    var loc   = [p.location, p.district, p.city].filter(Boolean).join(', ');
+    var locEl = document.getElementById('prj-modal-loc');
+    locEl.innerHTML = loc ? '<svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>' + loc : '';
+
+    var stats = '';
+    if (p.unitCount)  stats += '<div><span class="prj-mstat-val">'+ p.unitCount  +'</span><span class="prj-mstat-lbl">'+(isEn?'Units':'Daire')+'</span></div>';
+    if (p.floorCount) stats += '<div><span class="prj-mstat-val">'+ p.floorCount +'</span><span class="prj-mstat-lbl">'+(isEn?'Floors':'Kat')+'</span></div>';
+    if (p.totalArea)  stats += '<div><span class="prj-mstat-val">'+ (p.totalArea||0).toLocaleString() +'</span><span class="prj-mstat-lbl">m²</span></div>';
+    var statsEl = document.getElementById('prj-modal-stats');
+    statsEl.innerHTML = stats; statsEl.style.display = stats ? '' : 'none';
+
+    var descEl = document.getElementById('prj-modal-desc');
+    descEl.textContent   = p.desc || '';
+    descEl.style.display = p.desc ? '' : 'none';
+
+    document.getElementById('prj-modal-btn').href = '/Projeler#' + p.slug;
+
+    modalOverlay.classList.add('open');
+    modalOverlay.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('open');
+    modalOverlay.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+    mediaWrap.innerHTML = ''; slides = [];
+    if (activeMarker) {
+      activeMarker.setIcon(makePinIcon(activeMarker._projStatus, false));
+      activeMarker = null;
+    }
+  }
+
+  prevBtn.addEventListener('click', function(){ showSlide(cur - 1); });
+  nextBtn.addEventListener('click', function(){ showSlide(cur + 1); });
+  document.getElementById('prj-modal-close').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', function(e){ if(e.target === modalOverlay) closeModal(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+
+  /* ── Marker'ları yeniden oluştur ── */
+  function rebuildMarkers() {
+    clusterGroup.clearLayers();
+    if (activeMarker) { activeMarker = null; }
+    closeModal();
+
+    allProjects.forEach(function(p) {
+      if (!p.lat || !p.lng) return;
+      if (currentFilter !== 'all' && p.status !== currentFilter) return;
+
+      var marker = L.marker([p.lat, p.lng], { icon: makePinIcon(p.status, false) });
+      marker._projStatus = p.status;
+      marker.on('click', function(){ openModal(p, marker); });
+      clusterGroup.addLayer(marker);
+    });
+  }
+
+  rebuildMarkers();
+  map.addLayer(clusterGroup);
+
+  /* ── Haritayı pinlere göre ortala ── */
+  var withCoords = allProjects.filter(function(p){ return p.lat && p.lng; });
+  if (withCoords.length > 0) {
+    map.fitBounds(L.latLngBounds(withCoords.map(function(p){ return [p.lat, p.lng]; })), { padding:[80,80], maxZoom:13 });
+  } else {
+    map.setView([39.5,35], 6);
+  }
+
+  /* ── Filtre ── */
+  document.querySelectorAll('.mp-filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.mp-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      rebuildMarkers();
+    });
+  });
+
+  /* ── Tile switcher ── */
+  document.querySelectorAll('.mp-tile-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.mp-tile-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      map.removeLayer(tileLayers[currentTile]);
+      currentTile = btn.dataset.tile;
+      tileLayers[currentTile].addTo(map);
+    });
+  });
+
+})();
+</script>
+}

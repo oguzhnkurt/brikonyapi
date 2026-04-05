@@ -1,0 +1,63 @@
+@model BrikonYapi.Web.Data.Entities.HeroSlide
+@{
+    ViewData["Title"] = "Yeni Hero Slide";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Yeni Hero Slide</h2>
+        <a href="/Admin/HeroSlides" class="btn-secondary">← Geri</a>
+    </div>
+
+    <form asp-area="Admin" asp-controller="HeroSlides" asp-action="Create" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+            <div class="form-group">
+                <label class="form-label">Başlık</label>
+                <input asp-for="Title" class="form-control" placeholder="Proje adı veya slogan" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Alt Başlık</label>
+                <input asp-for="Subtitle" class="form-control" placeholder="Kısa açıklama" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">İlişkili Proje (opsiyonel)</label>
+                <select asp-for="ProjectId" class="form-control">
+                    <option value="">-- Seçin --</option>
+                    @foreach (var p in ViewBag.Projects as List<BrikonYapi.Web.Data.Entities.Project> ?? new())
+                    {
+                        <option value="@p.Id">@p.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sıra</label>
+                <input asp-for="OrderIndex" type="number" class="form-control" value="0" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Buton Metni</label>
+                <input asp-for="ButtonText" class="form-control" placeholder="Proje Sayfası" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Buton URL</label>
+                <input asp-for="ButtonUrl" class="form-control" placeholder="/Projeler/proje-slug" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Video Dosyası (MP4 - arka plan videosu)</label>
+            <input type="file" name="videoFile" class="form-control" accept="video/mp4,video/webm" />
+            <small style="color:var(--gray-600);font-size:0.78rem">Video yoksa varsayılan videolar kullanılır.</small>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Arka Plan Görseli (video yoksa kullanılır)</label>
+            <input type="file" name="bgImage" class="form-control" accept="image/*" />
+        </div>
+
+        <div style="margin-top:1.5rem;display:flex;gap:0.75rem">
+            <button type="submit" class="btn-primary">Slide Kaydet</button>
+            <a href="/Admin/HeroSlides" class="btn-secondary">İptal</a>
+        </div>
+    </form>
+</div>

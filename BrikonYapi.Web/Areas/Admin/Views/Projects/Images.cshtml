@@ -1,0 +1,245 @@
+@model BrikonYapi.Web.Data.Entities.Project
+@using BrikonYapi.Web.Data.Entities
+@{
+    ViewData["Title"] = "Görseller — " + Model.Name;
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var gallery = Model.Images.Where(i => !i.IsPlan).OrderBy(i => i.OrderIndex).ToList();
+    var plans   = Model.Images.Where(i =>  i.IsPlan).OrderBy(i => i.OrderIndex).ToList();
+}
+
+@section Styles {
+<style>
+.img-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+}
+.img-card {
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #1a1918;
+    aspect-ratio: 4/3;
+    border: 2px solid transparent;
+    transition: border-color .2s;
+}
+.img-card.is-cover { border-color: #0d6efd; }
+.img-card img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+}
+.img-card-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 6px;
+    transition: background .2s;
+}
+.img-card:hover .img-card-overlay { background: rgba(0,0,0,.55); }
+.img-card-overlay .btn { opacity: 0; transform: translateY(6px); transition: opacity .2s, transform .2s; font-size: .7rem; padding: .3rem .75rem; }
+.img-card:hover .img-card-overlay .btn { opacity: 1; transform: translateY(0); }
+.img-cover-badge {
+    position: absolute; top: 6px; left: 6px;
+    background: #0d6efd; color: #fff;
+    font-size: .6rem; font-weight: 700; letter-spacing: .08em;
+    padding: .2rem .5rem; border-radius: 3px;
+    pointer-events: none;
+}
+.plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+}
+.plan-card {
+    position: relative;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+.plan-card img {
+    width: 100%; aspect-ratio: 4/3;
+    object-fit: contain; display: block;
+    background: #f8f9fa;
+}
+.plan-card .plan-caption {
+    padding: .4rem .6rem;
+    font-size: .72rem; color: #555;
+    border-top: 1px solid #dee2e6;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.plan-card .del-btn {
+    position: absolute; top: 5px; right: 5px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(220,38,38,.85); color: #fff;
+    border: none; font-size: 14px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0; transition: opacity .15s;
+}
+.plan-card:hover .del-btn { opacity: 1; }
+.upload-zone {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+}
+.upload-zone:hover { border-color: #0d6efd; background: #f0f6ff; }
+</style>
+}
+
+<div class="d-flex align-items-center mb-3 gap-2">
+    <a href="/Admin/Projects" class="btn btn-sm btn-outline-secondary">
+        <iconify-icon icon="iconamoon:arrow-left-2-duotone"></iconify-icon> Projeler
+    </a>
+    <a href="/Admin/Projects/Edit/@Model.Id" class="btn btn-sm btn-outline-secondary">
+        <iconify-icon icon="iconamoon:edit-duotone"></iconify-icon> Düzenle
+    </a>
+    <h5 class="mb-0 ms-1">
+        Görseller — <span class="text-primary">@Model.Name</span>
+    </h5>
+</div>
+
+<!-- ── FOTOĞRAF GALERİSİ ── -->
+<div class="card mb-3">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <h6 class="card-title mb-0">
+            <iconify-icon icon="iconamoon:image-duotone" class="me-1"></iconify-icon>
+            Fotoğraf Galerisi
+            <span class="badge bg-secondary ms-1">@gallery.Count</span>
+        </h6>
+        <small class="text-muted">Üzerine gelin → Kapak Yap / Sil</small>
+    </div>
+    <div class="card-body">
+        @if (gallery.Any())
+        {
+            <div class="img-grid mb-3">
+                @foreach (var img in gallery)
+                {
+                    bool isMain = img.ImagePath == Model.MainImagePath;
+                    <div class="img-card @(isMain ? "is-cover" : "")">
+                        <img src="@img.ImagePath" alt="" loading="lazy" />
+                        @if (isMain)
+                        {
+                            <div class="img-cover-badge">KAPAK</div>
+                        }
+                        <div class="img-card-overlay">
+                            @if (!isMain)
+                            {
+                                <button type="button" class="btn btn-sm btn-primary"
+                                        onclick="imgAction('cover','@img.Id','@Model.Id')">
+                                    Kapak Yap
+                                </button>
+                            }
+                            <button type="button" class="btn btn-sm btn-danger"
+                                    onclick="imgAction('delete','@img.Id','@Model.Id')">
+                                Sil
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-muted mb-3">Henüz fotoğraf eklenmemiş.</p>
+        }
+
+        <!-- Yükleme -->
+        <form method="post" action="/Admin/Projects/UploadImages" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="projectId" value="@Model.Id" />
+            <label class="upload-zone d-block" for="newGalleryInput">
+                <iconify-icon icon="iconamoon:upload-duotone" class="fs-32 text-muted d-block mb-1"></iconify-icon>
+                <span class="text-muted" style="font-size:.85rem;">Fotoğraf yükle — birden fazla seçebilirsin</span>
+                <div id="newGalleryNames" class="mt-2 text-primary" style="font-size:.78rem;"></div>
+            </label>
+            <input type="file" id="newGalleryInput" name="galleryImages" class="d-none"
+                   accept="image/*" multiple onchange="showNames(this,'newGalleryNames')" />
+            <div class="mt-2 text-end">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <iconify-icon icon="iconamoon:upload-duotone" class="me-1"></iconify-icon>
+                    Yükle
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── PLANLAR ── -->
+<div class="card mb-3">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <h6 class="card-title mb-0">
+            <iconify-icon icon="iconamoon:copy-duotone" class="me-1"></iconify-icon>
+            Planlar
+            <span class="badge bg-secondary ms-1">@plans.Count</span>
+        </h6>
+        <small class="text-muted">Kat planı, vaziyet planı vb.</small>
+    </div>
+    <div class="card-body">
+        @if (plans.Any())
+        {
+            <div class="plan-grid mb-3">
+                @foreach (var img in plans)
+                {
+                    <div class="plan-card">
+                        <img src="@img.ImagePath" alt="@img.Caption" loading="lazy" />
+                        @if (!string.IsNullOrEmpty(img.Caption))
+                        {
+                            <div class="plan-caption" title="@img.Caption">@img.Caption</div>
+                        }
+                        <button type="button" class="del-btn"
+                                onclick="imgAction('delete','@img.Id','@Model.Id')"
+                                title="Sil">×</button>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-muted mb-3">Henüz plan eklenmemiş.</p>
+        }
+
+        <form method="post" action="/Admin/Projects/UploadImages" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="projectId" value="@Model.Id" />
+            <label class="upload-zone d-block" for="newPlanInput">
+                <iconify-icon icon="iconamoon:upload-duotone" class="fs-32 text-muted d-block mb-1"></iconify-icon>
+                <span class="text-muted" style="font-size:.85rem;">Plan yükle — dosya adı başlık olur</span>
+                <div id="newPlanNames" class="mt-2 text-primary" style="font-size:.78rem;"></div>
+            </label>
+            <input type="file" id="newPlanInput" name="planImages" class="d-none"
+                   accept="image/*" multiple onchange="showNames(this,'newPlanNames')" />
+            <div class="mt-2 text-end">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <iconify-icon icon="iconamoon:upload-duotone" class="me-1"></iconify-icon>
+                    Yükle
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+var _aft = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+function imgAction(action, imageId, projectId) {
+    if (action === 'delete' && !confirm('Bu görseli silmek istediğine emin misin?')) return;
+    var url = action === 'delete' ? '/Admin/Projects/DeleteImage' : '/Admin/Projects/SetMainImage';
+    var body = new URLSearchParams({ imageId, projectId, __RequestVerificationToken: _aft });
+    fetch(url, { method: 'POST', body, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+        .then(function(r) { if (r.ok || r.redirected) location.reload(); });
+}
+
+function showNames(input, targetId) {
+    var el = document.getElementById(targetId);
+    if (!el) return;
+    el.textContent = input.files.length
+        ? Array.from(input.files).map(function(f){ return f.name; }).join(', ')
+        : '';
+}
+</script>
+}

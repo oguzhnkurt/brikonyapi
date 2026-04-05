@@ -1,0 +1,153 @@
+@model Dictionary<string, string?>
+@{
+    ViewData["Title"] = "Site Ayarları";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    string Label(string key) => key switch {
+        "PhoneNumber"   => "Telefon Numarası",
+        "Email"         => "E-posta Adresi",
+        "Address"       => "Adres",
+        "WhatsApp"      => "WhatsApp Numarası",
+        "Instagram"     => "Instagram URL",
+        "Facebook"      => "Facebook URL",
+        "LinkedIn"      => "LinkedIn URL",
+        "CompanySlogan" => "Şirket Sloganı",
+        "AboutText"     => "Hakkımızda Kısa Metin",
+        "MarqueeMode"   => "Ana Sayfa Kayan Bölüm — Kart Görseli",
+        _               => key
+    };
+    string Hint(string key) => key switch {
+        "PhoneNumber"   => "Sitede görünecek iletişim telefonu",
+        "Email"         => "İletişim ve footer için e-posta",
+        "Address"       => "Şirket adresi (footer'da görünür)",
+        "WhatsApp"      => "WhatsApp hattı (ör: +905xxxxxxxxx)",
+        "Instagram"     => "Instagram profil linki (tam URL)",
+        "Facebook"      => "Facebook profil linki (tam URL)",
+        "LinkedIn"      => "LinkedIn profil linki (tam URL)",
+        "CompanySlogan" => "Hero bölümünde ana başlık olarak gösterilir",
+        "AboutText"     => "Footer ve hakkımızda bölümünde görünür",
+        "MarqueeMode"   => "Video: videosu olan kartlar otomatik oynar. Resim: sadece kapak fotoğrafı.",
+        _               => ""
+    };
+    string Icon(string key) => key switch {
+        "PhoneNumber"   => "iconamoon:phone-duotone",
+        "Email"         => "iconamoon:email-duotone",
+        "Address"       => "iconamoon:location-duotone",
+        "WhatsApp"      => "iconamoon:brand-whatsapp-duotone",
+        "Instagram"     => "iconamoon:brand-instagram-duotone",
+        "Facebook"      => "iconamoon:brand-facebook-duotone",
+        "LinkedIn"      => "iconamoon:brand-linkedin-duotone",
+        "CompanySlogan" => "iconamoon:quote-left-duotone",
+        "AboutText"     => "iconamoon:file-document-duotone",
+        "MarqueeMode"   => "iconamoon:video-camera-duotone",
+        _               => "iconamoon:settings-duotone"
+    };
+
+    var handled = new[]{"PhoneNumber","Email","Address","WhatsApp","Instagram","Facebook","LinkedIn","CompanySlogan","AboutText","MarqueeMode"};
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <iconify-icon icon="iconamoon:settings-duotone" class="me-2"></iconify-icon>
+                    Site Ayarları
+                </h5>
+            </div>
+            <div class="card-body">
+                <form asp-area="Admin" asp-controller="Settings" asp-action="Save" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <h6 class="text-muted text-uppercase fw-bold mb-3 mt-2" style="font-size:.7rem;letter-spacing:.12em;">
+                        <iconify-icon icon="iconamoon:phone-duotone" class="me-1"></iconify-icon> İletişim Bilgileri
+                    </h6>
+                    @foreach (var key in new[]{"PhoneNumber","Email","Address","WhatsApp"})
+                    {
+                        if (!Model.ContainsKey(key)) continue;
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">
+                                <iconify-icon icon="@Icon(key)" class="me-1 text-primary"></iconify-icon>@Label(key)
+                            </label>
+                            <input type="text" name="settings[@key]" value="@Model[key]" class="form-control" placeholder="@Hint(key)" />
+                            <div class="form-text">@Hint(key)</div>
+                        </div>
+                    }
+
+                    <hr class="my-4" />
+
+                    <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size:.7rem;letter-spacing:.12em;">
+                        <iconify-icon icon="iconamoon:brand-instagram-duotone" class="me-1"></iconify-icon> Sosyal Medya
+                    </h6>
+                    @foreach (var key in new[]{"Instagram","Facebook","LinkedIn"})
+                    {
+                        if (!Model.ContainsKey(key)) continue;
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">
+                                <iconify-icon icon="@Icon(key)" class="me-1 text-primary"></iconify-icon>@Label(key)
+                            </label>
+                            <input type="url" name="settings[@key]" value="@Model[key]" class="form-control" placeholder="https://..." />
+                            <div class="form-text">@Hint(key)</div>
+                        </div>
+                    }
+
+                    <hr class="my-4" />
+
+                    <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size:.7rem;letter-spacing:.12em;">
+                        <iconify-icon icon="iconamoon:file-document-duotone" class="me-1"></iconify-icon> İçerik & Görünüm
+                    </h6>
+                    @foreach (var key in new[]{"CompanySlogan","AboutText"})
+                    {
+                        if (!Model.ContainsKey(key)) continue;
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">
+                                <iconify-icon icon="@Icon(key)" class="me-1 text-primary"></iconify-icon>@Label(key)
+                            </label>
+                            <input type="text" name="settings[@key]" value="@Model[key]" class="form-control" />
+                            <div class="form-text">@Hint(key)</div>
+                        </div>
+                    }
+
+                    @if (Model.ContainsKey("MarqueeMode"))
+                    {
+                        var modeVal = Model["MarqueeMode"] ?? "image";
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">
+                                <iconify-icon icon="iconamoon:video-camera-duotone" class="me-1 text-primary"></iconify-icon>
+                                @Label("MarqueeMode")
+                            </label>
+                            <select name="settings[MarqueeMode]" class="form-select">
+                                @if (modeVal == "video")
+                                {
+                                    <option value="video" selected>🎬 Video — videosu olan projeler otomatik oynar</option>
+                                    <option value="image">🖼️ Resim — tüm kartlarda sadece kapak fotoğrafı</option>
+                                }
+                                else
+                                {
+                                    <option value="video">🎬 Video — videosu olan projeler otomatik oynar</option>
+                                    <option value="image" selected>🖼️ Resim — tüm kartlarda sadece kapak fotoğrafı</option>
+                                }
+                            </select>
+                            <div class="form-text">@Hint("MarqueeMode")</div>
+                        </div>
+                    }
+
+                    @foreach (var setting in Model.Where(s => !handled.Contains(s.Key)))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">@Label(setting.Key)</label>
+                            <input type="text" name="settings[@setting.Key]" value="@setting.Value" class="form-control" />
+                        </div>
+                    }
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <iconify-icon icon="iconamoon:check-duotone" class="me-1"></iconify-icon>
+                            Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

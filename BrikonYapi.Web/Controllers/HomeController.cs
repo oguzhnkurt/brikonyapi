@@ -1,0 +1,53 @@
+using BrikonYapi.Web.Data.Entities;
+using BrikonYapi.Web.Models.ViewModels;
+using BrikonYapi.Web.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BrikonYapi.Web.Controllers
+{
+    public class HomeController : BaseController
+    {
+        private readonly ProjectService _projects;
+        private readonly SiteSettingService _settings;
+        private readonly ReferenceService _refs;
+
+        public HomeController(ProjectService projects, SiteSettingService settings, ReferenceService refs)
+        {
+            _projects = projects;
+            _settings = settings;
+            _refs     = refs;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var allProjects = await _projects.GetAllActiveAsync();
+            var vm = new HomeViewModel
+            {
+                HeroProjects      = await _projects.GetFeaturedAsync(),
+                OngoingProjects   = allProjects.Where(p => p.Status == ProjectStatus.Ongoing).ToList(),
+                CompletedProjects = allProjects.Where(p => p.Status == ProjectStatus.Completed).ToList(),
+                AllProjects       = allProjects,
+                Settings          = await _settings.GetAllAsync(),
+                References        = await _refs.GetActiveAsync()
+            };
+            return View(vm);
+        }
+
+        [Route("Hakkimizda")]
+        public IActionResult Hakkimizda() => View();
+
+        [Route("Hizmetlerimiz")]
+        public IActionResult Hizmetlerimiz() => View();
+
+        [Route("ProjeHaritasi")]
+        public async Task<IActionResult> ProjeHaritasi()
+        {
+            var ongoing   = await _projects.GetAllActiveAsync(ProjectStatus.Ongoing);
+            var completed = await _projects.GetAllActiveAsync(ProjectStatus.Completed);
+            return View(ongoing.Concat(completed).ToList());
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error() => View();
+    }
+}

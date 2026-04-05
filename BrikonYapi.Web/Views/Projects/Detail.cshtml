@@ -1,0 +1,396 @@
+@model BrikonYapi.Web.Data.Entities.Project
+@using BrikonYapi.Web.Data.Entities
+@{
+    ViewData["Title"]       = Model.Name;
+    ViewData["Description"] = !string.IsNullOrEmpty(Model.ShortDescription)
+        ? Model.ShortDescription
+        : $"{Model.Name} - {Model.Location} | Brikon Yapı";
+    if (!string.IsNullOrEmpty(Model.MainImagePath))
+        ViewData["OgImage"] = Model.MainImagePath.StartsWith("/") ? Model.MainImagePath : "/" + Model.MainImagePath;
+}
+
+@section Styles {
+<style>
+/* Detail page: header always dark-glass/scrolled regardless of scroll position */
+#site-header {
+    background:rgba(18,17,16,.72) !important;
+    backdrop-filter:blur(14px) !important;
+    -webkit-backdrop-filter:blur(14px) !important;
+    box-shadow:0 2px 28px rgba(0,0,0,.28) !important;
+    border-bottom:1px solid rgba(255,255,255,.07) !important;
+    height:68px !important;
+}
+#site-header .header-logo img { filter:brightness(0) invert(1) !important; height:46px !important; }
+#site-header .header-nav .nav-link { color:rgba(255,255,255,.9) !important; }
+#site-header .header-nav .nav-link:hover { color:var(--c-primary) !important; }
+#site-header .nav-dropdown-toggle { color:rgba(255,255,255,.9) !important; }
+#site-header .lang-btn { color:rgba(255,255,255,.35) !important; }
+#site-header .lang-btn.active { color:#fff !important; }
+#site-header .header-instagram { color:rgba(255,255,255,.4) !important; }
+#site-header .hamburger span { background:#fff !important; }
+</style>
+}
+
+@{
+    bool isEn = ViewBag.IsEn == true;
+    ViewData["Title"] = Model.Name;
+
+    var _seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    var allImages = new List<string>();
+    if (!string.IsNullOrEmpty(Model.MainImagePath) && _seen.Add(Model.MainImagePath))
+        allImages.Add(Model.MainImagePath);
+    foreach (var img in Model.Images.Where(i => !i.IsPlan).OrderBy(i => i.OrderIndex))
+        if (!string.IsNullOrEmpty(img.ImagePath) && _seen.Add(img.ImagePath))
+            allImages.Add(img.ImagePath);
+
+    var planImages = Model.Images.Where(i => i.IsPlan).OrderBy(i => i.OrderIndex).ToList();
+
+    var year    = (Model.EndDate ?? Model.StartDate)?.ToString("yyyy") ?? "";
+    var locParts= new[]{ Model.District, Model.City }.Where(x => !string.IsNullOrEmpty(x));
+    var locStr  = string.Join(", ", locParts);
+    var bgImg   = Model.MainImagePath ?? "";
+    var hasSeps = Model.TotalArea.HasValue || Model.UnitCount.HasValue || Model.FloorCount.HasValue
+               || Model.BlockCount.HasValue || Model.StartDate.HasValue || Model.EndDate.HasValue
+               || !string.IsNullOrEmpty(Model.Location);
+    var hasMap  = Model.Latitude.HasValue && Model.Longitude.HasValue;
+    var latStr  = hasMap ? Model.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
+    var lngStr  = hasMap ? Model.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
+    var gmapUrl = hasMap ? $"https://maps.google.com/maps?q={latStr},{lngStr}&z=15&output=embed" : "";
+}
+
+<!-- ═══════════════════════════════════════════════
+     BÖLÜM 1: Fotoğraf Slaytı  |  Koyu Panel + Harita
+     ═══════════════════════════════════════════════ -->
+<section class="pd-top">
+
+  <!-- Sol: Fotoğraf -->
+  <div class="pd-gallery" id="pd-gallery">
+    @if (allImages.Any())
+    {
+      @for (int i = 0; i < allImages.Count; i++)
+      {
+        <div class="pd-slide @(i==0?"active":"")">
+          <img src="@allImages[i]" alt="" class="pd-slide-bg" loading="@(i==0?"eager":"lazy")" aria-hidden="true" />
+          <img src="@allImages[i]" alt="@Model.Name" class="pd-slide-img" loading="@(i==0?"eager":"lazy")" />
+        </div>
+      }
+      @if (allImages.Count > 1)
+      {
+        <button class="pd-arrow pd-arr-prev" id="pd-prev">&#8249;</button>
+        <button class="pd-arrow pd-arr-next" id="pd-next">&#8250;</button>
+        <div class="pd-counter"><span id="pd-cur">1</span>&nbsp;/&nbsp;@allImages.Count</div>
+      }
+    }
+    else
+    {
+      <div class="pd-slide active" style="background:linear-gradient(135deg,#1e1d1c,#2B2A29)"></div>
+    }
+  </div>
+
+  <!-- Sağ: Koyu panel -->
+  <div class="pd-right">
+
+    @if (hasMap)
+    {
+      <iframe class="pd-map" src="@gmapUrl" frameborder="0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    }
+    else
+    {
+      <div class="pd-map-empty">
+        <svg width="40" height="40" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5" viewBox="0 0 24 24">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+          <circle cx="12" cy="9" r="2.5"/>
+        </svg>
+        <span>@(isEn ? "No map coordinates added" : "Harita koordinatı eklenmemiş")</span>
+      </div>
+    }
+
+    <nav class="pd-tabs">
+      <a href="#pd-specs" class="pd-tab">@(isEn ? "Specifications" : "Özellikler")</a>
+    </nav>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     BÖLÜM 2: Proje Başlığı
+     ═══════════════════════════════════════════════ -->
+<section class="pd-title-section"
+         style="@(!string.IsNullOrEmpty(bgImg) ? $"--pd-bg:url('{bgImg}')" : "")">
+  <div class="pd-title-inner">
+    <h1 class="pd-name">@Model.Name</h1>
+    @if (!string.IsNullOrEmpty(locStr))  { <p class="pd-loc">@locStr</p>  }
+    @if (!string.IsNullOrEmpty(year))    { <p class="pd-year">@year</p>   }
+  </div>
+</section>
+
+
+
+<!-- ═══════════════════════════════════════════════
+     BÖLÜM 4: Özellikler
+     ═══════════════════════════════════════════════ -->
+<section id="pd-specs" class="pd-light-section">
+  <div class="pd-vtext pd-vtext-right">@(isEn ? "Specifications" : "Özellikler")</div>
+  <div class="pd-content-wrap">
+    <div class="pd-specs-grid">
+
+      <!-- Sol: Özellik listesi -->
+      <ul class="pd-specs-list">
+        @if (!string.IsNullOrEmpty(Model.Location))
+        {
+          <li><span>@(isEn ? "Location" : "Lokasyon")</span><strong>@Model.Location</strong></li>
+        }
+        @if (Model.TotalArea.HasValue)
+        {
+          <li><span>@(isEn ? "Total Area" : "Toplam Alan")</span><strong>@Model.TotalArea.Value.ToString("N0") m²</strong></li>
+        }
+        @if (Model.UnitCount.HasValue)
+        {
+          <li><span>@(isEn ? "Units" : "Daire Sayısı")</span><strong>@Model.UnitCount</strong></li>
+        }
+        @if (Model.FloorCount.HasValue)
+        {
+          <li><span>@(isEn ? "Floors" : "Kat Sayısı")</span><strong>@Model.FloorCount</strong></li>
+        }
+        @if (Model.BlockCount.HasValue)
+        {
+          <li><span>@(isEn ? "Blocks" : "Blok Sayısı")</span><strong>@Model.BlockCount</strong></li>
+        }
+        @if (Model.StartDate.HasValue)
+        {
+          <li><span>@(isEn ? "Start Date" : "Başlangıç")</span><strong>@Model.StartDate.Value.ToString("MMMM yyyy", new System.Globalization.CultureInfo(isEn ? "en-US" : "tr-TR"))</strong></li>
+        }
+        @if (Model.EndDate.HasValue)
+        {
+          <li>
+            <span>@(Model.Status == ProjectStatus.Completed ? (isEn ? "Delivered" : "Teslim") : (isEn ? "Est. Delivery" : "Tahmini Teslim"))</span>
+            <strong>@Model.EndDate.Value.ToString("MMMM yyyy", new System.Globalization.CultureInfo(isEn ? "en-US" : "tr-TR"))</strong>
+          </li>
+        }
+        <li>
+          <span>@(isEn ? "Status" : "Durum")</span>
+          <strong style="color:@(Model.Status == ProjectStatus.Ongoing ? "var(--c-primary)" : "#2B2A29")">
+            @(Model.Status == ProjectStatus.Ongoing ? (isEn ? "Ongoing" : "Devam Ediyor") : (isEn ? "Completed" : "Tamamlandı"))
+          </strong>
+        </li>
+      </ul>
+
+      <!-- Sağ: Açıklama + İletişim -->
+      <div class="pd-specs-desc">
+        @if (!string.IsNullOrEmpty(Model.ShortDescription))
+        {
+          <p class="pd-short-desc">@Model.ShortDescription</p>
+        }
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+          <div class="pd-long-desc">@Html.Raw(Model.Description.Replace("\n", "<br/>"))</div>
+        }
+        <a href="tel:@ViewBag.Phone" class="btn-hero-dark" style="margin-top:2rem;">@(isEn ? "Get Information" : "Bilgi Al")</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     BÖLÜM 5: Fotoğraf Galerisi
+     ═══════════════════════════════════════════════ -->
+@if (allImages.Count > 1)
+{
+<section class="pd-photo-section">
+  <div class="pd-content-wrap">
+    <h2 class="pd-section-title">@(isEn ? "Photo Gallery" : "Fotoğraf Galerisi")</h2>
+    <div class="pd-photo-grid">
+      @for (int i = 0; i < allImages.Count; i++)
+      {
+        <div class="pd-photo-item" data-index="@i">
+          <img src="@allImages[i]" alt="@Model.Name @(i+1)" loading="lazy" />
+          <div class="pd-photo-overlay"><svg width="20" height="20" fill="none" stroke="#fff" stroke-width="1.5" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Lightbox -->
+<div class="pd-lightbox" id="pd-lightbox">
+  <button class="pd-lb-close" id="pd-lb-close">&times;</button>
+  <button class="pd-lb-prev" id="pd-lb-prev">&#8249;</button>
+  <button class="pd-lb-next" id="pd-lb-next">&#8250;</button>
+  <div class="pd-lb-img-wrap"><img src="" alt="" id="pd-lb-img" /></div>
+  <div class="pd-lb-counter" id="pd-lb-counter"></div>
+</div>
+
+<style>
+.pd-photo-section { background:#f5f5f3; padding:5rem 0; }
+.pd-section-title { font-family:'Inter',sans-serif; font-weight:800; font-size:clamp(1.4rem,2.5vw,2rem); color:#1a1918; letter-spacing:-.025em; margin:0 0 2.5rem; }
+.pd-photo-grid {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+}
+.pd-photo-item {
+  position:relative; overflow:hidden; cursor:zoom-in;
+  aspect-ratio:4/3; background:#1a1918;
+}
+.pd-photo-item img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .45s cubic-bezier(.4,0,.2,1); }
+.pd-photo-item:hover img { transform:scale(1.06); }
+.pd-photo-overlay {
+  position:absolute; inset:0;
+  background:rgba(0,0,0,0); display:flex; align-items:center; justify-content:center;
+  transition:background .3s;
+}
+.pd-photo-item:hover .pd-photo-overlay { background:rgba(0,0,0,.35); }
+.pd-photo-overlay svg { opacity:0; transform:scale(.8); transition:opacity .3s, transform .3s; }
+.pd-photo-item:hover .pd-photo-overlay svg { opacity:1; transform:scale(1); }
+
+/* Lightbox */
+.pd-lightbox {
+  position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,.95);
+  display:none; align-items:center; justify-content:center;
+}
+.pd-lightbox.open { display:flex; }
+.pd-lb-img-wrap { max-width:90vw; max-height:90vh; }
+.pd-lb-img-wrap img { max-width:90vw; max-height:86vh; object-fit:contain; display:block; }
+.pd-lb-close, .pd-lb-prev, .pd-lb-next {
+  position:absolute; background:none; border:none; cursor:pointer;
+  color:#fff; font-size:2.5rem; line-height:1; padding:.5rem 1rem;
+  transition:color .2s; z-index:1;
+}
+.pd-lb-close { top:1rem; right:1.2rem; font-size:2rem; }
+.pd-lb-prev  { left:1rem;  top:50%; transform:translateY(-50%); font-size:3rem; }
+.pd-lb-next  { right:1rem; top:50%; transform:translateY(-50%); font-size:3rem; }
+.pd-lb-close:hover,.pd-lb-prev:hover,.pd-lb-next:hover { color:var(--c-primary); }
+.pd-lb-counter { position:absolute; bottom:1.2rem; left:50%; transform:translateX(-50%); color:rgba(255,255,255,.5); font-size:.75rem; letter-spacing:.1em; }
+
+@@media(max-width:860px)  { .pd-photo-grid { grid-template-columns:repeat(3,1fr); } }
+@@media(max-width:560px)  { .pd-photo-grid { grid-template-columns:repeat(2,1fr); gap:4px; } }
+</style>
+}
+
+@if (planImages.Any())
+{
+<section class="pd-plans-section">
+  <div class="pd-content-wrap">
+    <h2 class="pd-section-title">@(isEn ? "Plans" : "Planlar")</h2>
+    <div class="pd-plans-grid">
+      @foreach (var plan in planImages)
+      {
+        <div class="pd-plan-item">
+          <img src="@plan.ImagePath" alt="@(plan.Caption ?? Model.Name)" loading="lazy" />
+          @if (!string.IsNullOrEmpty(plan.Caption))
+          {
+            <div class="pd-plan-caption">@plan.Caption</div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</section>
+<style>
+.pd-plans-section { background:#fff; padding:5rem 0; border-top:1px solid #e8e6e4; }
+.pd-plans-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+}
+.pd-plan-item {
+  background:#f5f5f3;
+  border:1px solid #e0dedd;
+  border-radius:4px;
+  overflow:hidden;
+}
+.pd-plan-item img {
+  width:100%; display:block;
+  object-fit:contain;
+  background:#f5f5f3;
+  max-height:320px;
+}
+.pd-plan-caption {
+  padding:.6rem .9rem;
+  font-size:.78rem; font-weight:600;
+  color:#555; letter-spacing:.03em;
+  text-align:center;
+  border-top:1px solid #e0dedd;
+}
+@@media(max-width:768px) { .pd-plans-grid { grid-template-columns:repeat(2,1fr); } }
+@@media(max-width:480px) { .pd-plans-grid { grid-template-columns:1fr; } }
+</style>
+}
+
+@section Scripts {
+  <script>
+  /* Lock header permanently to scrolled state on this page */
+  (function(){
+    var h = document.getElementById('site-header');
+    if (!h) return;
+    h.classList.remove('transparent');
+    h.classList.add('scrolled');
+  })();
+  </script>
+  <script>
+    (function(){
+      var slides  = [...document.querySelectorAll('#pd-gallery .pd-slide')];
+      var curEl   = document.getElementById('pd-cur');
+      if (slides.length < 2) return;
+      var cur = 0;
+      var go = function(idx){
+        slides[cur].classList.remove('active');
+        cur = (idx + slides.length) % slides.length;
+        slides[cur].classList.add('active');
+        if (curEl) curEl.textContent = cur + 1;
+      };
+      document.getElementById('pd-prev')?.addEventListener('click', function(){ go(cur - 1); });
+      document.getElementById('pd-next')?.addEventListener('click', function(){ go(cur + 1); });
+      // Keyboard support
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'ArrowLeft')  go(cur - 1);
+        if (e.key === 'ArrowRight') go(cur + 1);
+      });
+    })();
+
+    // Galeri lightbox
+    (function(){
+      var lb     = document.getElementById('pd-lightbox');
+      var lbImg  = document.getElementById('pd-lb-img');
+      var lbCtr  = document.getElementById('pd-lb-counter');
+      if(!lb || !lbImg) return;
+      var items  = [...document.querySelectorAll('.pd-photo-item')];
+      var imgs   = items.map(function(el){ return el.querySelector('img').src; });
+      var cur    = 0;
+      function show(idx){
+        cur = (idx + imgs.length) % imgs.length;
+        lbImg.src = imgs[cur];
+        if(lbCtr) lbCtr.textContent = (cur+1) + ' / ' + imgs.length;
+      }
+      items.forEach(function(el){
+        el.addEventListener('click', function(){
+          show(parseInt(el.dataset.index));
+          lb.classList.add('open');
+          document.body.style.overflow='hidden';
+        });
+      });
+      document.getElementById('pd-lb-close')?.addEventListener('click', function(){ lb.classList.remove('open'); document.body.style.overflow=''; });
+      document.getElementById('pd-lb-prev')?.addEventListener('click', function(){ show(cur-1); });
+      document.getElementById('pd-lb-next')?.addEventListener('click', function(){ show(cur+1); });
+      lb.addEventListener('click', function(e){ if(e.target===lb){ lb.classList.remove('open'); document.body.style.overflow=''; }});
+      document.addEventListener('keydown', function(e){
+        if(!lb.classList.contains('open')) return;
+        if(e.key==='ArrowLeft') show(cur-1);
+        if(e.key==='ArrowRight') show(cur+1);
+        if(e.key==='Escape'){ lb.classList.remove('open'); document.body.style.overflow=''; }
+      });
+    })();
+
+    // Smooth scroll for tab links
+    document.querySelectorAll('.pd-tab').forEach(function(a){
+      a.addEventListener('click', function(e){
+        e.preventDefault();
+        var target = document.querySelector(a.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior:'smooth' });
+      });
+    });
+  </script>
+
+}

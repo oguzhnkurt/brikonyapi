@@ -1,0 +1,8 @@
+.vs/
+bin/
+obj/
+*.user
+*.suo
+.env
+appsettings.Development.json
+BrikonYapi.Web/wwwroot/videos/

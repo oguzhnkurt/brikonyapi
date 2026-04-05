@@ -1,0 +1,605 @@
+@model BrikonYapi.Web.Data.Entities.Project
+@using BrikonYapi.Web.Data.Entities
+@{
+    ViewData["Title"] = "Proje Düzenle";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-10">
+
+        <div class="d-flex align-items-center mb-3 gap-2">
+            <a href="/Admin/Projects" class="btn btn-sm btn-outline-secondary">
+                <iconify-icon icon="iconamoon:arrow-left-2-duotone"></iconify-icon> Geri
+            </a>
+            <h5 class="mb-0">Düzenle: <span class="text-primary">@Model.Name</span></h5>
+        </div>
+
+        <form method="post" action="/Admin/Projects/Edit" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.Id" />
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger mb-3">
+                    <strong>Kayıt yapılamadı. Lütfen hataları düzeltin:</strong>
+                    <div asp-validation-summary="All" class="mt-1 mb-0"></div>
+                </div>
+            }
+
+            <!-- Temel Bilgiler -->
+            <div class="card mb-3">
+                <div class="card-header"><h6 class="card-title mb-0">Temel Bilgiler</h6></div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Proje Adı <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Lokasyon</label>
+                            <input asp-for="Location" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">İlçe</label>
+                            <input asp-for="District" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Şehir</label>
+                            <input asp-for="City" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Durum</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="0">Devam Ediyor</option>
+                                <option value="1">Tamamlandı</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kategori</label>
+                            <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select">
+                                <option value="">— Seçiniz —</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sıra</label>
+                            <input asp-for="OrderIndex" type="number" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Proje Detayları -->
+            <div class="card mb-3">
+                <div class="card-header"><h6 class="card-title mb-0">Proje Detayları</h6></div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Toplam Alan (m²)</label>
+                            <input asp-for="TotalArea" type="number" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Daire Sayısı</label>
+                            <input asp-for="UnitCount" type="number" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kat Sayısı</label>
+                            <input asp-for="FloorCount" type="number" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Blok Sayısı</label>
+                            <input asp-for="BlockCount" type="number" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">
+                                Kart Etiketi
+                                <small class="text-muted ms-1">— Proje kartının sağ üstünde gösterilir (örn: "42 Villa", "TOKİ", "Anahtar Teslim"). Boş bırakılırsa etiket görünmez.</small>
+                            </label>
+                            <input asp-for="CardTag" type="text" class="form-control" placeholder="örn: 42 Daire" maxlength="80" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Başlangıç Tarihi</label>
+                            <input asp-for="StartDate" type="date" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Bitiş / Teslim Tarihi</label>
+                            <input asp-for="EndDate" type="date" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Konum (Harita)</label>
+                            <div class="d-flex gap-2 mb-2">
+                                <input asp-for="Latitude" type="number" step="any" class="form-control" placeholder="Enlem" id="inputLat" />
+                                <input asp-for="Longitude" type="number" step="any" class="form-control" placeholder="Boylam" id="inputLng" />
+                                <button type="button" class="btn btn-outline-primary text-nowrap" id="btnToggleMap">
+                                    <iconify-icon icon="iconamoon:location-pin-duotone" class="me-1"></iconify-icon>
+                                    Haritadan Seç
+                                </button>
+                            </div>
+                            <div id="pick-map-wrap" style="display:none; border-radius:6px; overflow:hidden; border:1px solid #dee2e6;">
+                                <div id="pick-map" style="height:360px;"></div>
+                                <div class="px-3 py-2 bg-light border-top small text-muted">
+                                    <iconify-icon icon="iconamoon:information-circle-duotone" class="me-1"></iconify-icon>
+                                    Konumu seçmek için haritaya tıklayın veya işaretçiyi sürükleyin.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Kısa Açıklama</label>
+                            <input asp-for="ShortDescription" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Detay Açıklama</label>
+                            <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medya -->
+            <div class="card mb-3">
+                <div class="card-header"><h6 class="card-title mb-0">Medya</h6></div>
+                <div class="card-body">
+                    <div class="row g-4">
+
+                        <!-- KAPAK FOTOĞRAFI -->
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" class="text-primary flex-shrink-0"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                                <div>
+                                    <div class="fw-semibold" style="font-size:.9rem;">Kapak Fotoğrafı</div>
+                                    <div class="text-muted" style="font-size:.75rem;">Ana sayfada proje kartında görünür</div>
+                                </div>
+                            </div>
+                            <label class="media-upload-box w-100" for="mainImageInput" style="cursor:pointer;">
+                                @if (!string.IsNullOrEmpty(Model.MainImagePath))
+                                {
+                                    <img src="@Model.MainImagePath" class="w-100 rounded" style="height:170px;object-fit:cover;display:block;" />
+                                    <div class="media-upload-hint">
+                                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        Değiştirmek için tıkla veya sürükle
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="media-upload-empty">
+                                        <svg width="32" height="32" fill="none" stroke="#adb5bd" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                                        <span class="mt-2 d-block" style="font-size:.82rem;color:#adb5bd;">Kapak fotoğrafı yükle</span>
+                                    </div>
+                                }
+                            </label>
+                            <input type="file" id="mainImageInput" name="mainImage" class="d-none" accept="image/*"
+                                   onchange="previewMedia(this,'mainImageInput')" />
+                        </div>
+
+                        <!-- PROJE VİDEOSU -->
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" class="text-primary flex-shrink-0"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                                <div>
+                                    <div class="fw-semibold" style="font-size:.9rem;">Proje Videosu</div>
+                                    <div class="text-muted" style="font-size:.75rem;">Detay sayfasında arka planda sessizce oynar</div>
+                                </div>
+                            </div>
+                            <label class="media-upload-box w-100" for="projectVideoInput" style="cursor:pointer;">
+                                @if (!string.IsNullOrEmpty(Model.VideoPath))
+                                {
+                                    <video src="@Model.VideoPath" class="w-100 rounded" style="height:170px;object-fit:cover;display:block;" muted playsinline></video>
+                                    <div class="media-upload-hint">
+                                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        Değiştirmek için tıkla veya sürükle
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="media-upload-empty">
+                                        <svg width="32" height="32" fill="none" stroke="#adb5bd" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                                        <span class="mt-2 d-block" style="font-size:.82rem;color:#adb5bd;">Video yükle (MP4 önerilir)</span>
+                                    </div>
+                                }
+                            </label>
+                            <input type="file" id="projectVideoInput" name="projectVideo" class="d-none" accept="video/mp4,video/*"
+                                   onchange="previewMedia(this,'projectVideoInput')" />
+                        </div>
+
+                    </div>
+                </div>
+                    <!-- Kart Görünümü Tercihi -->
+                    @if (!string.IsNullOrEmpty(Model.VideoPath))
+                    {
+                        <div class="border rounded p-3 mt-3 bg-light">
+                            <div class="fw-semibold mb-1" style="font-size:.85rem;">
+                                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" class="me-1"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                                Ana Sayfada Kart Görünümü
+                            </div>
+                            <div class="text-muted mb-2" style="font-size:.75rem;">Proje kartına gelindiğinde ne görünsün?</div>
+                            <div class="d-flex gap-3">
+                                <div class="card-media-option @(!Model.CardVideoAutoplay ? "selected" : "")" onclick="setCardMedia(false)" style="cursor:pointer;">
+                                    <div class="option-icon">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                                    </div>
+                                    <div class="option-label">Fotoğraf</div>
+                                    <div class="option-desc">Kapak fotoğrafı gösterilir</div>
+                                </div>
+                                <div class="card-media-option @(Model.CardVideoAutoplay ? "selected" : "")" onclick="setCardMedia(true)" style="cursor:pointer;">
+                                    <div class="option-icon">
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                                    </div>
+                                    <div class="option-label">Video</div>
+                                    <div class="option-desc">Video otomatik oynar</div>
+                                </div>
+                            </div>
+                            <input type="hidden" asp-for="CardVideoAutoplay" id="cardVideoAutoplayInput" />
+                        </div>
+                    }
+            </div>
+
+            <!-- Galeri -->
+            <div class="card mb-3">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h6 class="card-title mb-0">Fotoğraf Galerisi</h6>
+                    <small class="text-muted">Kapak yapmak için fotoğrafa tıkla</small>
+                </div>
+                <div class="card-body">
+                    @if (Model.Images.Any(i => !i.IsPlan))
+                    {
+                        <div class="gallery-grid mb-3">
+                            @foreach (var img in Model.Images.Where(i => !i.IsPlan).OrderBy(i => i.OrderIndex))
+                            {
+                                bool isMain = img.ImagePath == Model.MainImagePath;
+                                <div class="gallery-item @(isMain ? "is-cover" : "")">
+                                    <img src="@img.ImagePath" alt="" />
+
+                                    @if (isMain)
+                                    {
+                                        <div class="gallery-badge">
+                                            <svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h18v14H3zM8 21h8M12 17v4"/></svg>
+                                            KAPAK
+                                        </div>
+                                    }
+
+                                    <div class="gallery-overlay">
+                                        @if (!isMain)
+                                        {
+                                            <button type="button" class="gallery-action-btn cover-btn"
+                                                    onclick="galleryAction('cover','@img.Id','@Model.Id')">
+                                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h18v14H3zM8 21h8M12 17v4"/></svg>
+                                                Kapak Yap
+                                            </button>
+                                        }
+                                        <button type="button" class="gallery-action-btn delete-btn"
+                                                onclick="galleryAction('delete','@img.Id','@Model.Id')">
+                                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                                            Sil
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <label class="media-upload-box gallery-add-box w-100" for="galleryInput" style="cursor:pointer;">
+                        <svg width="24" height="24" fill="none" stroke="#adb5bd" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                        <span style="font-size:.82rem;color:#adb5bd;margin-top:6px;">Fotoğraf ekle — birden fazla seçebilirsin</span>
+                    </label>
+                    <input type="file" id="galleryInput" name="galleryImages" class="d-none" accept="image/*" multiple
+                           onchange="showFileNames(this,'galleryInput')" />
+                    <div id="galleryInput-names" class="text-muted mt-1" style="font-size:.78rem;"></div>
+                </div>
+            </div>
+
+            <!-- Planlar -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <iconify-icon icon="iconamoon:copy-duotone" class="me-1"></iconify-icon>
+                        Planlar (Kat Planı, Vaziyet Planı vb.)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.Images.Any(i => i.IsPlan))
+                    {
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            @foreach (var img in Model.Images.Where(i => i.IsPlan).OrderBy(i => i.OrderIndex))
+                            {
+                                <div class="position-relative text-center" style="width:130px">
+                                    <img src="@img.ImagePath" class="rounded border"
+                                         style="width:130px;height:90px;object-fit:contain;background:#f5f5f5;" />
+                                    @if (!string.IsNullOrEmpty(img.Caption))
+                                    {
+                                        <small class="d-block text-muted mt-1" style="font-size:11px">@img.Caption</small>
+                                    }
+                                    <button type="button" class="btn btn-danger btn-sm p-0 position-absolute top-0 end-0 m-1"
+                                            style="width:20px;height:20px;font-size:11px;line-height:1"
+                                            onclick="galleryAction('delete','@img.Id','@Model.Id')">×</button>
+                                </div>
+                            }
+                        </div>
+                    }
+                    <div>
+                        <label class="form-label">Plan Görseli Ekle (çoklu seçim)</label>
+                        <input type="file" name="planImages" class="form-control" accept="image/*" multiple />
+                        <div class="form-text">Dosya adı plan başlığı olarak kullanılır (örn: "Normal Kat Planı.png")</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yayın Ayarları -->
+            <div class="card mb-3">
+                <div class="card-header"><h6 class="card-title mb-0">Yayın Ayarları</h6></div>
+                <div class="card-body">
+                    <div class="d-flex gap-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="IsActive" @(Model.IsActive ? "checked" : "") />
+                            <input type="hidden" name="IsActive" value="false" />
+                            <label class="form-check-label" for="IsActive">Aktif</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="IsFeatured" value="true" id="IsFeatured" @(Model.IsFeatured ? "checked" : "") />
+                            <input type="hidden" name="IsFeatured" value="false" />
+                            <label class="form-check-label" for="IsFeatured">
+                                <iconify-icon icon="iconamoon:star-duotone" class="text-warning me-1"></iconify-icon>
+                                Açılış Ekranında Göster
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="IsMarquee" value="true" id="IsMarquee" @(Model.IsMarquee ? "checked" : "") />
+                            <input type="hidden" name="IsMarquee" value="false" />
+                            <label class="form-check-label" for="IsMarquee">
+                                <iconify-icon icon="iconamoon:play-circle-duotone" class="text-primary me-1"></iconify-icon>
+                                Kayan Bantta Göster
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mb-4">
+                <button type="submit" class="btn btn-primary">
+                    <iconify-icon icon="iconamoon:check-duotone" class="me-1"></iconify-icon>
+                    Değişiklikleri Kaydet
+                </button>
+                <a href="/Admin/Projects" class="btn btn-outline-secondary">İptal</a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+@section Styles {
+<style>
+/* ── Medya Upload Box ── */
+.media-upload-box {
+    display: block;
+    position: relative;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color .2s;
+    min-height: 170px;
+}
+.media-upload-box:hover { border-color: #0d6efd; }
+.media-upload-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 170px;
+    padding: 1rem;
+}
+.media-upload-hint {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    font-size: .8rem;
+    opacity: 0;
+    transition: opacity .2s;
+}
+.media-upload-box:hover .media-upload-hint { opacity: 1; }
+
+/* ── Galeri Grid ── */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+.gallery-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    aspect-ratio: 4/3;
+    background: #f5f5f5;
+    transition: border-color .2s;
+}
+.gallery-item img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.gallery-item.is-cover {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13,110,253,.15);
+}
+
+/* Kapak rozeti */
+.gallery-badge {
+    position: absolute;
+    top: 6px; left: 6px;
+    background: #0d6efd;
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: flex; align-items: center; gap: 4px;
+}
+
+/* Hover overlay */
+.gallery-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity .2s;
+}
+.gallery-item:hover .gallery-overlay { opacity: 1; }
+
+.gallery-action-btn {
+    display: flex; align-items: center; gap: 5px;
+    font-size: .73rem; font-weight: 600;
+    padding: 5px 12px; border-radius: 5px;
+    border: none; cursor: pointer;
+    transition: transform .15s;
+}
+.gallery-action-btn:hover { transform: scale(1.04); }
+.cover-btn  { background: #0d6efd; color: #fff; }
+.delete-btn { background: #dc3545; color: #fff; }
+
+/* Galeri Ekle kutusu */
+.gallery-add-box {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 90px;
+    border-radius: 8px;
+}
+
+/* Kart Medya Seçici */
+.card-media-option {
+    flex: 1;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: .75rem 1rem;
+    text-align: center;
+    transition: border-color .2s, background .2s;
+    user-select: none;
+}
+.card-media-option:hover { border-color: #0d6efd; background: #f0f6ff; }
+.card-media-option.selected { border-color: #0d6efd; background: #e7f0ff; }
+.option-icon { margin-bottom: 4px; color: #495057; }
+.card-media-option.selected .option-icon { color: #0d6efd; }
+.option-label { font-size: .82rem; font-weight: 600; color: #212529; }
+.option-desc  { font-size: .7rem; color: #6c757d; margin-top: 2px; }
+</style>
+}
+
+@section Scripts {
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script>
+// ── Harita ile Konum Seçici ──────────────────────────────
+(function(){
+    var btn     = document.getElementById('btnToggleMap');
+    var wrap    = document.getElementById('pick-map-wrap');
+    var inputLat = document.getElementById('inputLat');
+    var inputLng = document.getElementById('inputLng');
+    var map, marker, initialized = false;
+
+    var initLat = parseFloat(inputLat.value) || 39.0;
+    var initLng = parseFloat(inputLng.value) || 35.0;
+    var initZoom = (inputLat.value && inputLng.value) ? 13 : 6;
+
+    btn.addEventListener('click', function(){
+        var open = wrap.style.display !== 'none';
+        wrap.style.display = open ? 'none' : 'block';
+        btn.innerHTML = open
+            ? '<iconify-icon icon="iconamoon:location-pin-duotone" class="me-1"></iconify-icon>Haritadan Seç'
+            : '<iconify-icon icon="iconamoon:close-circle-duotone" class="me-1"></iconify-icon>Kapat';
+
+        if (!open && !initialized) {
+            initialized = true;
+            map = L.map('pick-map').setView([initLat, initLng], initZoom);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            if (inputLat.value && inputLng.value) {
+                marker = L.marker([initLat, initLng], { draggable: true }).addTo(map);
+                marker.on('dragend', function(e){
+                    var ll = e.target.getLatLng();
+                    inputLat.value = ll.lat.toFixed(6);
+                    inputLng.value = ll.lng.toFixed(6);
+                });
+            }
+
+            map.on('click', function(e){
+                inputLat.value = e.latlng.lat.toFixed(6);
+                inputLng.value = e.latlng.lng.toFixed(6);
+                if (marker) {
+                    marker.setLatLng(e.latlng);
+                } else {
+                    marker = L.marker(e.latlng, { draggable: true }).addTo(map);
+                    marker.on('dragend', function(ev){
+                        var ll = ev.target.getLatLng();
+                        inputLat.value = ll.lat.toFixed(6);
+                        inputLng.value = ll.lng.toFixed(6);
+                    });
+                }
+            });
+        } else if (!open) {
+            setTimeout(function(){ map.invalidateSize(); }, 50);
+        }
+    });
+})();
+</script>
+<script>
+function previewMedia(input, inputId) {
+    const file = input.files[0];
+    if (!file) return;
+    const label = document.querySelector('label[for="' + inputId + '"]');
+    const isVideo = file.type.startsWith('video/');
+    const url = URL.createObjectURL(file);
+    const existing = label.querySelector('img, video');
+    if (existing) existing.remove();
+    const hint = label.querySelector('.media-upload-hint');
+    if (hint) hint.remove();
+    const el = document.createElement(isVideo ? 'video' : 'img');
+    el.src = url; el.className = 'w-100 rounded';
+    el.style.cssText = 'height:170px;object-fit:cover;display:block;';
+    if (isVideo) { el.muted = true; el.playsInline = true; }
+    const empty = label.querySelector('.media-upload-empty');
+    if (empty) empty.remove();
+    label.insertBefore(el, label.firstChild);
+    const newHint = document.createElement('div');
+    newHint.className = 'media-upload-hint';
+    newHint.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Değiştirmek için tıkla';
+    label.appendChild(newHint);
+}
+
+var _aft = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+function galleryAction(action, imageId, projectId) {
+    var confirmMsg = action === 'delete' ? 'Bu görseli silmek istediğine emin misin?' : null;
+    if (confirmMsg && !confirm(confirmMsg)) return;
+    var url = action === 'delete' ? '/Admin/Projects/DeleteImage' : '/Admin/Projects/SetMainImage';
+    var body = new URLSearchParams({ imageId: imageId, projectId: projectId, __RequestVerificationToken: _aft });
+    fetch(url, { method: 'POST', body: body, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+        .then(function(r) { if (r.ok || r.redirected) location.reload(); });
+}
+
+function setCardMedia(isVideo) {
+    document.getElementById('cardVideoAutoplayInput').value = isVideo ? 'true' : 'false';
+    document.querySelectorAll('.card-media-option').forEach((el, i) => {
+        el.classList.toggle('selected', isVideo ? i === 1 : i === 0);
+    });
+}
+
+function showFileNames(input, inputId) {
+    const names = [...input.files].map(f => f.name).join(', ');
+    const el = document.getElementById(inputId + '-names');
+    if (el) el.textContent = input.files.length + ' dosya seçildi: ' + names;
+}
+</script>
+}

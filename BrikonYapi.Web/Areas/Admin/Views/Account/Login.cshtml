@@ -1,0 +1,399 @@
+@{
+    ViewData["Title"] = "Admin Giriş";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Giriş — Brikon Yapı</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @@font-face {
+            font-family: 'BankGothic';
+            src: url('/fonts/BankGothic_Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --blue-dark:   #0082B4;   /* RGB 0,130,180  */
+            --blue-light:  #00A0E3;   /* RGB 0,160,227  */
+            --brand-dark:  #2B2A29;   /* RGB 43,42,41   */
+            --glass-bg:    rgba(8, 16, 28, 0.58);
+            --glass-border:rgba(0, 160, 227, 0.22);
+            --input-bg:    rgba(255, 255, 255, 0.06);
+            --input-border:rgba(255, 255, 255, 0.14);
+            --input-focus: rgba(0, 160, 227, 0.55);
+        }
+
+        body {
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #050c14;
+        }
+
+        /* ── Video ── */
+        .video-bg {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+        .video-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(
+                140deg,
+                rgba(0, 10, 22, 0.78) 0%,
+                rgba(0, 20, 40, 0.62) 50%,
+                rgba(0, 10, 22, 0.80) 100%
+            );
+            z-index: 1;
+        }
+
+        /* ── Ambient orbs ── */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0;
+            z-index: 1;
+            pointer-events: none;
+            animation: orb-appear 1.2s ease forwards, orb-drift 14s ease-in-out infinite alternate;
+        }
+        .orb-1 {
+            width: 520px; height: 520px;
+            background: var(--blue-dark);
+            top: -140px; left: -140px;
+            animation-delay: 0.2s, 0.2s;
+            opacity: 0;
+        }
+        .orb-2 {
+            width: 380px; height: 380px;
+            background: var(--blue-light);
+            bottom: -80px; right: -60px;
+            animation-delay: 0.5s, 0.5s;
+        }
+        .orb-3 {
+            width: 260px; height: 260px;
+            background: var(--blue-dark);
+            top: 38%; left: 62%;
+            animation-delay: 0.8s, 0.8s;
+        }
+
+        @@keyframes orb-appear {
+            from { opacity: 0; }
+            to   { opacity: 0.2; }
+        }
+        @@keyframes orb-drift {
+            from { transform: translate(0, 0) scale(1); }
+            to   { transform: translate(24px, 18px) scale(1.07); }
+        }
+
+        /* ── Wrapper ── */
+        .login-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 450px;
+            padding: 0 1.25rem;
+            animation: card-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @@keyframes card-in {
+            from { opacity: 0; transform: translateY(30px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ── Glass card ── */
+        .login-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(28px) saturate(1.5);
+            -webkit-backdrop-filter: blur(28px) saturate(1.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 3px;
+            padding: 3rem 2.75rem 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* top blue line */
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                var(--blue-dark) 20%,
+                var(--blue-light) 50%,
+                var(--blue-dark) 80%,
+                transparent 100%
+            );
+        }
+
+        /* radial glow top-center */
+        .login-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 70% 45% at 50% 0%,
+                rgba(0, 160, 227, 0.09) 0%,
+                transparent 70%
+            );
+            pointer-events: none;
+        }
+
+        /* ── Logo ── */
+        .login-brand {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .login-brand img {
+            height: 80px;
+            filter: brightness(0) invert(1);
+            opacity: 0.95;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* ── Divider ── */
+        .brand-divider {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            margin-top: 1.4rem;
+        }
+        .brand-divider span {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,160,227,0.45), transparent);
+        }
+        .brand-divider em {
+            font-style: normal;
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-size: .58rem;
+            letter-spacing: .3em;
+            color: var(--blue-light);
+            opacity: .7;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        /* ── Heading ── */
+        .login-heading {
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-size: .65rem;
+            letter-spacing: .35em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        /* ── Fields ── */
+        .field {
+            margin-bottom: 1.2rem;
+            position: relative;
+        }
+        .field label {
+            display: block;
+            font-size: .65rem;
+            font-weight: 600;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: .5rem;
+            transition: color .2s;
+        }
+        .field:focus-within label {
+            color: var(--blue-light);
+        }
+        .field-inner { position: relative; }
+        .field-inner svg {
+            position: absolute;
+            left: .95rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 15px; height: 15px;
+            color: rgba(255,255,255,0.28);
+            pointer-events: none;
+            transition: color .25s;
+        }
+        .field:focus-within .field-inner svg {
+            color: var(--blue-light);
+        }
+        .field input {
+            width: 100%;
+            padding: .78rem .9rem .78rem 2.6rem;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 2px;
+            color: #fff;
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-size: .88rem;
+            font-weight: 300;
+            outline: none;
+            transition: border-color .25s, background .25s, box-shadow .25s;
+        }
+        .field input::placeholder { color: rgba(255,255,255,0.18); font-size: .85rem; }
+        .field input:focus {
+            border-color: var(--input-focus);
+            background: rgba(0, 160, 227, 0.06);
+            box-shadow: 0 0 0 3px rgba(0,160,227,0.13);
+        }
+        .field input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 1000px rgba(8,18,32,0.92) inset;
+            -webkit-text-fill-color: #fff;
+        }
+
+        /* ── Error ── */
+        .error-msg {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.32);
+            border-radius: 2px;
+            color: #fca5a5;
+            padding: .65rem .9rem;
+            font-size: .78rem;
+            letter-spacing: .04em;
+            margin-bottom: 1.25rem;
+        }
+        .error-msg svg { flex-shrink: 0; width: 15px; height: 15px; }
+
+        /* ── Button ── */
+        .btn-login {
+            width: 100%;
+            padding: .88rem 1rem;
+            margin-top: .4rem;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue-light) 100%);
+            border: none;
+            border-radius: 2px;
+            color: #fff;
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-size: .65rem;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: opacity .2s, box-shadow .25s, transform .15s;
+        }
+        /* shimmer on hover */
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+            transition: left .4s ease;
+        }
+        .btn-login:hover {
+            box-shadow: 0 6px 32px rgba(0,130,180,0.45);
+            transform: translateY(-1px);
+        }
+        .btn-login:hover::before { left: 160%; }
+        .btn-login:active { transform: translateY(0); box-shadow: none; }
+
+        /* ── Footer ── */
+        .login-footer {
+            text-align: center;
+            margin-top: 1.75rem;
+            font-size: .6rem;
+            letter-spacing: .15em;
+            color: rgba(255,255,255,0.18);
+            text-transform: uppercase;
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        @@media (prefers-reduced-motion: reduce) {
+            .login-wrapper { animation: none; }
+            .orb { animation: none; opacity: 0.15; }
+            .btn-login::before { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <video class="video-bg" autoplay muted loop playsinline>
+        <source src="/videos/login-bg.mov" type="video/mp4" />
+    </video>
+    <div class="video-overlay"></div>
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+
+            <div class="login-brand">
+                <img src="/images/logo-transparent.png" alt="Brikon Yapı" />
+                <div class="brand-divider">
+                    <span></span>
+                    <em>Yönetim Paneli</em>
+                    <span></span>
+                </div>
+            </div>
+
+            <p class="login-heading">Giriş Yapın</p>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="error-msg">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                    @ViewBag.Error
+                </div>
+            }
+
+            <form method="post" asp-area="Admin" asp-controller="Account" asp-action="Login"
+                  asp-route-returnUrl="@ViewBag.ReturnUrl">
+                @Html.AntiForgeryToken()
+
+                <div class="field">
+                    <label for="email">E-Posta Adresi</label>
+                    <div class="field-inner">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                        <input type="email" id="email" name="email"
+                               placeholder="admin@brikonyapi.com"
+                               required autofocus autocomplete="username" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="password">Şifre</label>
+                    <div class="field-inner">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                        <input type="password" id="password" name="password"
+                               placeholder="••••••••"
+                               required autocomplete="current-password" />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">Giriş Yap</button>
+            </form>
+
+            <p class="login-footer">Brikon Yapı &copy; @DateTime.Now.Year</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,74 @@
+@model List<BrikonYapi.Web.Data.Entities.HeroSlide>
+@{
+    ViewData["Title"] = "Hero Slides";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Hero Slides (@Model.Count)</h2>
+        <a href="/Admin/HeroSlides/Create" class="btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg>
+            Yeni Slide
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p style="color:var(--gray-600);text-align:center;padding:2rem">
+            Henüz slide eklenmemiş. Slide eklenene kadar varsayılan videolar kullanılır.
+        </p>
+    }
+    else
+    {
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Önizleme</th>
+                    <th>Başlık</th>
+                    <th>Proje</th>
+                    <th>Durum</th>
+                    <th>Sıra</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var slide in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(slide.BackgroundImagePath))
+                            {
+                                <img src="@slide.BackgroundImagePath" style="width:80px;height:50px;object-fit:cover;" />
+                            }
+                            else if (!string.IsNullOrEmpty(slide.VideoPath))
+                            {
+                                <div style="width:80px;height:50px;background:var(--dark);display:flex;align-items:center;justify-content:center;color:var(--secondary);font-size:0.7rem">VIDEO</div>
+                            }
+                        </td>
+                        <td>@(slide.Title ?? "-")</td>
+                        <td>@(slide.Project?.Name ?? "-")</td>
+                        <td>
+                            <form asp-area="Admin" asp-controller="HeroSlides" asp-action="ToggleActive" method="post" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@slide.Id" />
+                                <button type="submit" class="badge @(slide.IsActive ? "badge-ongoing" : "badge-completed")" style="border:none;cursor:pointer">
+                                    @(slide.IsActive ? "Aktif" : "Pasif")
+                                </button>
+                            </form>
+                        </td>
+                        <td>@slide.OrderIndex</td>
+                        <td>
+                            <form asp-area="Admin" asp-controller="HeroSlides" asp-action="Delete" method="post"
+                                  onsubmit="return confirm('Slide silinsin mi?')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@slide.Id" />
+                                <button type="submit" class="btn-danger" style="font-size:0.75rem;padding:0.4rem 0.85rem">Sil</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

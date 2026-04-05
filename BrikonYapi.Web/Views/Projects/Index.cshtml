@@ -1,0 +1,900 @@
+@model BrikonYapi.Web.Models.ViewModels.ProjectListViewModel
+@using BrikonYapi.Web.Data.Entities
+@{
+    bool isEn = ViewBag.IsEn == true;
+    ViewData["Title"] = isEn ? "Projects" : "Projeler";
+    var projects = Model.Projects;
+}
+
+@section Styles {
+<style>
+
+/* Page-level dark background — overrides body { background: #fff } */
+body { background: #030608; }
+
+/* ══ HEADER ══════════════════════════════ */
+.prj-header {
+    background: #0f1724;
+    padding: calc(68px + 2.8rem) 3rem 2.2rem;
+}
+.prj-header-top {
+    display: flex; align-items: flex-end;
+    justify-content: space-between; gap: 2rem; flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+.prj-eyebrow {
+    font-size: .58rem; font-weight: 700; letter-spacing: .3em;
+    text-transform: uppercase; color: var(--c-primary);
+    display: block; margin-bottom: .5rem;
+}
+.prj-title {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    color: #fff; letter-spacing: -.025em; line-height: 1; margin: 0 0 .6rem;
+}
+.prj-breadcrumb {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .68rem; color: rgba(255,255,255,.28);
+}
+.prj-breadcrumb a { color: rgba(255,255,255,.38); text-decoration: none; transition: color .2s; }
+.prj-breadcrumb a:hover { color: var(--c-primary); }
+
+.prj-tabs { display: flex; gap: .45rem; }
+.prj-tab {
+    font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: rgba(255,255,255,.4); padding: .6rem 1.4rem;
+    border: 1.5px solid rgba(255,255,255,.1); border-radius: 2px;
+    background: transparent; cursor: pointer; transition: all .22s; white-space: nowrap;
+}
+.prj-tab:hover { color: #fff; border-color: rgba(255,255,255,.28); }
+.prj-tab.active { color: #fff; background: var(--c-primary); border-color: var(--c-primary); }
+
+.prj-header-bottom {
+    display: flex; align-items: center;
+    padding-top: 1.6rem; border-top: 1px solid rgba(255,255,255,.07);
+    gap: 3rem; flex-wrap: wrap;
+}
+.prj-stat-val { font-size: 1.7rem; font-weight: 900; color: #fff; line-height: 1; display: block; letter-spacing: -.04em; }
+.prj-stat-val em { color: var(--c-primary); font-style: normal; }
+.prj-stat-lbl { font-size: .53rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.22); display: block; margin-top: .18rem; }
+.prj-count { margin-left: auto; font-size: .68rem; color: rgba(255,255,255,.2); }
+
+.prj-stat-btn {
+    background: none; border: none; padding: 0;
+    cursor: pointer; text-align: left;
+    position: relative;
+    transition: opacity .2s;
+    opacity: .45;
+}
+.prj-stat-btn::after {
+    content: '';
+    position: absolute; left: 0; bottom: -6px;
+    width: 0; height: 2px;
+    background: var(--c-primary);
+    transition: width .25s;
+}
+.prj-stat-btn:hover { opacity: .75; }
+.prj-stat-btn.active { opacity: 1; }
+.prj-stat-btn.active::after { width: 100%; }
+
+/* ══ GRID ════════════════════════════════ */
+.prj-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    width: 100%;
+    gap: 3px;
+    background: #030608; /* gap rengi — koyu ayırıcı */
+    min-height: 30vh;
+}
+
+/* ══ CARD ════════════════════════════════ */
+.prj-card {
+    display: block; position: relative; overflow: hidden;
+    background: #080d14;
+    height: 65vh; min-height: 400px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Image */
+.prj-card-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center; display: block;
+    transition: transform .75s cubic-bezier(.25,0,.05,1), filter .5s;
+    will-change: transform;
+}
+.prj-card:hover .prj-card-img {
+    transform: scale(1.09);
+    filter: brightness(.55) saturate(1.1);
+}
+
+/* Video */
+.prj-card-video {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    opacity: 0; z-index: 1;
+    transition: opacity .5s;
+}
+.prj-card.playing .prj-card-video { opacity: 1; }
+.prj-card.playing .prj-card-img   { filter: brightness(.55); }
+
+/* Gradient overlay */
+.prj-card-grad {
+    position: absolute; inset: 0; z-index: 2;
+    background: linear-gradient(
+        to bottom,
+        transparent 20%,
+        rgba(0,0,0,.15) 50%,
+        rgba(0,0,0,.88) 100%
+    );
+}
+
+/* Accent line — slides in from left on hover */
+.prj-card-line {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--c-primary); z-index: 8;
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .5s cubic-bezier(.4,0,.2,1);
+}
+.prj-card:hover .prj-card-line { transform: scaleX(1); }
+
+/* Glow border on hover */
+.prj-card::before {
+    content: '';
+    position: absolute; inset: 0; z-index: 7;
+    box-shadow: inset 0 0 0 1.5px rgba(0,130,180,.0);
+    transition: box-shadow .35s;
+    pointer-events: none;
+}
+.prj-card:hover::before {
+    box-shadow: inset 0 0 0 1.5px rgba(0,130,180,.55);
+}
+
+/* Ghost number */
+.prj-card-num {
+    position: absolute; bottom: 5.5rem; right: 1rem; z-index: 3;
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: 7rem; color: rgba(255,255,255,.04);
+    line-height: 1; letter-spacing: -.05em;
+    pointer-events: none; user-select: none;
+    transition: opacity .4s, transform .5s;
+}
+.prj-card:hover .prj-card-num { opacity: 0; transform: translateY(-8px); }
+
+/* Badge */
+.prj-badge {
+    position: absolute; top: 1rem; left: 1rem; z-index: 6;
+    font-size: .5rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase;
+    padding: .26rem .7rem; border-radius: 2px; color: #fff; white-space: nowrap;
+}
+.prj-badge-ongoing   { background: var(--c-primary); }
+.prj-badge-completed { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(4px); }
+
+/* Chip */
+.prj-chip {
+    position: absolute; top: 1rem; right: 1rem; z-index: 6;
+    font-size: .52rem; font-weight: 700; color: rgba(255,255,255,.88);
+    background: rgba(0,0,0,.5); backdrop-filter: blur(8px);
+    padding: .26rem .68rem; border-radius: 2px;
+    border: 1px solid rgba(255,255,255,.12); white-space: nowrap;
+}
+
+/* Video icon */
+.prj-video-icon {
+    position: absolute; top: 1rem; right: 1rem; z-index: 6;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(0,0,0,.4); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,.7);
+    transition: opacity .3s;
+}
+.prj-card:hover .prj-video-icon { opacity: 0; }
+.has-chip .prj-video-icon { top: 3rem; }
+
+/* Bottom content */
+.prj-card-body {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 5;
+    padding: 1.6rem 1.3rem 1.4rem;
+}
+
+.prj-card-name {
+    font-family: 'Inter', sans-serif; font-weight: 800;
+    font-size: 1rem; color: #fff; line-height: 1.3; margin: 0 0 .35rem;
+    text-shadow: 0 2px 10px rgba(0,0,0,.5);
+    transition: transform .38s cubic-bezier(.4,0,.2,1);
+    overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.prj-card:hover .prj-card-name { transform: translateY(-5px); }
+
+.prj-card-loc {
+    display: flex; align-items: center; gap: .28rem;
+    font-size: .68rem; color: rgba(255,255,255,.48);
+    transition: transform .38s .05s cubic-bezier(.4,0,.2,1);
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.prj-card:hover .prj-card-loc { transform: translateY(-5px); }
+
+/* Reveal row */
+.prj-card-reveal {
+    display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+    margin-top: 1.1rem;
+    opacity: 0; transform: translateY(14px);
+    transition: opacity .3s .1s, transform .3s .1s;
+}
+.prj-card:hover .prj-card-reveal { opacity: 1; transform: translateY(0); }
+.prj-card-stats { display: flex; gap: 1.2rem; }
+.prj-s { display: flex; flex-direction: column; }
+.prj-s-val { font-size: .84rem; font-weight: 700; color: var(--c-primary); line-height: 1; }
+.prj-s-lbl { font-size: .44rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.32); margin-top: .1rem; }
+
+.prj-card-cta {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .58rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: #fff; white-space: nowrap;
+    padding: .5rem 1rem; border: 1.5px solid rgba(255,255,255,.3); border-radius: 2px;
+    transition: background .22s, border-color .22s;
+    flex-shrink: 0;
+}
+.prj-card:hover .prj-card-cta:hover { background: var(--c-primary); border-color: var(--c-primary); }
+
+/* Empty */
+.prj-empty {
+    grid-column: 1/-1; text-align: center; padding: 6rem 2rem;
+    color: rgba(255,255,255,.25); background: #0f1724;
+}
+.prj-empty a { color: var(--c-primary); font-weight: 600; }
+
+/* Anim */
+.prj-anim { opacity: 0; transform: translateY(20px); transition: opacity .55s, transform .55s; }
+.prj-anim.visible { opacity: 1; transform: none; }
+
+/* ══ PAGINATION ══ */
+.prj-pagination {
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    padding: 2.4rem 3rem;
+    background: #030608;
+}
+.prj-pg-btn {
+    min-width: 38px; height: 38px; padding: 0 .6rem;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; font-weight: 700; letter-spacing: .05em;
+    color: rgba(255,255,255,.4);
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,.08);
+    border-radius: 3px; cursor: pointer;
+    transition: all .2s;
+}
+.prj-pg-btn:hover { color: #fff; border-color: rgba(255,255,255,.3); }
+.prj-pg-btn.active { color: #fff; background: var(--c-primary); border-color: var(--c-primary); }
+.prj-pg-btn:disabled { opacity: .25; cursor: default; pointer-events: none; }
+.prj-pg-dots { color: rgba(255,255,255,.2); font-size: .75rem; padding: 0 .3rem; line-height: 38px; }
+
+/* ══ MODAL ══ */
+.prj-modal-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,.72); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s;
+}
+.prj-modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.prj-modal {
+  display: flex;
+  width: min(1060px, 92vw);
+  height: min(640px, 86vh);
+  background: #fff; border-radius: 16px; overflow: hidden;
+  transform: translateY(24px) scale(.97);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 32px 80px rgba(0,0,0,.45);
+}
+.prj-modal-overlay.open .prj-modal { transform: none; }
+
+/* Galeri */
+.prj-modal-gallery {
+  position: relative; flex: 0 0 60%; overflow: hidden; background: #111;
+}
+.prj-modal-media-wrap {
+  width: 100%; height: 100%; position: relative;
+}
+.prj-modal-media-wrap img,
+.prj-modal-media-wrap video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: opacity .3s;
+}
+.prj-modal-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(0,0,0,.45); border: none; cursor: pointer;
+  color: #fff; font-size: 1.5rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 5; transition: background .2s;
+}
+.prj-modal-nav:hover { background: rgba(0,0,0,.75); }
+.prj-modal-prev { left: 14px; }
+.prj-modal-next { right: 14px; }
+.prj-modal-dots {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px;
+}
+.prj-modal-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,.45); border: none; cursor: pointer; padding: 0;
+  transition: background .2s, transform .2s;
+}
+.prj-modal-dot.active { background: #fff; transform: scale(1.2); }
+
+/* Bilgi paneli */
+.prj-modal-info {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 2rem 2rem 1.8rem; overflow-y: auto;
+  min-width: 0;
+}
+.prj-modal-close {
+  position: absolute; top: 14px; right: 14px; z-index: 20;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(0,0,0,.55); border: none; cursor: pointer;
+  font-size: 1.4rem; line-height: 1; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+  backdrop-filter: blur(4px);
+}
+.prj-modal-close:hover { background: rgba(0,0,0,.8); }
+
+.prj-modal-badge {
+  display: inline-block; padding: .28rem .9rem;
+  border-radius: 20px; font-size: .62rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.prj-modal-badge.ongoing   { background: rgba(0,130,180,.12); color: #0082B4; }
+.prj-modal-badge.completed { background: rgba(0,0,0,.08); color: #555; }
+
+.prj-modal-title {
+  font-family: 'Inter', sans-serif; font-size: 1.55rem; font-weight: 800;
+  color: #0f1724; line-height: 1.25; margin: 0 0 .7rem;
+}
+.prj-modal-loc {
+  display: flex; align-items: center; gap: .35rem;
+  font-size: .8rem; color: #888; margin-bottom: 1.3rem;
+}
+.prj-modal-stats {
+  display: flex; gap: 2rem; padding: 1.1rem 0;
+  border-top: 1px solid #eee; border-bottom: 1px solid #eee;
+  margin-bottom: 1.2rem;
+}
+.prj-mstat-val {
+  font-family: 'Inter', sans-serif; font-size: 1.4rem; font-weight: 900;
+  color: #0f1724; line-height: 1; display: block;
+}
+.prj-mstat-lbl {
+  font-size: .5rem; font-weight: 700; letter-spacing: .15em;
+  text-transform: uppercase; color: #aaa; margin-top: .2rem; display: block;
+}
+.prj-modal-desc {
+  font-size: .85rem; color: #666; line-height: 1.75; margin: 0 0 1.6rem;
+  overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+}
+.prj-modal-btn {
+  display: block; text-align: center;
+  background: var(--c-primary); color: #fff;
+  padding: .9rem 1.5rem; border-radius: 6px;
+  font-family: 'Inter', sans-serif; font-size: .7rem;
+  font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  transition: background .2s; text-decoration: none;
+  margin-top: auto;
+}
+.prj-modal-btn:hover { background: var(--c-secondary); color: #fff; }
+
+/* Tablet */
+@@media (max-width: 900px) {
+  .prj-modal-overlay { padding: .8rem; }
+  .prj-modal { flex-direction: column; width: 96vw; height: 88vh; border-radius: 12px; }
+  .prj-modal-gallery { flex: 0 0 42%; }
+  .prj-modal-info { flex: 1; padding: 1.4rem 1.6rem 1.4rem; overflow-y: auto; }
+  .prj-modal-title { font-size: 1.2rem; margin-bottom: .45rem; }
+  .prj-modal-badge { margin-bottom: .7rem; }
+  .prj-modal-stats { gap: 1.4rem; padding: .9rem 0; margin-bottom: .9rem; }
+  .prj-mstat-val { font-size: 1.2rem; }
+  .prj-modal-desc { -webkit-line-clamp: 4; }
+  .prj-modal-close { top: 10px; right: 10px; width: 32px; height: 32px; font-size: 1.2rem; }
+}
+/* Mobil */
+@@media (max-width: 540px) {
+  .prj-modal-overlay { padding: 0; align-items: flex-end; }
+  .prj-modal { width: 100vw; height: 95svh; border-radius: 18px 18px 0 0; flex-direction: column; }
+  .prj-modal-gallery { flex: 0 0 46%; }
+  .prj-modal-info { padding: 1rem 1.2rem 1.2rem; }
+  .prj-modal-title { font-size: 1rem; }
+  .prj-modal-stats { gap: 1rem; padding: .7rem 0; margin-bottom: .7rem; }
+  .prj-mstat-val { font-size: 1rem; }
+  .prj-modal-desc { -webkit-line-clamp: 3; margin-bottom: .6rem; }
+  .prj-modal-btn { padding: .7rem 1rem; font-size: .65rem; }
+}
+
+/* ══ FILTER BAR ══════════════════════════ */
+.prj-filter-bar {
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    padding: 1.2rem 3rem; background: #0a1220;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.prj-search-wrap {
+    position: relative; flex: 0 0 240px;
+}
+.prj-search-wrap svg {
+    position: absolute; left: .75rem; top: 50%; transform: translateY(-50%);
+    color: rgba(255,255,255,.3); pointer-events: none;
+}
+.prj-search {
+    width: 100%; background: rgba(255,255,255,.05);
+    border: 1.5px solid rgba(255,255,255,.08); border-radius: 4px;
+    color: #fff; font-size: .72rem; padding: .55rem .75rem .55rem 2.2rem;
+    outline: none; transition: border-color .2s;
+}
+.prj-search::placeholder { color: rgba(255,255,255,.25); }
+.prj-search:focus { border-color: rgba(0,130,180,.55); }
+.prj-city-pills { display: flex; gap: .4rem; flex-wrap: wrap; }
+.prj-city-pill {
+    font-size: .58rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    padding: .38rem 1rem; border-radius: 2px; cursor: pointer;
+    border: 1.5px solid rgba(255,255,255,.1); color: rgba(255,255,255,.45);
+    background: transparent; transition: all .2s; white-space: nowrap;
+}
+.prj-city-pill:hover { color: #fff; border-color: rgba(255,255,255,.3); }
+.prj-city-pill.active { color: #fff; background: var(--c-primary); border-color: var(--c-primary); }
+.prj-filter-count {
+    margin-left: auto; font-size: .62rem; color: rgba(255,255,255,.2); white-space: nowrap;
+}
+@@media (max-width: 860px) {
+    .prj-filter-bar { padding: .9rem 1.2rem; gap: .7rem; }
+    .prj-search-wrap { flex: 1 1 100%; }
+    .prj-filter-count { display: none; }
+}
+
+/* ══ RESPONSIVE ══════════════════════════ */
+@@media (max-width: 1200px) { .prj-grid { grid-template-columns: repeat(3, 1fr); gap: 3px; } }
+@@media (max-width: 860px) {
+    .prj-header { padding: calc(68px + 1.8rem) 1.4rem 1.6rem; }
+    .prj-tabs { overflow-x: auto; width: 100%; }
+    .prj-tab { flex-shrink: 0; }
+    .prj-header-bottom { gap: 1.2rem; padding-top: 1rem; }
+    .prj-stat-val { font-size: 1.2rem; }
+    .prj-stat-lbl { font-size: .46rem; }
+    .prj-grid { grid-template-columns: repeat(2, 1fr); gap: 2px; }
+    .prj-card { height: 56vw; min-height: 220px; }
+    .prj-card-reveal { opacity: 1; transform: none; }
+    .prj-card-name { -webkit-line-clamp: 2; }
+}
+@@media (max-width: 480px) {
+    .prj-grid { grid-template-columns: 1fr; }
+    .prj-card { height: 72vw; }
+}
+</style>
+}
+
+<!-- Header -->
+<div class="prj-header">
+    <div class="prj-header-top">
+        <div>
+            <span class="prj-eyebrow">@(isEn ? "Portfolio" : "Portföy")</span>
+            <h1 class="prj-title">@(isEn ? "Projects" : "Projelerimiz")</h1>
+            <nav class="prj-breadcrumb">
+                <a href="/">@(isEn ? "Home" : "Ana Sayfa")</a>
+                <span>›</span>
+                <span>@(isEn ? "Projects" : "Projeler")</span>
+            </nav>
+        </div>
+    </div>
+    <div class="prj-header-bottom">
+        <button class="prj-stat-btn active" data-status-filter="ongoing">
+            <span class="prj-stat-val"><em>@Model.OngoingCount</em></span>
+            <span class="prj-stat-lbl">@(isEn?"Ongoing":"Devam Eden")</span>
+        </button>
+        <button class="prj-stat-btn" data-status-filter="completed">
+            <span class="prj-stat-val"><em>@Model.CompletedCount</em></span>
+            <span class="prj-stat-lbl">@(isEn?"Completed":"Tamamlanan")</span>
+        </button>
+        <button class="prj-stat-btn" data-status-filter="all">
+            <span class="prj-stat-val">@(Model.OngoingCount+Model.CompletedCount)</span>
+            <span class="prj-stat-lbl">@(isEn?"Total":"Toplam")</span>
+        </button>
+        <span class="prj-count">@projects.Count @(isEn?"projects":"proje")</span>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+@{
+    var allCategories = (List<BrikonYapi.Web.Data.Entities.Category>)(ViewBag.Categories ?? new List<BrikonYapi.Web.Data.Entities.Category>());
+}
+<div class="prj-filter-bar">
+    <div class="prj-search-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" class="prj-search" id="prj-search" placeholder="@(isEn ? "Search projects..." : "Proje ara...")" autocomplete="off" />
+    </div>
+    @if (allCategories.Any())
+    {
+        <div class="prj-city-pills">
+            <button class="prj-city-pill active" data-cat="">@(isEn ? "All" : "Tümü")</button>
+            @foreach (var cat in allCategories)
+            {
+                <button class="prj-city-pill" data-cat="@cat.Id">@cat.Name</button>
+            }
+        </div>
+    }
+    <span class="prj-filter-count" id="prj-filter-count">@projects.Count @(isEn ? "projects" : "proje")</span>
+</div>
+
+<!-- Grid -->
+<div class="prj-grid" id="prj-grid">
+@if (!projects.Any())
+{
+    <div class="prj-empty"><p>@(isEn?"No projects found.":"Bu kategoride proje bulunmamaktadır.")</p><a href="/Projeler">@(isEn?"View All":"Tümünü Gör")</a></div>
+}
+else
+{
+    int idx = 0;
+    @foreach (var p in projects)
+    {
+        idx++;
+        bool isOngoing = p.Status == ProjectStatus.Ongoing;
+        bool hasVideo  = !string.IsNullOrEmpty(p.VideoPath);
+        bool hasStats  = p.UnitCount.HasValue || p.FloorCount.HasValue || p.TotalArea.HasValue;
+        bool hasChip   = !string.IsNullOrEmpty(p.CardTag);
+
+        var cardImages = p.Images != null ? p.Images.Where(i => !i.IsPlan).Select(i => i.ImagePath).ToList() : new List<string>();
+        var imagesJson = System.Text.Json.JsonSerializer.Serialize(cardImages);
+        <div class="prj-card prj-anim @(hasVideo?"has-video":"") @(hasChip?"has-chip":"")"
+           data-video="@(hasVideo ? p.VideoPath : "")"
+           data-city="@(p.City ?? "")"
+           data-cat="@(p.CategoryId.HasValue ? p.CategoryId.Value.ToString() : "")"
+           data-name="@p.Name.ToLower()"
+           data-slug="@p.Slug"
+           data-status="@p.Status"
+           data-title="@p.Name"
+           data-location="@(string.IsNullOrEmpty(p.District) ? p.City : p.District + ", " + p.City)"
+           data-units="@(p.UnitCount.HasValue ? p.UnitCount.ToString() : "")"
+           data-floors="@(p.FloorCount.HasValue ? p.FloorCount.ToString() : "")"
+           data-area="@(p.TotalArea.HasValue ? p.TotalArea.Value.ToString("N0") : "")"
+           data-desc="@(p.ShortDescription ?? "")"
+           data-mainimg="@(p.MainImagePath ?? "")"
+           data-images="@Html.Raw(System.Web.HttpUtility.HtmlEncode(imagesJson))"
+           style="transition-delay:@(((idx-1)%4)*65)ms">
+
+            @if (!string.IsNullOrEmpty(p.MainImagePath))
+            { <img class="prj-card-img" src="@p.MainImagePath" alt="@p.Name" loading="@(idx<=4?"eager":"lazy")" /> }
+            else
+            { <div class="prj-card-img" style="position:absolute;inset:0;background:linear-gradient(160deg,#1a2540,#0d1520);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.06)"><svg width="52" height="52" fill="none" stroke="currentColor" stroke-width=".8" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></div> }
+
+            @if (hasVideo) { <video class="prj-card-video" muted loop playsinline autoplay preload="auto"></video> }
+
+            <div class="prj-card-grad"></div>
+            <div class="prj-card-line"></div>
+
+            <span class="prj-badge @(isOngoing?"prj-badge-ongoing":"prj-badge-completed")">
+                @(isEn?(isOngoing?"Ongoing":"Completed"):(isOngoing?"Devam Ediyor":"Tamamlandı"))
+            </span>
+
+            @if (hasChip) { <span class="prj-chip">@p.CardTag</span> }
+            @if (hasVideo && !hasChip) { <div class="prj-video-icon"><svg width="9" height="9" fill="currentColor" viewBox="0 0 16 16"><path d="M6.79 5.093A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814z"/><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"/></svg></div> }
+
+            <div class="prj-card-num">@idx.ToString("D2")</div>
+
+            <div class="prj-card-body">
+                <div class="prj-card-name">@p.Name</div>
+                @if (!string.IsNullOrEmpty(p.Location))
+                {
+                    <div class="prj-card-loc">
+                        <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
+                        @p.Location
+                    </div>
+                }
+                <div class="prj-card-reveal">
+                    <div class="prj-card-stats">
+                        @if (p.UnitCount.HasValue)  { <div class="prj-s"><span class="prj-s-val">@p.UnitCount</span><span class="prj-s-lbl">@(isEn?"Units":"Daire")</span></div> }
+                        @if (p.FloorCount.HasValue) { <div class="prj-s"><span class="prj-s-val">@p.FloorCount</span><span class="prj-s-lbl">@(isEn?"Floors":"Kat")</span></div> }
+                        @if (p.TotalArea.HasValue)  { <div class="prj-s"><span class="prj-s-val">@p.TotalArea.Value.ToString("N0")</span><span class="prj-s-lbl">m²</span></div> }
+                    </div>
+                    <span class="prj-card-cta prj-modal-open">@(isEn?"Explore":"İncele") →</span>
+                </div>
+            </div>
+
+        </div>
+    }
+}
+</div>
+
+<!-- ══ PAGINATION ══════════════════════════════════════════ -->
+<div id="prj-pagination" class="prj-pagination"></div>
+
+<!-- ══ MODAL ══════════════════════════════════════════════ -->
+<div id="prj-modal-overlay" class="prj-modal-overlay" aria-hidden="true">
+  <div class="prj-modal" role="dialog">
+
+    <!-- Kapat butonu — her zaman sağ üstte -->
+    <button class="prj-modal-close" id="prj-modal-close" aria-label="Kapat">&times;</button>
+
+    <!-- Sol: galeri -->
+    <div class="prj-modal-gallery">
+      <div id="prj-modal-media" class="prj-modal-media-wrap"></div>
+      <button class="prj-modal-nav prj-modal-prev" id="prj-modal-prev">&#8249;</button>
+      <button class="prj-modal-nav prj-modal-next" id="prj-modal-next">&#8250;</button>
+      <div class="prj-modal-dots" id="prj-modal-dots"></div>
+    </div>
+
+    <!-- Sağ: bilgi -->
+    <div class="prj-modal-info">
+      <span class="prj-modal-badge" id="prj-modal-badge"></span>
+      <h2 class="prj-modal-title" id="prj-modal-title"></h2>
+      <div class="prj-modal-loc" id="prj-modal-loc"></div>
+      <div class="prj-modal-stats" id="prj-modal-stats"></div>
+      <p class="prj-modal-desc" id="prj-modal-desc"></p>
+    </div>
+
+  </div>
+</div>
+
+@section Scripts {
+<script>
+// ── Filter + Pagination ───────────────────────────────
+var searchInput  = document.getElementById('prj-search');
+var countEl      = document.getElementById('prj-filter-count');
+var pgEl         = document.getElementById('prj-pagination');
+var cards        = Array.from(document.querySelectorAll('.prj-card'));
+var activeCat    = '';
+var activeStatus = 'ongoing';
+var currentPage  = 1;
+var PAGE_SIZE    = 8;
+var filteredCards = [];
+
+function getFiltered() {
+    var q = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    return cards.filter(function(card) {
+        var statusVal   = card.dataset.status;
+        var statusMatch = activeStatus === 'all'
+            || (activeStatus === 'ongoing'   && statusVal === 'Ongoing')
+            || (activeStatus === 'completed' && statusVal === 'Completed');
+        var catMatch    = !activeCat || card.dataset.cat === activeCat;
+        var nameMatch   = !q || card.dataset.name.indexOf(q) !== -1;
+        return statusMatch && catMatch && nameMatch;
+    });
+}
+
+function renderPage(page) {
+    filteredCards = getFiltered();
+    var total     = filteredCards.length;
+    var totalPages= Math.ceil(total / PAGE_SIZE) || 1;
+    currentPage   = Math.min(Math.max(page, 1), totalPages);
+    var start     = (currentPage - 1) * PAGE_SIZE;
+    var end       = start + PAGE_SIZE;
+
+    cards.forEach(function(c){ c.style.display = 'none'; });
+    filteredCards.forEach(function(c, i){ c.style.display = (i >= start && i < end) ? '' : 'none'; });
+
+    var empty = document.querySelector('.prj-empty');
+    if (empty) empty.style.display = total === 0 ? '' : 'none';
+    if (countEl) countEl.textContent = total + ' @(isEn ? "projects" : "proje")';
+
+    // Animate newly visible cards
+    filteredCards.slice(start, end).forEach(function(c){ c.classList.add('visible'); });
+
+    buildPagination(totalPages);
+}
+
+function buildPagination(totalPages) {
+    pgEl.innerHTML = '';
+    if (totalPages <= 1) return;
+
+    function btn(label, page, isActive, isDots) {
+        if (isDots) {
+            var s = document.createElement('span');
+            s.className = 'prj-pg-dots'; s.textContent = '…';
+            pgEl.appendChild(s); return;
+        }
+        var b = document.createElement('button');
+        b.className = 'prj-pg-btn' + (isActive ? ' active' : '');
+        b.textContent = label;
+        b.addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); renderPage(page); });
+        pgEl.appendChild(b);
+    }
+
+    // Prev
+    var prev = document.createElement('button');
+    prev.className = 'prj-pg-btn'; prev.textContent = '‹';
+    if (currentPage === 1) prev.disabled = true;
+    prev.addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); renderPage(currentPage - 1); });
+    pgEl.appendChild(prev);
+
+    // Pages with ellipsis
+    for (var i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            btn(i, i, i === currentPage, false);
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+            btn(null, null, false, true);
+        }
+    }
+
+    // Next
+    var next = document.createElement('button');
+    next.className = 'prj-pg-btn'; next.textContent = '›';
+    if (currentPage === totalPages) next.disabled = true;
+    next.addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); renderPage(currentPage + 1); });
+    pgEl.appendChild(next);
+}
+
+document.querySelectorAll('.prj-stat-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.prj-stat-btn').forEach(function(b){ b.classList.remove('active'); });
+        this.classList.add('active');
+        activeStatus = this.dataset.statusFilter;
+        renderPage(1);
+    });
+});
+
+document.querySelectorAll('.prj-city-pill').forEach(function(pill) {
+    pill.addEventListener('click', function() {
+        document.querySelectorAll('.prj-city-pill').forEach(function(p){ p.classList.remove('active'); });
+        this.classList.add('active');
+        activeCat = this.dataset.cat;
+        renderPage(1);
+    });
+});
+
+if (searchInput) { searchInput.addEventListener('input', function(){ renderPage(1); }); }
+
+renderPage(1);
+
+/* ── Modal ─────────────────────────────────────────── */
+(function(){
+  var overlay   = document.getElementById('prj-modal-overlay');
+  var mediaWrap = document.getElementById('prj-modal-media');
+  var dotsEl    = document.getElementById('prj-modal-dots');
+  var prevBtn   = document.getElementById('prj-modal-prev');
+  var nextBtn   = document.getElementById('prj-modal-next');
+  var closeBtn  = document.getElementById('prj-modal-close');
+  var slides    = []; // [{type:'video'|'img', src:'...'}]
+  var cur       = 0;
+
+  function renderSlide(slide) {
+    mediaWrap.innerHTML = '';
+    var el;
+    if (slide.type === 'video') {
+      el = document.createElement('video');
+      el.src = slide.src;
+      el.autoplay = true; el.muted = true; el.loop = true;
+      el.setAttribute('playsinline', '');
+    } else {
+      el = document.createElement('img');
+      el.src = slide.src; el.alt = '';
+    }
+    mediaWrap.appendChild(el);
+  }
+
+  function showSlide(i) {
+    cur = (i + slides.length) % slides.length;
+    renderSlide(slides[cur]);
+    dotsEl.querySelectorAll('.prj-modal-dot').forEach(function(d, idx){
+      d.classList.toggle('active', idx === cur);
+    });
+    prevBtn.style.display = slides.length > 1 ? '' : 'none';
+    nextBtn.style.display = slides.length > 1 ? '' : 'none';
+  }
+
+  function buildDots() {
+    dotsEl.innerHTML = '';
+    slides.forEach(function(_, i){
+      var d = document.createElement('button');
+      d.className = 'prj-modal-dot' + (i===0?' active':'');
+      d.addEventListener('click', function(){ showSlide(i); });
+      dotsEl.appendChild(d);
+    });
+  }
+
+  function openModal(card) {
+    var status  = card.dataset.status;
+    var imgs    = [];
+    try { imgs = JSON.parse(card.dataset.images || '[]'); } catch(e){}
+    var main  = card.dataset.mainimg;
+    var video = card.dataset.video;
+    slides = [];
+    if (video) slides.push({ type: 'video', src: video });
+    if (main)  slides.push({ type: 'img',   src: main  });
+    imgs.forEach(function(img){ if (img && img !== main) slides.push({ type:'img', src:img }); });
+    if (!slides.length) slides.push({ type:'img', src:'' });
+
+    cur = 0;
+    buildDots();
+    renderSlide(slides[0]);
+
+    var badge = document.getElementById('prj-modal-badge');
+    badge.textContent = status === 'Ongoing' ? 'DEVAM EDİYOR' : 'TAMAMLANDI';
+    badge.className = 'prj-modal-badge ' + (status === 'Ongoing' ? 'ongoing' : 'completed');
+
+    document.getElementById('prj-modal-title').textContent = card.dataset.title || '';
+
+    var loc = card.dataset.location || '';
+    var locEl = document.getElementById('prj-modal-loc');
+    locEl.innerHTML = loc
+      ? '<svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>' + loc
+      : '';
+
+    var stats = '';
+    if (card.dataset.units)  stats += '<div><span class="prj-mstat-val">'+ card.dataset.units  +'</span><span class="prj-mstat-lbl">Daire</span></div>';
+    if (card.dataset.floors) stats += '<div><span class="prj-mstat-val">'+ card.dataset.floors +'</span><span class="prj-mstat-lbl">Kat</span></div>';
+    if (card.dataset.area)   stats += '<div><span class="prj-mstat-val">'+ card.dataset.area   +'</span><span class="prj-mstat-lbl">M²</span></div>';
+    var statsEl = document.getElementById('prj-modal-stats');
+    statsEl.innerHTML = stats;
+    statsEl.style.display = stats ? '' : 'none';
+
+    var desc = card.dataset.desc || '';
+    var descEl = document.getElementById('prj-modal-desc');
+    descEl.textContent = desc;
+    descEl.style.display = desc ? '' : 'none';
+
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+    mediaWrap.innerHTML = '';
+    slides = [];
+  }
+
+  prevBtn.addEventListener('click', function(){ showSlide(cur - 1); });
+  nextBtn.addEventListener('click', function(){ showSlide(cur + 1); });
+  closeBtn.addEventListener('click', closeModal);
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) closeModal(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeModal(); });
+
+  document.querySelectorAll('.prj-card').forEach(function(card){
+    card.addEventListener('click', function(){
+      openModal(card);
+    });
+  });
+})();
+
+/* Video autoplay — ekrana girince otomatik başlar */
+var videoObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+        var card  = e.target;
+        var video = card.querySelector('.prj-card-video');
+        if(!video) return;
+        if(e.isIntersecting){
+            if(!video.src){ video.src = card.dataset.video; }
+            video.play().catch(function(){});
+            card.classList.add('playing');
+        } else {
+            video.pause();
+            video.currentTime = 0;
+            card.classList.remove('playing');
+        }
+    });
+},{ threshold: 0.3 });
+
+document.querySelectorAll('.prj-card.has-video').forEach(function(card){
+    videoObs.observe(card);
+});
+
+/* Parallax — videosuz kartlar için fare hareketi efekti */
+if(window.matchMedia('(hover:hover) and (pointer:fine)').matches){
+    document.querySelectorAll('.prj-card:not(.has-video)').forEach(function(card){
+        var img = card.querySelector('.prj-card-img');
+        if(!img) return;
+        card.addEventListener('mousemove', function(e){
+            var r=card.getBoundingClientRect();
+            var x=((e.clientX-r.left)/r.width -0.5)*16;
+            var y=((e.clientY-r.top) /r.height-0.5)*10;
+            img.style.transform='scale(1.09) translate('+x+'px,'+y+'px)';
+        });
+        card.addEventListener('mouseleave', function(){ img.style.transform=''; });
+    });
+}
+</script>
+}

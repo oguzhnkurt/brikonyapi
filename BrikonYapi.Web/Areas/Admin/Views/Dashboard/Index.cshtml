@@ -1,0 +1,328 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+<style>
+/* ── Genel ── */
+.section-label {
+    font-size: .72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: #aaa; margin-bottom: 12px; display: block;
+}
+
+/* ── Welcome Banner ── */
+.db-welcome {
+    background: linear-gradient(135deg, #1a2332 0%, #243447 50%, #1e3a5f 100%);
+    border-radius: 14px; padding: 28px 32px; color: #fff;
+    position: relative; overflow: hidden;
+}
+.db-welcome::before {
+    content:''; position:absolute; right:-40px; top:-40px;
+    width:220px; height:220px; background:rgba(255,255,255,.04); border-radius:50%;
+}
+.db-welcome::after {
+    content:''; position:absolute; right:40px; bottom:-60px;
+    width:160px; height:160px; background:rgba(255,255,255,.03); border-radius:50%;
+}
+.db-welcome .brand-line { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.db-welcome .brand-dot  { width:8px; height:8px; background:#f59e0b; border-radius:50%; }
+.db-welcome h2 { font-size:1.6rem; font-weight:700; margin-bottom:4px; }
+.db-welcome p  { color:rgba(255,255,255,.6); margin-bottom:0; font-size:.9rem; }
+
+/* ── Stat Kartları ── */
+.stat-card { border:none; border-radius:12px; transition:transform .15s,box-shadow .15s; }
+.stat-card:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(0,0,0,.1); }
+.stat-icon {
+    width:52px; height:52px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.6rem; flex-shrink:0;
+}
+.stat-label { font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:#888; margin-bottom:2px; }
+.stat-value { font-size:2rem; font-weight:800; line-height:1; }
+
+/* ── Hızlı Erişim ── */
+.quick-btn {
+    border-radius:10px; padding:14px 18px; font-weight:600; font-size:.88rem;
+    transition:transform .15s,box-shadow .15s; display:flex; align-items:center; gap:10px;
+}
+.quick-btn:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,.12); }
+.quick-btn iconify-icon { font-size:1.3rem; }
+
+/* ── Video Arka Plan Paneli ── */
+.vbg-panel {
+    border-radius: 16px;
+    overflow: hidden;
+    position: sticky;
+    top: 80px;
+    height: calc(100vh - 110px);
+    min-height: 480px;
+    max-height: 800px;
+}
+.vbg-video {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+/* katmanlı overlay: altta karartma + üstte gradient şerit */
+.vbg-overlay {
+    position: absolute; inset: 0; z-index: 1;
+    background:
+        linear-gradient(to bottom,
+            rgba(10,18,30,.72) 0%,
+            rgba(10,18,30,.18) 35%,
+            rgba(10,18,30,.18) 65%,
+            rgba(10,18,30,.88) 100%);
+}
+.vbg-content {
+    position: relative; z-index: 2;
+    height: 100%;
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    padding: 24px 22px;
+    color: #fff;
+}
+
+/* üst logo alanı */
+.vbg-top { display:flex; align-items:center; gap:10px; }
+.vbg-logo-ring {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(245,158,11,.18);
+    border: 1.5px solid rgba(245,158,11,.45);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; color: #f59e0b;
+}
+.vbg-brand { font-size: .78rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,.85); }
+.vbg-brand small { display:block; font-size:.65rem; font-weight:500; letter-spacing:.5px; color:rgba(255,255,255,.4); }
+
+/* orta —  büyük yazı */
+.vbg-mid { text-align: center; }
+.vbg-mid .big-label {
+    font-size: .7rem; font-weight: 700; letter-spacing: 2.5px;
+    text-transform: uppercase; color: #f59e0b;
+    margin-bottom: 10px; display: block;
+}
+.vbg-mid h1 {
+    font-size: clamp(1.4rem, 2vw, 2rem); font-weight: 800;
+    line-height: 1.2; margin-bottom: 8px;
+    text-shadow: 0 2px 12px rgba(0,0,0,.5);
+}
+.vbg-mid p {
+    font-size: .8rem; color: rgba(255,255,255,.55);
+    line-height: 1.5; margin: 0;
+}
+
+/* alt — kayan yazı */
+.vbg-bottom { overflow: hidden; }
+.vbg-ticker-wrap {
+    background: rgba(245,158,11,.12);
+    border: 1px solid rgba(245,158,11,.25);
+    border-radius: 30px;
+    padding: 8px 16px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.vbg-ticker {
+    display: inline-block;
+    animation: ticker-scroll 22s linear infinite;
+    font-size: .75rem; font-weight: 600; letter-spacing: .5px;
+    color: rgba(255,255,255,.9);
+}
+.vbg-ticker .sep { color: #f59e0b; margin: 0 14px; }
+@@keyframes ticker-scroll {
+    0%   { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+</style>
+}
+
+<div class="row g-4 align-items-start">
+
+    <!-- ═══════ SOL ═══════ -->
+    <div class="col-lg-8 d-flex flex-column gap-4">
+
+        <!-- Welcome Banner -->
+        <div class="db-welcome">
+            <div class="brand-line">
+                <span class="brand-dot"></span>
+                <span style="font-size:.78rem;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:600;">Brikon Yapı</span>
+            </div>
+            <h2>Hoş Geldiniz</h2>
+            <p>Yönetim panelinizden projeleri, içerikleri ve mesajları yönetebilirsiniz.</p>
+            <div class="mt-3 d-flex gap-2 flex-wrap">
+                <a href="/Admin/Projects/Create" class="btn btn-sm btn-warning fw-semibold px-3" style="border-radius:8px;">
+                    <iconify-icon icon="iconamoon:add-duotone" class="me-1"></iconify-icon>Yeni Proje
+                </a>
+                <a href="/" target="_blank" class="btn btn-sm fw-semibold px-3" style="border-radius:8px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15);">
+                    <iconify-icon icon="iconamoon:link-external-duotone" class="me-1"></iconify-icon>Siteyi Gör
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div>
+            <span class="section-label">İstatistikler</span>
+            <div class="row g-3">
+                <div class="col-6 col-xl-3">
+                    <div class="card stat-card">
+                        <div class="card-body d-flex align-items-center gap-3 py-3">
+                            <div class="stat-icon bg-primary-subtle text-primary">
+                                <iconify-icon icon="iconamoon:building-apartment-duotone"></iconify-icon>
+                            </div>
+                            <div>
+                                <div class="stat-label">Toplam</div>
+                                <div class="stat-value text-dark">@ViewBag.TotalCount</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="card stat-card">
+                        <div class="card-body d-flex align-items-center gap-3 py-3">
+                            <div class="stat-icon bg-warning-subtle text-warning">
+                                <iconify-icon icon="iconamoon:hammer-duotone"></iconify-icon>
+                            </div>
+                            <div>
+                                <div class="stat-label">Devam</div>
+                                <div class="stat-value text-dark">@ViewBag.OngoingCount</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="card stat-card">
+                        <div class="card-body d-flex align-items-center gap-3 py-3">
+                            <div class="stat-icon bg-success-subtle text-success">
+                                <iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon>
+                            </div>
+                            <div>
+                                <div class="stat-label">Tamamlandı</div>
+                                <div class="stat-value text-dark">@ViewBag.CompletedCount</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="card stat-card">
+                        <div class="card-body d-flex align-items-center gap-3 py-3">
+                            <div class="stat-icon bg-danger-subtle text-danger">
+                                <iconify-icon icon="iconamoon:email-duotone"></iconify-icon>
+                            </div>
+                            <div>
+                                <div class="stat-label">Okunmamış</div>
+                                <div class="stat-value text-dark">@ViewBag.UnreadCount</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hızlı Erişim -->
+        <div>
+            <span class="section-label">Hızlı Erişim</span>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <a href="/Admin/Projects/Create" class="btn btn-primary w-100 quick-btn">
+                        <iconify-icon icon="iconamoon:add-duotone"></iconify-icon>
+                        Yeni Proje Ekle
+                    </a>
+                </div>
+                <div class="col-sm-6">
+                    <a href="/Admin/Projects" class="btn btn-outline-secondary w-100 quick-btn">
+                        <iconify-icon icon="iconamoon:building-apartment-duotone"></iconify-icon>
+                        Projeleri Yönet
+                    </a>
+                </div>
+                <div class="col-sm-6">
+                    <a href="/Admin/Messages" class="btn btn-outline-secondary w-100 quick-btn">
+                        <iconify-icon icon="iconamoon:email-duotone"></iconify-icon>
+                        Mesajlar
+                        @if ((int)ViewBag.UnreadCount > 0)
+                        {
+                            <span class="badge bg-danger ms-auto">@ViewBag.UnreadCount</span>
+                        }
+                    </a>
+                </div>
+                <div class="col-sm-6">
+                    <a href="/Admin/Settings" class="btn btn-outline-secondary w-100 quick-btn">
+                        <iconify-icon icon="iconamoon:settings-duotone"></iconify-icon>
+                        Site Ayarları
+                    </a>
+                </div>
+                <div class="col-sm-6">
+                    <a href="/Admin/Categories" class="btn btn-outline-secondary w-100 quick-btn">
+                        <iconify-icon icon="iconamoon:category-duotone"></iconify-icon>
+                        Kategoriler
+                    </a>
+                </div>
+                <div class="col-sm-6">
+                    <a href="/Admin/References" class="btn btn-outline-secondary w-100 quick-btn">
+                        <iconify-icon icon="iconamoon:star-duotone"></iconify-icon>
+                        Referanslar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ═══════ SAĞ — VİDEO ARKA PLAN ═══════ -->
+    <div class="col-lg-4 d-none d-lg-block">
+        <div class="vbg-panel">
+
+            <!-- Arka plan videosu -->
+            <video class="vbg-video" autoplay muted loop playsinline>
+                <source src="/videos/dashboard-vertical.mp4" type="video/mp4" />
+            </video>
+
+            <!-- Gradient overlay -->
+            <div class="vbg-overlay"></div>
+
+            <!-- İçerik -->
+            <div class="vbg-content">
+
+                <!-- Üst: Logo / Marka -->
+                <div class="vbg-top">
+                    <div class="vbg-logo-ring">
+                        <iconify-icon icon="iconamoon:building-apartment-duotone"></iconify-icon>
+                    </div>
+                    <div>
+                        <div class="vbg-brand">
+                            Brikon Yapı
+                            <small>Yönetim Paneli</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orta: Büyük hoş geldiniz yazısı -->
+                <div class="vbg-mid">
+                    <span class="big-label">Admin Panel</span>
+                    <h1>Brikon Yapı'ya<br/>Hoş Geldiniz</h1>
+                    <p>Güvenilir yapı çözümleri ile<br/>geleceği inşa ediyoruz.</p>
+                </div>
+
+                <!-- Alt: Kayan yazı -->
+                <div class="vbg-bottom">
+                    <div class="vbg-ticker-wrap">
+                        <span class="vbg-ticker">
+                            Brikon Yapı Admin Paneline Hoş Geldiniz
+                            <span class="sep">✦</span>
+                            @ViewBag.TotalCount Proje
+                            <span class="sep">✦</span>
+                            @ViewBag.OngoingCount Devam Ediyor
+                            <span class="sep">✦</span>
+                            @ViewBag.CompletedCount Tamamlandı
+                            <span class="sep">✦</span>
+                            Brikon Yapı Admin Paneline Hoş Geldiniz
+                            <span class="sep">✦</span>
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>

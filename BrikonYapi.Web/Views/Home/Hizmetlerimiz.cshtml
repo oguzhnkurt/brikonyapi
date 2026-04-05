@@ -1,0 +1,84 @@
+@{
+    bool isEn = ViewBag.IsEn == true;
+    ViewData["Title"] = isEn ? "Our Services" : "Hizmetlerimiz";
+}
+
+<!-- Page Hero -->
+<section class="svc-hero">
+    <div class="container">
+        <div class="sh">
+            <span class="sh-eyebrow">@(isEn ? "What We Do" : "Ne Yapıyoruz")</span>
+            <h1 class="sh-title">@(isEn ? "Our Services" : "Hizmetlerimiz")</h1>
+            <div class="sh-line"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Services Grid -->
+<section class="section svc-section">
+    <div class="container">
+        <div class="svc-grid">
+
+            <div class="svc-card reveal">
+                <div class="svc-card-body">
+                    <h3 class="svc-card-title">@(isEn ? "Residential Construction & Sales" : "Konut İnşaatı Ve Satışı")</h3>
+                    <p class="svc-card-desc">@(isEn ? "With a mission to offer living alternatives beyond just building homes, we develop quality projects backed by years of experience." : "Konut inşa etmekten öte yaşam alternatifleri sunmayı hedefleyen misyon ve yılların tecrübesiyle kaliteli projeler geliştiriyoruz.")</p>
+                </div>
+                <div class="svc-card-logo">
+                    <img src="/images/logo.png" alt="Brikon Yapı" />
+                </div>
+            </div>
+
+            <div class="svc-card reveal delay-1">
+                <div class="svc-card-body">
+                    <h3 class="svc-card-title">@(isEn ? "Mass Housing Projects" : "Toplu Konut Projeleri")</h3>
+                    <p class="svc-card-desc">@(isEn ? "We have extensive experience in developing low-cost, high-quality mass housing projects for communities." : "Düşük maliyetli ve kaliteli toplu konut projeleri geliştirme konusunda geniş deneyim ve tecrübeye sahibiz.")</p>
+                </div>
+                <div class="svc-card-logo">
+                    <img src="/images/logo.png" alt="Brikon Yapı" />
+                </div>
+            </div>
+
+            <div class="svc-card reveal delay-2">
+                <div class="svc-card-body">
+                    <h3 class="svc-card-title">@(isEn ? "Construction Contracting" : "İnşaat Taahhüt İşleri")</h3>
+                    <p class="svc-card-desc">@(isEn ? "Drawing on our planning and construction expertise, we successfully fulfill all contractual commitments on time." : "Planlama ve inşaat konusundaki deneyimlerimizden güç alarak tüm taahhütleri başarıyla gerçekleştiriyoruz.")</p>
+                </div>
+                <div class="svc-card-logo">
+                    <img src="/images/logo.png" alt="Brikon Yapı" />
+                </div>
+            </div>
+
+            <div class="svc-card reveal delay-1">
+                <div class="svc-card-body">
+                    <h3 class="svc-card-title">@(isEn ? "Landscape & Environmental Design" : "Çevre Peyzaj Düzenlemeleri")</h3>
+                    <p class="svc-card-desc">@(isEn ? "We provide comprehensive landscaping and environmental design services to make the surroundings of our projects livable and aesthetic." : "Projelerimizin çevresini yaşanabilir ve estetik kılmak için kapsamlı peyzaj ve çevre düzenlemesi hizmetleri sunuyoruz.")</p>
+                </div>
+                <div class="svc-card-logo">
+                    <img src="/images/logo.png" alt="Brikon Yapı" />
+                </div>
+            </div>
+
+            <div class="svc-card reveal delay-2">
+                <div class="svc-card-body">
+                    <h3 class="svc-card-title">@(isEn ? "Structural Engineering Services" : "İnşaat Ve Statik Proje Hizmetleri")</h3>
+                    <p class="svc-card-desc">@(isEn ? "Prioritizing structural safety, our expert team delivers solutions in static project design and engineering services." : "Yapı güvenliğini ön planda tutarak statik proje ve mühendislik hizmetleri alanında uzman ekibimizle çözümler üretiyoruz.")</p>
+                </div>
+                <div class="svc-card-logo">
+                    <img src="/images/logo.png" alt="Brikon Yapı" />
+                </div>
+            </div>
+
+            <div class="svc-card reveal delay-3">
+                <div class="svc-card-body">
+                    <h3 class="svc-card-title">@(isEn ? "Urban Transformation Services" : "Kentsel Dönüşüm Hizmetleri")</h3>
+                    <p class="svc-card-desc">@(isEn ? "We manage the entire urban transformation process to convert risky buildings into modern, safe and comfortable residences." : "Riskli yapıları modern ve güvenli konutlara dönüştürmek için kentsel dönüşüm süreçlerini eksiksiz yönetiyoruz.")</p>
+                </div>
+                <div class="svc-card-logo">
+                    <img src="/images/logo.png" alt="Brikon Yapı" />
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>

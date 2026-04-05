@@ -1,0 +1,192 @@
+@model List<BrikonYapi.Web.Data.Entities.Project>
+@using BrikonYapi.Web.Data.Entities
+@{
+    ViewData["Title"] = "Projeler";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+<script>
+(function () {
+    var tbody = document.getElementById('sortable-tbody');
+    var saveBtn = document.getElementById('btn-save-order');
+    if (!tbody || !saveBtn) return;
+
+    var dirty = false;
+
+    Sortable.create(tbody, {
+        handle: '.drag-handle',
+        animation: 150,
+        ghostClass: 'table-warning',
+        onEnd: function () {
+            var rows = tbody.querySelectorAll('tr[data-id]');
+            rows.forEach(function (r, i) {
+                var cell = r.querySelector('.order-cell');
+                if (cell) cell.textContent = i + 1;
+            });
+            if (!dirty) {
+                dirty = true;
+                saveBtn.classList.remove('d-none');
+            }
+        }
+    });
+
+    saveBtn.addEventListener('click', function () {
+        var rows = tbody.querySelectorAll('tr[data-id]');
+        var ids = Array.from(rows).map(function (r) { return parseInt(r.dataset.id); });
+
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Kaydediliyor…';
+
+        var token = document.querySelector('input[name="__RequestVerificationToken"]');
+        fetch('/Admin/Projects/SaveOrder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token ? token.value : ''
+            },
+            body: JSON.stringify(ids)
+        }).then(function (res) {
+            if (res.ok) {
+                saveBtn.innerHTML = '<iconify-icon icon="iconamoon:check-duotone" class="me-1"></iconify-icon>Kaydedildi';
+                saveBtn.classList.replace('btn-success', 'btn-outline-success');
+                dirty = false;
+                setTimeout(function () { saveBtn.classList.add('d-none'); saveBtn.disabled = false; saveBtn.innerHTML = '<iconify-icon icon="iconamoon:check-duotone" class="me-1"></iconify-icon>Sıraları Kaydet'; saveBtn.classList.replace('btn-outline-success','btn-success'); }, 2000);
+            } else {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<iconify-icon icon="iconamoon:check-duotone" class="me-1"></iconify-icon>Sıraları Kaydet';
+                alert('Kaydetme başarısız! HTTP ' + res.status);
+            }
+        });
+    });
+})();
+</script>
+}
+
+
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="card-title mb-0">Tüm Projeler (@Model.Count)</h5>
+        <div class="d-flex gap-2">
+            <button id="btn-save-order" class="btn btn-success d-none d-inline-flex align-items-center gap-2">
+                <iconify-icon icon="iconamoon:check-duotone" style="font-size:1.1rem;"></iconify-icon>
+                Sıraları Kaydet
+            </button>
+            <a href="/Admin/Projects/Create" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                <iconify-icon icon="iconamoon:plus-circle-duotone" style="font-size:1.1rem;"></iconify-icon>
+                Yeni Proje Ekle
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="text-center text-muted py-5">
+                <iconify-icon icon="iconamoon:building-apartment-duotone" class="fs-48 d-block mb-2"></iconify-icon>
+                Henüz proje eklenmemiş.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover table-nowrap align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:32px;"></th>
+                            <th>Görsel</th>
+                            <th>Proje Adı</th>
+                            <th>Lokasyon</th>
+                            <th>Durum</th>
+                            <th>Aktif</th>
+                            <th>Açılış Ekranı</th>
+                            <th>Sıra</th>
+                            <th class="text-end">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sortable-tbody">
+                        @foreach (var p in Model.OrderBy(x => x.OrderIndex))
+                        {
+                            <tr data-id="@p.Id">
+                                <td class="drag-handle" style="cursor:grab;color:#aaa;font-size:1.2rem;text-align:center;user-select:none;">⠿</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(p.MainImagePath))
+                                    {
+                                        <img src="@p.MainImagePath" alt="@p.Name"
+                                             style="width:64px;height:48px;object-fit:cover;border-radius:4px;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex align-items-center justify-content-center bg-light rounded"
+                                             style="width:64px;height:48px;color:#aaa;font-size:11px">Yok</div>
+                                    }
+                                </td>
+                                <td>
+                                    <strong>@p.Name</strong>
+                                    <br /><small class="text-muted">/Projeler/@p.Slug</small>
+                                </td>
+                                <td class="text-muted">@(p.Location ?? "—")</td>
+                                <td>
+                                    @if (p.Status == ProjectStatus.Ongoing)
+                                    {
+                                        <span class="badge bg-primary-subtle text-primary">Devam Ediyor</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success-subtle text-success">Tamamlandı</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (p.IsActive)
+                                    {
+                                        <span class="badge bg-success-subtle text-success">Aktif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary">Pasif</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (p.IsFeatured)
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning">
+                                            <iconify-icon icon="iconamoon:star-duotone" class="me-1"></iconify-icon>Evet
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">—</span>
+                                    }
+                                </td>
+                                <td class="order-cell text-muted">@p.OrderIndex</td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <a href="/Admin/Projects/Edit/@p.Id" class="btn btn-sm btn-outline-secondary">
+                                            <iconify-icon icon="iconamoon:edit-duotone"></iconify-icon>
+                                            Düzenle
+                                        </a>
+                                        <a href="/Admin/Projects/Images/@p.Id" class="btn btn-sm btn-outline-primary" title="Görseller (@p.Images.Count)">
+                                            <iconify-icon icon="iconamoon:image-duotone"></iconify-icon>
+                                            <span class="ms-1">@p.Images.Count</span>
+                                        </a>
+                                        <a href="/Projeler/@p.Slug" target="_blank" class="btn btn-sm btn-outline-info">
+                                            <iconify-icon icon="iconamoon:link-external-duotone"></iconify-icon>
+                                        </a>
+                                        <form asp-area="Admin" asp-controller="Projects" asp-action="Delete" method="post" class="d-inline"
+                                              onsubmit="return confirm('Projeyi silmek istediğinize emin misiniz?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@p.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <iconify-icon icon="iconamoon:trash-duotone"></iconify-icon>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
