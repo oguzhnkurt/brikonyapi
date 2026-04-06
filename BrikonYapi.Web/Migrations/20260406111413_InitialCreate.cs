@@ -53,6 +53,21 @@ namespace BrikonYapi.Web.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Categories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    OrderIndex = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Categories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ContactMessages",
                 columns: table => new
                 {
@@ -72,40 +87,20 @@ namespace BrikonYapi.Web.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Projects",
+                name: "References",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Slug = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    ShortDescription = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Location = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    District = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    TotalArea = table.Column<int>(type: "int", nullable: true),
-                    UnitCount = table.Column<int>(type: "int", nullable: true),
-                    FloorCount = table.Column<int>(type: "int", nullable: true),
-                    BlockCount = table.Column<int>(type: "int", nullable: true),
-                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CardTag = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: true),
-                    MainImagePath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    VideoPath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    CardVideoAutoplay = table.Column<bool>(type: "bit", nullable: false),
-                    Latitude = table.Column<double>(type: "float", nullable: true),
-                    Longitude = table.Column<double>(type: "float", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    IsFeatured = table.Column<bool>(type: "bit", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LogoPath = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     OrderIndex = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Projects", x => x.Id);
+                    table.PrimaryKey("PK_References", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -230,6 +225,51 @@ namespace BrikonYapi.Web.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Projects",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Slug = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    ShortDescription = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Location = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    District = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    CategoryId = table.Column<int>(type: "int", nullable: true),
+                    TotalArea = table.Column<int>(type: "int", nullable: true),
+                    UnitCount = table.Column<int>(type: "int", nullable: true),
+                    FloorCount = table.Column<int>(type: "int", nullable: true),
+                    BlockCount = table.Column<int>(type: "int", nullable: true),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CardTag = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: true),
+                    MainImagePath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    VideoPath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CardVideoAutoplay = table.Column<bool>(type: "bit", nullable: false),
+                    Latitude = table.Column<double>(type: "float", nullable: true),
+                    Longitude = table.Column<double>(type: "float", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsFeatured = table.Column<bool>(type: "bit", nullable: false),
+                    IsMarquee = table.Column<bool>(type: "bit", nullable: false),
+                    OrderIndex = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Projects", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Projects_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "HeroSlides",
                 columns: table => new
                 {
@@ -278,6 +318,21 @@ namespace BrikonYapi.Web.Migrations
                         principalTable: "Projects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "Categories",
+                columns: new[] { "Id", "IsActive", "Name", "OrderIndex" },
+                values: new object[,]
+                {
+                    { 1, true, "Kampüs - Eğitim Yapıları", 0 },
+                    { 2, true, "Konutlar - Ofisler", 1 },
+                    { 3, true, "Sağlık Yapıları", 2 },
+                    { 4, true, "Endüstriyel Yapılar", 3 },
+                    { 5, true, "Altyapı - Yol", 4 },
+                    { 6, true, "Renovasyonlar", 5 },
+                    { 7, true, "Büyükelçilikler", 6 },
+                    { 8, true, "İdari Binalar", 7 }
                 });
 
             migrationBuilder.InsertData(
@@ -346,6 +401,11 @@ namespace BrikonYapi.Web.Migrations
                 column: "ProjectId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Projects_CategoryId",
+                table: "Projects",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Projects_Slug",
                 table: "Projects",
                 column: "Slug",
@@ -386,6 +446,9 @@ namespace BrikonYapi.Web.Migrations
                 name: "ProjectImages");
 
             migrationBuilder.DropTable(
+                name: "References");
+
+            migrationBuilder.DropTable(
                 name: "SiteSettings");
 
             migrationBuilder.DropTable(
@@ -396,6 +459,9 @@ namespace BrikonYapi.Web.Migrations
 
             migrationBuilder.DropTable(
                 name: "Projects");
+
+            migrationBuilder.DropTable(
+                name: "Categories");
         }
     }
 }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BrikonYapi.Web.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260328085516_AddCategoryIsActive")]
-    partial class AddCategoryIsActive
+    [Migration("20260406111413_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
