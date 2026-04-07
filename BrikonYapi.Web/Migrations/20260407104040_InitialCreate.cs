@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -18,10 +18,10 @@ namespace BrikonYapi.Web.Migrations
                 name: "AspNetRoles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(nullable: false),
-                    Name = table.Column<string>(maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(maxLength: 256, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(nullable: true)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -32,21 +32,21 @@ namespace BrikonYapi.Web.Migrations
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(nullable: false),
-                    UserName = table.Column<string>(maxLength: 256, nullable: true),
-                    NormalizedUserName = table.Column<string>(maxLength: 256, nullable: true),
-                    Email = table.Column<string>(maxLength: 256, nullable: true),
-                    NormalizedEmail = table.Column<string>(maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(nullable: false),
-                    PasswordHash = table.Column<string>(nullable: true),
-                    SecurityStamp = table.Column<string>(nullable: true),
-                    ConcurrencyStamp = table.Column<string>(nullable: true),
-                    PhoneNumber = table.Column<string>(nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(nullable: false),
-                    TwoFactorEnabled = table.Column<bool>(nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(nullable: true),
-                    LockoutEnabled = table.Column<bool>(nullable: false),
-                    AccessFailedCount = table.Column<int>(nullable: false)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "text", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -57,11 +57,11 @@ namespace BrikonYapi.Web.Migrations
                 name: "Categories",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(maxLength: 200, nullable: false),
-                    OrderIndex = table.Column<int>(nullable: false),
-                    IsActive = table.Column<bool>(nullable: false)
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    OrderIndex = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -72,15 +72,15 @@ namespace BrikonYapi.Web.Migrations
                 name: "ContactMessages",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    FullName = table.Column<string>(maxLength: 100, nullable: false),
-                    Email = table.Column<string>(maxLength: 200, nullable: false),
-                    Phone = table.Column<string>(maxLength: 20, nullable: true),
-                    Subject = table.Column<string>(maxLength: 200, nullable: true),
-                    Message = table.Column<string>(nullable: false),
-                    CreatedAt = table.Column<DateTime>(nullable: false),
-                    IsRead = table.Column<bool>(nullable: false)
+                    FullName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    Subject = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Message = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsRead = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -91,13 +91,13 @@ namespace BrikonYapi.Web.Migrations
                 name: "References",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(nullable: false),
-                    LogoPath = table.Column<string>(nullable: true),
-                    OrderIndex = table.Column<int>(nullable: false),
-                    IsActive = table.Column<bool>(nullable: false),
-                    CreatedAt = table.Column<DateTime>(nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    LogoPath = table.Column<string>(type: "text", nullable: true),
+                    OrderIndex = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -108,11 +108,11 @@ namespace BrikonYapi.Web.Migrations
                 name: "SiteSettings",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Key = table.Column<string>(maxLength: 100, nullable: false),
-                    Value = table.Column<string>(nullable: true),
-                    Description = table.Column<string>(maxLength: 200, nullable: true)
+                    Key = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -123,11 +123,11 @@ namespace BrikonYapi.Web.Migrations
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RoleId = table.Column<string>(nullable: false),
-                    ClaimType = table.Column<string>(nullable: true),
-                    ClaimValue = table.Column<string>(nullable: true)
+                    RoleId = table.Column<string>(type: "text", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -144,11 +144,11 @@ namespace BrikonYapi.Web.Migrations
                 name: "AspNetUserClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<string>(nullable: false),
-                    ClaimType = table.Column<string>(nullable: true),
-                    ClaimValue = table.Column<string>(nullable: true)
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -165,10 +165,10 @@ namespace BrikonYapi.Web.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(nullable: false),
-                    ProviderKey = table.Column<string>(nullable: false),
-                    ProviderDisplayName = table.Column<string>(nullable: true),
-                    UserId = table.Column<string>(nullable: false)
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    ProviderKey = table.Column<string>(type: "text", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -185,8 +185,8 @@ namespace BrikonYapi.Web.Migrations
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(nullable: false),
-                    RoleId = table.Column<string>(nullable: false)
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    RoleId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -209,10 +209,10 @@ namespace BrikonYapi.Web.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(nullable: false),
-                    LoginProvider = table.Column<string>(nullable: false),
-                    Name = table.Column<string>(nullable: false),
-                    Value = table.Column<string>(nullable: true)
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -229,35 +229,35 @@ namespace BrikonYapi.Web.Migrations
                 name: "Projects",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(maxLength: 200, nullable: false),
-                    Slug = table.Column<string>(maxLength: 200, nullable: false),
-                    ShortDescription = table.Column<string>(maxLength: 500, nullable: true),
-                    Description = table.Column<string>(nullable: true),
-                    Location = table.Column<string>(maxLength: 200, nullable: true),
-                    District = table.Column<string>(maxLength: 100, nullable: true),
-                    City = table.Column<string>(maxLength: 100, nullable: true),
-                    Status = table.Column<int>(nullable: false),
-                    CategoryId = table.Column<int>(nullable: true),
-                    TotalArea = table.Column<int>(nullable: true),
-                    UnitCount = table.Column<int>(nullable: true),
-                    FloorCount = table.Column<int>(nullable: true),
-                    BlockCount = table.Column<int>(nullable: true),
-                    StartDate = table.Column<DateTime>(nullable: true),
-                    EndDate = table.Column<DateTime>(nullable: true),
-                    CardTag = table.Column<string>(maxLength: 80, nullable: true),
-                    MainImagePath = table.Column<string>(maxLength: 500, nullable: true),
-                    VideoPath = table.Column<string>(maxLength: 500, nullable: true),
-                    CardVideoAutoplay = table.Column<bool>(nullable: false),
-                    Latitude = table.Column<double>(nullable: true),
-                    Longitude = table.Column<double>(nullable: true),
-                    IsActive = table.Column<bool>(nullable: false),
-                    IsFeatured = table.Column<bool>(nullable: false),
-                    IsMarquee = table.Column<bool>(nullable: false),
-                    OrderIndex = table.Column<int>(nullable: false),
-                    CreatedAt = table.Column<DateTime>(nullable: false),
-                    UpdatedAt = table.Column<DateTime>(nullable: true)
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Slug = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ShortDescription = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    Location = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    District = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    City = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: true),
+                    TotalArea = table.Column<int>(type: "integer", nullable: true),
+                    UnitCount = table.Column<int>(type: "integer", nullable: true),
+                    FloorCount = table.Column<int>(type: "integer", nullable: true),
+                    BlockCount = table.Column<int>(type: "integer", nullable: true),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CardTag = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
+                    MainImagePath = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    VideoPath = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CardVideoAutoplay = table.Column<bool>(type: "boolean", nullable: false),
+                    Latitude = table.Column<double>(type: "double precision", nullable: true),
+                    Longitude = table.Column<double>(type: "double precision", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsFeatured = table.Column<bool>(type: "boolean", nullable: false),
+                    IsMarquee = table.Column<bool>(type: "boolean", nullable: false),
+                    OrderIndex = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -274,17 +274,17 @@ namespace BrikonYapi.Web.Migrations
                 name: "HeroSlides",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProjectId = table.Column<int>(nullable: true),
-                    Title = table.Column<string>(maxLength: 200, nullable: true),
-                    Subtitle = table.Column<string>(maxLength: 300, nullable: true),
-                    VideoPath = table.Column<string>(maxLength: 500, nullable: true),
-                    BackgroundImagePath = table.Column<string>(maxLength: 500, nullable: true),
-                    ButtonText = table.Column<string>(maxLength: 100, nullable: true),
-                    ButtonUrl = table.Column<string>(maxLength: 500, nullable: true),
-                    OrderIndex = table.Column<int>(nullable: false),
-                    IsActive = table.Column<bool>(nullable: false)
+                    ProjectId = table.Column<int>(type: "integer", nullable: true),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Subtitle = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    VideoPath = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    BackgroundImagePath = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    ButtonText = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    ButtonUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    OrderIndex = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -301,14 +301,14 @@ namespace BrikonYapi.Web.Migrations
                 name: "ProjectImages",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProjectId = table.Column<int>(nullable: false),
-                    ImagePath = table.Column<string>(maxLength: 500, nullable: false),
-                    Caption = table.Column<string>(maxLength: 200, nullable: true),
-                    OrderIndex = table.Column<int>(nullable: false),
-                    IsMain = table.Column<bool>(nullable: false),
-                    IsPlan = table.Column<bool>(nullable: false)
+                    ProjectId = table.Column<int>(type: "integer", nullable: false),
+                    ImagePath = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Caption = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    OrderIndex = table.Column<int>(type: "integer", nullable: false),
+                    IsMain = table.Column<bool>(type: "boolean", nullable: false),
+                    IsPlan = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -324,7 +324,6 @@ namespace BrikonYapi.Web.Migrations
             migrationBuilder.InsertData(
                 table: "Categories",
                 columns: new[] { "Id", "IsActive", "Name", "OrderIndex" },
-                columnTypes: new[] { "integer", "boolean", "character varying(200)", "integer" },
                 values: new object[,]
                 {
                     { 1, true, "Kampüs - Eğitim Yapıları", 0 },
@@ -421,20 +420,47 @@ namespace BrikonYapi.Web.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(name: "AspNetRoleClaims");
-            migrationBuilder.DropTable(name: "AspNetUserClaims");
-            migrationBuilder.DropTable(name: "AspNetUserLogins");
-            migrationBuilder.DropTable(name: "AspNetUserRoles");
-            migrationBuilder.DropTable(name: "AspNetUserTokens");
-            migrationBuilder.DropTable(name: "ContactMessages");
-            migrationBuilder.DropTable(name: "HeroSlides");
-            migrationBuilder.DropTable(name: "ProjectImages");
-            migrationBuilder.DropTable(name: "References");
-            migrationBuilder.DropTable(name: "SiteSettings");
-            migrationBuilder.DropTable(name: "AspNetRoles");
-            migrationBuilder.DropTable(name: "AspNetUsers");
-            migrationBuilder.DropTable(name: "Projects");
-            migrationBuilder.DropTable(name: "Categories");
+            migrationBuilder.DropTable(
+                name: "AspNetRoleClaims");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserClaims");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserLogins");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserRoles");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "ContactMessages");
+
+            migrationBuilder.DropTable(
+                name: "HeroSlides");
+
+            migrationBuilder.DropTable(
+                name: "ProjectImages");
+
+            migrationBuilder.DropTable(
+                name: "References");
+
+            migrationBuilder.DropTable(
+                name: "SiteSettings");
+
+            migrationBuilder.DropTable(
+                name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Projects");
+
+            migrationBuilder.DropTable(
+                name: "Categories");
         }
     }
 }
