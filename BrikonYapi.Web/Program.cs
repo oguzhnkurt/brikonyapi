@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 var dbProvider = builder.Configuration["DatabaseProvider"] ?? "PostgreSQL";
