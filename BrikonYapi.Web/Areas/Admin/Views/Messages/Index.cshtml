@@ -37,8 +37,13 @@
                     <tbody>
                         @foreach (var msg in Model)
                         {
-                            <tr class="@(!msg.IsRead ? "table-primary" : "")" style="cursor:pointer"
-                                onclick="showMessage(@msg.Id, '@Html.Raw(System.Text.Json.JsonSerializer.Serialize(msg.FullName))', '@Html.Raw(System.Text.Json.JsonSerializer.Serialize(msg.Email))', '@(msg.Phone ?? "")', '@Html.Raw(System.Text.Json.JsonSerializer.Serialize(msg.Subject ?? ""))', '@Html.Raw(System.Text.Json.JsonSerializer.Serialize(msg.Message))', '@msg.CreatedAt.ToString("dd.MM.yyyy HH:mm")')">
+                            <tr class="@(!msg.IsRead ? "table-primary" : "") msg-row" style="cursor:pointer"
+                                data-name="@msg.FullName"
+                                data-email="@msg.Email"
+                                data-phone="@(msg.Phone ?? "")"
+                                data-subject="@(msg.Subject ?? "")"
+                                data-message="@msg.Message"
+                                data-date="@msg.CreatedAt.ToString("dd.MM.yyyy HH:mm")">
                                 <td>
                                     @if (!msg.IsRead)
                                     {
@@ -135,16 +140,20 @@
 
 @section Scripts {
 <script>
-function showMessage(id, name, email, phone, subject, message, date) {
-    document.getElementById('modal-name').textContent = name;
-    document.getElementById('modal-email').textContent = email;
-    document.getElementById('modal-email').href = 'mailto:' + email;
-    document.getElementById('modal-mailto').href = 'mailto:' + email;
-    document.getElementById('modal-phone').textContent = phone || '—';
-    document.getElementById('modal-subject').textContent = subject || '—';
-    document.getElementById('modal-message').textContent = message;
-    document.getElementById('modal-date').textContent = date;
-    new bootstrap.Modal(document.getElementById('msgModal')).show();
-}
+document.querySelectorAll('.msg-row').forEach(function(row) {
+    row.addEventListener('click', function(e) {
+        if (e.target.closest('form') || e.target.closest('a')) return;
+        var d = row.dataset;
+        document.getElementById('modal-name').textContent = d.name;
+        document.getElementById('modal-email').textContent = d.email;
+        document.getElementById('modal-email').href = 'mailto:' + d.email;
+        document.getElementById('modal-mailto').href = 'mailto:' + d.email;
+        document.getElementById('modal-phone').textContent = d.phone || '—';
+        document.getElementById('modal-subject').textContent = d.subject || '—';
+        document.getElementById('modal-message').textContent = d.message;
+        document.getElementById('modal-date').textContent = d.date;
+        new bootstrap.Modal(document.getElementById('msgModal')).show();
+    });
+});
 </script>
 }
