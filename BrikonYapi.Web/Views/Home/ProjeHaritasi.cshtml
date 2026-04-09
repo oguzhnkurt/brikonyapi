@@ -497,7 +497,7 @@
     if (p.video) slides.push({ type:'video', src: p.video });
     if (p.image) slides.push({ type:'img',   src: p.image });
     if (p.images) p.images.forEach(function(img){ if (img && img !== p.image) slides.push({ type:'img', src: img }); });
-    if (!slides.length) slides.push({ type:'img', src:'' });
+    if (!slides.length) slides.push({ type:'img', src:'/images/logo-color.png', placeholder:true });
 
     cur = 0; buildDots(); renderSlide(slides[0]);
 
