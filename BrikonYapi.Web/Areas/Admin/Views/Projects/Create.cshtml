@@ -15,7 +15,19 @@
             <h5 class="mb-0">Yeni Proje Ekle</h5>
         </div>
 
-        <form asp-area="Admin" asp-controller="Projects" asp-action="Create" method="post" enctype="multipart/form-data">
+        <!-- Loading Overlay -->
+        <div id="save-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+            <div style="background:#fff;border-radius:14px;padding:28px 40px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+                <div class="spinner-border text-primary mb-3" style="width:2.5rem;height:2.5rem;"></div>
+                <div style="font-weight:600;font-size:1rem;color:#1a2332;">Kaydediliyor...</div>
+                <div style="font-size:.8rem;color:#888;margin-top:4px;">Video yükleniyorsa bu biraz sürebilir</div>
+                <div style="margin-top:12px;background:#f0f0f0;border-radius:8px;height:6px;width:220px;overflow:hidden;">
+                    <div id="save-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#0d6efd,#6ea8fe);border-radius:8px;transition:width .3s;"></div>
+                </div>
+            </div>
+        </div>
+
+        <form asp-area="Admin" asp-controller="Projects" asp-action="Create" method="post" enctype="multipart/form-data" id="project-form">
             @Html.AntiForgeryToken()
 
             <!-- Temel Bilgiler -->
@@ -182,3 +194,19 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+<script>
+document.getElementById('project-form').addEventListener('submit', function() {
+    var overlay = document.getElementById('save-overlay');
+    var bar = document.getElementById('save-progress-bar');
+    overlay.style.display = 'flex';
+    var pct = 0;
+    var interval = setInterval(function() {
+        pct += pct < 70 ? Math.random() * 8 : pct < 90 ? Math.random() * 2 : 0;
+        if (pct > 95) pct = 95;
+        bar.style.width = pct + '%';
+    }, 400);
+});
+</script>
+}
