@@ -287,41 +287,6 @@
                 </div>
             </div>
 
-            <!-- Planlar -->
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">
-                        <iconify-icon icon="iconamoon:copy-duotone" class="me-1"></iconify-icon>
-                        Planlar (Kat Planı, Vaziyet Planı vb.)
-                    </h6>
-                </div>
-                <div class="card-body">
-                    @if (Model.Images.Any(i => i.IsPlan))
-                    {
-                        <div class="d-flex flex-wrap gap-2 mb-3">
-                            @foreach (var img in Model.Images.Where(i => i.IsPlan).OrderBy(i => i.OrderIndex))
-                            {
-                                <div class="position-relative text-center" style="width:130px">
-                                    <img src="@img.ImagePath" class="rounded border"
-                                         style="width:130px;height:90px;object-fit:contain;background:#f5f5f5;" />
-                                    @if (!string.IsNullOrEmpty(img.Caption))
-                                    {
-                                        <small class="d-block text-muted mt-1" style="font-size:11px">@img.Caption</small>
-                                    }
-                                    <button type="button" class="btn btn-danger btn-sm p-0 position-absolute top-0 end-0 m-1"
-                                            style="width:20px;height:20px;font-size:11px;line-height:1"
-                                            onclick="galleryAction('delete','@img.Id','@Model.Id')">×</button>
-                                </div>
-                            }
-                        </div>
-                    }
-                    <div>
-                        <label class="form-label">Plan Görseli Ekle (çoklu seçim)</label>
-                        <input type="file" name="planImages" class="form-control" accept="image/*" multiple />
-                        <div class="form-text">Dosya adı plan başlığı olarak kullanılır (örn: "Normal Kat Planı.png")</div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Yayın Ayarları -->
             <div class="card mb-3">
