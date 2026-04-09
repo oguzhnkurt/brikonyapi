@@ -37,7 +37,8 @@
                     <tbody>
                         @foreach (var msg in Model)
                         {
-                            <tr class="@(!msg.IsRead ? "table-primary" : "")">
+                            <tr class="@(!msg.IsRead ? "table-primary" : "")" style="cursor:pointer"
+                                onclick="showMessage(@msg.Id, '@Html.Raw(System.Text.Json.JsonSerializer.Serialize(msg.FullName))', '@Html.Raw(System.Text.Json.JsonSerializer.Serialize(msg.Email))', '@(msg.Phone ?? "")', '@Html.Raw(System.Text.Json.JsonSerializer.Serialize(msg.Subject ?? ""))', '@Html.Raw(System.Text.Json.JsonSerializer.Serialize(msg.Message))', '@msg.CreatedAt.ToString("dd.MM.yyyy HH:mm")')">
                                 <td>
                                     @if (!msg.IsRead)
                                     {
@@ -46,7 +47,7 @@
                                     <strong>@msg.FullName</strong>
                                 </td>
                                 <td>
-                                    <a href="mailto:@msg.Email" class="text-primary">@msg.Email</a>
+                                    <a href="mailto:@msg.Email" class="text-primary" onclick="event.stopPropagation()">@msg.Email</a>
                                 </td>
                                 <td class="text-muted">@(msg.Phone ?? "—")</td>
                                 <td class="text-muted">@(msg.Subject ?? "—")</td>
@@ -56,7 +57,7 @@
                                 <td class="text-muted text-nowrap">
                                     @msg.CreatedAt.ToString("dd.MM.yyyy HH:mm")
                                 </td>
-                                <td class="text-end">
+                                <td class="text-end" onclick="event.stopPropagation()">
                                     <div class="d-flex gap-1 justify-content-end">
                                         @if (!msg.IsRead)
                                         {
@@ -87,3 +88,63 @@
         }
     </div>
 </div>
+
+<!-- Mesaj Detay Modal -->
+<div class="modal fade" id="msgModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <iconify-icon icon="iconamoon:email-duotone" class="me-2"></iconify-icon>
+                    <span id="modal-name"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6">
+                        <div class="text-muted small mb-1">E-posta</div>
+                        <a id="modal-email" href="#" class="fw-semibold"></a>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="text-muted small mb-1">Telefon</div>
+                        <div id="modal-phone" class="fw-semibold"></div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="text-muted small mb-1">Tarih</div>
+                        <div id="modal-date" class="fw-semibold"></div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="text-muted small mb-1">Konu</div>
+                    <div id="modal-subject" class="fw-semibold"></div>
+                </div>
+                <hr/>
+                <div class="text-muted small mb-1">Mesaj</div>
+                <div id="modal-message" class="p-3 bg-light rounded" style="white-space:pre-wrap;line-height:1.7"></div>
+            </div>
+            <div class="modal-footer">
+                <a id="modal-mailto" href="#" class="btn btn-outline-primary btn-sm">
+                    <iconify-icon icon="iconamoon:email-duotone" class="me-1"></iconify-icon>Yanıtla
+                </a>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function showMessage(id, name, email, phone, subject, message, date) {
+    document.getElementById('modal-name').textContent = name;
+    document.getElementById('modal-email').textContent = email;
+    document.getElementById('modal-email').href = 'mailto:' + email;
+    document.getElementById('modal-mailto').href = 'mailto:' + email;
+    document.getElementById('modal-phone').textContent = phone || '—';
+    document.getElementById('modal-subject').textContent = subject || '—';
+    document.getElementById('modal-message').textContent = message;
+    document.getElementById('modal-date').textContent = date;
+    new bootstrap.Modal(document.getElementById('msgModal')).show();
+}
+</script>
+}
