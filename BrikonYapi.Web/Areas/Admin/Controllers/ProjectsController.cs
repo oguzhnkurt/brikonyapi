@@ -49,18 +49,18 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             if (!ModelState.IsValid) { await LoadCategoriesAsync(project.CategoryId); return View(project); }
 
             project.Slug = _projects.GenerateSlug(project.Name);
-            if (mainImage?.Length > 0) project.MainImagePath = await SaveFileAsync(mainImage, "images/projects");
+            if (mainImage?.Length > 0) project.MainImagePath = await SaveFileAsync(mainImage, "uploads/projects");
             if (projectVideo?.Length > 0) project.VideoPath = await SaveFileAsync(projectVideo, "videos/projects");
 
             await _projects.CreateAsync(project);
 
             if (galleryImages != null)
                 foreach (var f in galleryImages.Where(f => f.Length > 0))
-                    await _projects.AddImageAsync(new ProjectImage { ProjectId = project.Id, ImagePath = await SaveFileAsync(f, "images/projects"), IsPlan = false });
+                    await _projects.AddImageAsync(new ProjectImage { ProjectId = project.Id, ImagePath = await SaveFileAsync(f, "uploads/projects"), IsPlan = false });
 
             if (planImages != null)
                 foreach (var f in planImages.Where(f => f.Length > 0))
-                    await _projects.AddImageAsync(new ProjectImage { ProjectId = project.Id, ImagePath = await SaveFileAsync(f, "images/projects/plans"), IsPlan = true, Caption = Path.GetFileNameWithoutExtension(f.FileName) });
+                    await _projects.AddImageAsync(new ProjectImage { ProjectId = project.Id, ImagePath = await SaveFileAsync(f, "uploads/projects/plans"), IsPlan = true, Caption = Path.GetFileNameWithoutExtension(f.FileName) });
 
             TempData["Success"] = "Proje oluşturuldu.";
             return RedirectToAction(nameof(Index));
@@ -114,7 +114,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             if (mainImage?.Length > 0)
             {
                 if (!string.IsNullOrEmpty(existing.MainImagePath)) DeleteFile(existing.MainImagePath);
-                existing.MainImagePath = await SaveFileAsync(mainImage, "images/projects");
+                existing.MainImagePath = await SaveFileAsync(mainImage, "uploads/projects");
             }
 
             if (projectVideo?.Length > 0)
@@ -125,11 +125,11 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             if (galleryImages != null)
                 foreach (var f in galleryImages.Where(f => f.Length > 0))
-                    await _projects.AddImageAsync(new ProjectImage { ProjectId = existing.Id, ImagePath = await SaveFileAsync(f, "images/projects"), IsPlan = false });
+                    await _projects.AddImageAsync(new ProjectImage { ProjectId = existing.Id, ImagePath = await SaveFileAsync(f, "uploads/projects"), IsPlan = false });
 
             if (planImages != null)
                 foreach (var f in planImages.Where(f => f.Length > 0))
-                    await _projects.AddImageAsync(new ProjectImage { ProjectId = existing.Id, ImagePath = await SaveFileAsync(f, "images/projects/plans"), IsPlan = true, Caption = Path.GetFileNameWithoutExtension(f.FileName) });
+                    await _projects.AddImageAsync(new ProjectImage { ProjectId = existing.Id, ImagePath = await SaveFileAsync(f, "uploads/projects/plans"), IsPlan = true, Caption = Path.GetFileNameWithoutExtension(f.FileName) });
 
             await _projects.UpdateAsync(existing);
             TempData["Success"] = "Proje güncellendi.";
@@ -148,11 +148,11 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         {
             if (galleryImages != null)
                 foreach (var f in galleryImages.Where(f => f.Length > 0))
-                    await _projects.AddImageAsync(new ProjectImage { ProjectId = projectId, ImagePath = await SaveFileAsync(f, "images/projects"), IsPlan = false });
+                    await _projects.AddImageAsync(new ProjectImage { ProjectId = projectId, ImagePath = await SaveFileAsync(f, "uploads/projects"), IsPlan = false });
 
             if (planImages != null)
                 foreach (var f in planImages.Where(f => f.Length > 0))
-                    await _projects.AddImageAsync(new ProjectImage { ProjectId = projectId, ImagePath = await SaveFileAsync(f, "images/projects/plans"), IsPlan = true, Caption = Path.GetFileNameWithoutExtension(f.FileName) });
+                    await _projects.AddImageAsync(new ProjectImage { ProjectId = projectId, ImagePath = await SaveFileAsync(f, "uploads/projects/plans"), IsPlan = true, Caption = Path.GetFileNameWithoutExtension(f.FileName) });
 
             TempData["Success"] = "Görseller yüklendi.";
             return RedirectToAction(nameof(Images), new { id = projectId });

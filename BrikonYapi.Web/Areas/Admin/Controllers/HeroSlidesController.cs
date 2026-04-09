@@ -30,7 +30,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             if (!ModelState.IsValid) { ViewBag.Projects = await _db.Projects.Where(p => p.IsActive).ToListAsync(); return View(slide); }
 
             if (videoFile?.Length > 0) slide.VideoPath = await SaveAsync(videoFile, "videos");
-            if (bgImage?.Length > 0) slide.BackgroundImagePath = await SaveAsync(bgImage, "images/hero");
+            if (bgImage?.Length > 0) slide.BackgroundImagePath = await SaveAsync(bgImage, "uploads/hero");
 
             _db.HeroSlides.Add(slide);
             await _db.SaveChangesAsync();

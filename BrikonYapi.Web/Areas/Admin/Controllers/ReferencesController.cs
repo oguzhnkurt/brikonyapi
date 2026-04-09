@@ -85,7 +85,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
         private async Task<string> SaveLogoAsync(IFormFile file)
         {
-            var dir = Path.Combine(_env.WebRootPath, "images/refs");
+            var dir = Path.Combine(_env.WebRootPath, "uploads/refs");
             Directory.CreateDirectory(dir);
             var fileName = $"{Guid.NewGuid()}.png";
             var fullPath = Path.Combine(dir, fileName);
@@ -95,7 +95,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             if (image.Width > 400) image.Mutate(x => x.Resize(400, 0));
             await image.SaveAsPngAsync(fullPath);
 
-            return $"/images/refs/{fileName}";
+            return $"/uploads/refs/{fileName}";
         }
 
         private void DeleteLogo(string? path)
