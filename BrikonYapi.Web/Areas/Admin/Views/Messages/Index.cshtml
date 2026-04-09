@@ -94,6 +94,9 @@
     </div>
 </div>
 
+<!-- Gizli trigger -->
+<button id="msgModalTrigger" data-bs-toggle="modal" data-bs-target="#msgModal" style="display:none"></button>
+
 <!-- Mesaj Detay Modal -->
 <div class="modal fade" id="msgModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -144,12 +147,11 @@ document.querySelectorAll('.msg-row').forEach(function(row) {
         document.getElementById('modal-name').textContent = d.name;
         document.getElementById('modal-email').textContent = d.email;
         document.getElementById('modal-email').href = 'mailto:' + d.email;
-        document.getElementById('modal-mailto').href = 'mailto:' + d.email;
         document.getElementById('modal-phone').textContent = d.phone || '—';
         document.getElementById('modal-subject').textContent = d.subject || '—';
         document.getElementById('modal-message').textContent = d.message;
         document.getElementById('modal-date').textContent = d.date;
-        new bootstrap.Modal(document.getElementById('msgModal')).show();
+        document.getElementById('msgModalTrigger').click();
     });
 });
 </script>
