@@ -43,9 +43,9 @@ namespace BrikonYapi.Web.Data
             builder.Entity<SiteSetting>(e => e.HasIndex(s => s.Key).IsUnique());
 
             builder.Entity<SiteSetting>().HasData(
-                new SiteSetting { Id = 1, Key = "PhoneNumber",    Value = "+90 555 000 00 00",   Description = "Header telefon" },
+                new SiteSetting { Id = 1, Key = "PhoneNumber",    Value = "+90 212 236 19 88",   Description = "Header telefon" },
                 new SiteSetting { Id = 2, Key = "Email",          Value = "info@brikonyapi.com", Description = "E-posta" },
-                new SiteSetting { Id = 3, Key = "Address",        Value = "İstanbul, Türkiye",   Description = "Adres" },
+                new SiteSetting { Id = 3, Key = "Address",        Value = "Seyrantepe Mahallesi İbrahim Karaoğlanoğlu Cad. No:147 K:7 KAĞITHANE-İSTANBUL", Description = "Adres" },
                 new SiteSetting { Id = 4, Key = "Instagram",      Value = "",                    Description = "Instagram URL" },
                 new SiteSetting { Id = 5, Key = "Facebook",       Value = "",                    Description = "Facebook URL" },
                 new SiteSetting { Id = 6, Key = "LinkedIn",       Value = "",                    Description = "LinkedIn URL" },
