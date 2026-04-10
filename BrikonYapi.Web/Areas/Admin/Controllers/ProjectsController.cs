@@ -176,22 +176,54 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadVideo(int projectId, IFormFile videoFile)
+        public async Task<IActionResult> UploadVideoChunk(
+            int projectId, IFormFile chunk,
+            int chunkIndex, int totalChunks,
+            string uploadId, string originalExt)
         {
-            if (videoFile == null || videoFile.Length == 0)
-                return BadRequest(new { error = "Dosya boş." });
+            if (chunk == null || chunk.Length == 0)
+                return BadRequest(new { error = "Chunk boş." });
 
-            var existing = await _projects.GetByIdAsync(projectId);
-            if (existing == null) return NotFound();
+            var tempDir = Path.Combine(_env.WebRootPath, "temp-uploads");
+            Directory.CreateDirectory(tempDir);
 
-            if (!string.IsNullOrEmpty(existing.VideoPath))
-                DeleteFile(existing.VideoPath);
+            var chunkPath = Path.Combine(tempDir, $"{uploadId}_{chunkIndex}");
+            await using (var fs = new FileStream(chunkPath, FileMode.Create))
+                await chunk.CopyToAsync(fs);
 
-            var path = await SaveFileAsync(videoFile, "videos/projects");
-            existing.VideoPath = path;
-            await _projects.UpdateAsync(existing);
+            // Son chunk geldi — birleştir
+            if (chunkIndex == totalChunks - 1)
+            {
+                var finalDir = Path.Combine(_env.WebRootPath, "videos/projects");
+                Directory.CreateDirectory(finalDir);
+                var ext      = string.IsNullOrEmpty(originalExt) ? ".mp4" : originalExt;
+                var fileName = $"{Guid.NewGuid()}{ext}";
+                var finalPath = Path.Combine(finalDir, fileName);
 
-            return Json(new { success = true, path });
+                await using (var output = new FileStream(finalPath, FileMode.Create))
+                {
+                    for (int i = 0; i < totalChunks; i++)
+                    {
+                        var cp = Path.Combine(tempDir, $"{uploadId}_{i}");
+                        var bytes = await System.IO.File.ReadAllBytesAsync(cp);
+                        await output.WriteAsync(bytes);
+                        System.IO.File.Delete(cp);
+                    }
+                }
+
+                var urlPath = $"/videos/projects/{fileName}";
+                var existing = await _projects.GetByIdAsync(projectId);
+                if (existing != null)
+                {
+                    if (!string.IsNullOrEmpty(existing.VideoPath)) DeleteFile(existing.VideoPath);
+                    existing.VideoPath = urlPath;
+                    await _projects.UpdateAsync(existing);
+                }
+
+                return Json(new { done = true, path = urlPath });
+            }
+
+            return Json(new { done = false });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
