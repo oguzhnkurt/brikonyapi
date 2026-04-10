@@ -537,6 +537,62 @@ using (var scope = app.Services.CreateScope())
         await db.SaveChangesAsync();
     }
 
+    // ── Koordinat güncelleme (mevcut projeler için) ──────────
+    var coordMap = new Dictionary<string, (double lat, double lng)>
+    {
+        ["trakpark-premium"]                              = (41.1518, 27.8003),
+        ["afyon-gomu-tarimkoy-villalari"]                 = (38.6321, 30.4427),
+        ["toki-afyon-serbanli-tarimkoy"]                  = (38.5980, 30.3850),
+        ["devlet-hastanesi-zonguldak"]                    = (41.2167, 31.9667),
+        ["hacettepe-kongre-merkezi"]                      = (39.8680, 32.7340),
+        ["hacettepe-makina-muhendisligi"]                 = (39.8685, 32.7350),
+        ["hacettepe-yabanci-diller"]                      = (39.8690, 32.7360),
+        ["safranbolu-guzel-sanatlar-lisesi"]              = (41.2506, 32.6904),
+        ["hacettepe-dis-hekimligi"]                       = (39.9348, 32.8617),
+        ["hacettepe-hastaneleri-cevre"]                   = (39.9342, 32.8610),
+        ["hacettepe-morfoloji-dis-cephe"]                 = (39.9338, 32.8605),
+        ["hacettepe-beytepe-otomotiv"]                    = (39.8695, 32.7355),
+        ["hacettepe-kafeterya"]                           = (39.8700, 32.7345),
+        ["zonguldak-uni-alapli-myo"]                      = (41.1544, 31.3989),
+        ["istanbul-havalimani-akaryakit-bina"]            = (41.2611, 28.7420),
+        ["istanbul-havalimani-camii"]                     = (41.2620, 28.7430),
+        ["ankara-imitkoy-villa"]                          = (39.8961, 32.6739),
+        ["bakirkoy-senlik-mahallesi-bilgic-apartmani"]    = (40.9825, 28.8719),
+        ["besiktas-yildiz-mahallesi-mor-apartmani"]       = (41.0425, 29.0019),
+        ["cankaya-mkb-mesleki-teknik-lisesi"]             = (39.9060, 32.8630),
+        ["cukurambar-30-daire"]                           = (39.9180, 32.8120),
+        ["cukurambar-32-daire"]                           = (39.9185, 32.8125),
+        ["hacettepe-altyapi-kanalizasyon"]                = (39.8675, 32.7330),
+        ["hacettepe-beytepe-anaokulu"]                    = (39.8705, 32.7365),
+        ["hacettepe-jeodezi-fotogrametri"]                = (39.8710, 32.7370),
+        ["haymana-bumsuz-ilkogretim"]                     = (39.4316, 32.4966),
+        ["haymana-oyaca-ilkogretim"]                      = (39.4350, 32.5010),
+        ["ihlamur-apartmani"]                             = (39.9200, 32.8550),
+        ["turkan-hanim-apartmani"]                        = (39.9210, 32.8560),
+        ["karabuk-uni-kongre-salonu"]                     = (41.2061, 32.6204),
+        ["karabuk-uni-teknik-egitim"]                     = (41.2070, 32.6215),
+        ["karabuk-universitesi"]                          = (41.2080, 32.6220),
+        ["mugla-bodrum-degirmentepe"]                     = (37.0342, 27.4301),
+        ["mugla-bodrum-firuze-tas-evler"]                 = (37.0360, 27.4320),
+        ["odtu-parlar-ogrenci-yurdu"]                     = (39.8917, 32.7793),
+        ["safranbolu-hatice-sultan-konagi"]               = (41.2498, 32.6912),
+        ["zonguldak-uni-yemekhane"]                       = (41.4564, 31.7987),
+    };
+
+    var projectsToUpdate = db.Projects.Where(p => p.Latitude == null || p.Longitude == null).ToList();
+    if (projectsToUpdate.Any())
+    {
+        foreach (var proj in projectsToUpdate)
+        {
+            if (coordMap.TryGetValue(proj.Slug, out var coord))
+            {
+                proj.Latitude  = coord.lat;
+                proj.Longitude = coord.lng;
+            }
+        }
+        await db.SaveChangesAsync();
+    }
+
     // ── Seed: İletişim Mesajları ─────────────────────────────
     if (!db.ContactMessages.Any())
     {
