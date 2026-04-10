@@ -121,11 +121,11 @@
                                              style="width:64px;height:48px;color:#aaa;font-size:11px">Yok</div>
                                     }
                                 </td>
-                                <td>
+                                <td style="max-width:220px;white-space:normal;">
                                     <strong>@p.Name</strong>
                                     <br /><small class="text-muted">/Projeler/@p.Slug</small>
                                 </td>
-                                <td class="text-muted">@(p.Location ?? "—")</td>
+                                <td class="text-muted" style="max-width:130px;white-space:normal;">@(p.Location ?? "—")</td>
                                 <td>
                                     @if (p.Status == ProjectStatus.Ongoing)
                                     {
