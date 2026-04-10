@@ -166,6 +166,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, UnitCount = 55, FloorCount = 2,
                 StartDate = new DateTime(2011,8,22), EndDate = new DateTime(2013,2,26),
                 IsActive = true, IsMarquee = true, OrderIndex = 2,
+                Latitude = 38.6321, Longitude = 30.4427,
                 MainImagePath = MainImg(r, "afyon-gomu-tarimkoy-villalari"), Images = Gallery(r, "afyon-gomu-tarimkoy-villalari") },
 
             new() {
@@ -176,6 +177,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, UnitCount = 55, FloorCount = 2,
                 StartDate = new DateTime(2011,8,22), EndDate = new DateTime(2013,2,26),
                 IsActive = true, IsMarquee = true, OrderIndex = 3,
+                Latitude = 38.5980, Longitude = 30.3850,
                 MainImagePath = MainImg(r, "toki-afyon-serbanli-tarimkoy"), Images = Gallery(r, "toki-afyon-serbanli-tarimkoy") },
 
             new() {
@@ -186,6 +188,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 22500,
                 StartDate = new DateTime(2011,11,17), EndDate = new DateTime(2014,8,17),
                 IsActive = true, OrderIndex = 4,
+                Latitude = 41.2167, Longitude = 31.9667,
                 MainImagePath = MainImg(r, "devlet-hastanesi-zonguldak"), Images = Gallery(r, "devlet-hastanesi-zonguldak") },
 
             new() {
@@ -196,6 +199,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 22000,
                 StartDate = new DateTime(2007,9,28), EndDate = new DateTime(2012,4,13),
                 IsActive = true, OrderIndex = 5,
+                Latitude = 39.8680, Longitude = 32.7340,
                 MainImagePath = MainImg(r, "hacettepe-kongre-merkezi"), Images = Gallery(r, "hacettepe-kongre-merkezi") },
 
             new() {
@@ -206,6 +210,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 17000,
                 StartDate = new DateTime(2005,8,11), EndDate = new DateTime(2008,5,31),
                 IsActive = true, OrderIndex = 6,
+                Latitude = 39.8685, Longitude = 32.7350,
                 MainImagePath = MainImg(r, "hacettepe-makina-muhendisligi"), Images = Gallery(r, "hacettepe-makina-muhendisligi") },
 
             new() {
@@ -216,6 +221,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 10500,
                 EndDate = new DateTime(2003,12,31),
                 IsActive = true, OrderIndex = 7,
+                Latitude = 39.8690, Longitude = 32.7360,
                 MainImagePath = MainImg(r, "hacettepe-yabanci-diller"), Images = Gallery(r, "hacettepe-yabanci-diller") },
 
             new() {
@@ -226,6 +232,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 19000,
                 StartDate = new DateTime(2002,2,12), EndDate = new DateTime(2002,11,30),
                 IsActive = true, OrderIndex = 8,
+                Latitude = 41.2506, Longitude = 32.6904,
                 MainImagePath = MainImg(r, "safranbolu-guzel-sanatlar-lisesi"), Images = Gallery(r, "safranbolu-guzel-sanatlar-lisesi") },
 
             new() {
@@ -236,6 +243,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 8500,
                 StartDate = new DateTime(1998,12,28), EndDate = new DateTime(2001,10,25),
                 IsActive = true, OrderIndex = 9,
+                Latitude = 39.9348, Longitude = 32.8617,
                 MainImagePath = MainImg(r, "hacettepe-dis-hekimligi"), Images = Gallery(r, "hacettepe-dis-hekimligi") },
 
             new() {
@@ -246,6 +254,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 5500,
                 EndDate = new DateTime(2000,12,31),
                 IsActive = true, OrderIndex = 10,
+                Latitude = 39.9342, Longitude = 32.8610,
                 MainImagePath = MainImg(r, "hacettepe-hastaneleri-cevre"), Images = Gallery(r, "hacettepe-hastaneleri-cevre") },
 
             new() {
@@ -256,6 +265,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 4500,
                 StartDate = new DateTime(2004,7,20), EndDate = new DateTime(2004,8,3),
                 IsActive = true, OrderIndex = 11,
+                Latitude = 39.9338, Longitude = 32.8605,
                 MainImagePath = MainImg(r, "hacettepe-morfoloji-dis-cephe"), Images = Gallery(r, "hacettepe-morfoloji-dis-cephe") },
 
             new() {
@@ -266,6 +276,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 2300,
                 EndDate = new DateTime(2007,12,31),
                 IsActive = true, OrderIndex = 12,
+                Latitude = 39.8695, Longitude = 32.7355,
                 MainImagePath = MainImg(r, "hacettepe-beytepe-otomotiv"), Images = Gallery(r, "hacettepe-beytepe-otomotiv") },
 
             new() {
@@ -276,6 +287,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 650,
                 EndDate = new DateTime(2003,12,31),
                 IsActive = true, OrderIndex = 13,
+                Latitude = 39.8700, Longitude = 32.7345,
                 MainImagePath = MainImg(r, "hacettepe-kafeterya"), Images = Gallery(r, "hacettepe-kafeterya") },
 
             new() {
@@ -286,6 +298,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 8500,
                 EndDate = new DateTime(1998,12,31),
                 IsActive = true, OrderIndex = 14,
+                Latitude = 41.1544, Longitude = 31.3989,
                 MainImagePath = MainImg(r, "zonguldak-uni-alapli-myo"), Images = Gallery(r, "zonguldak-uni-alapli-myo") },
 
             new() {
@@ -295,6 +308,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Arnavutköy, İstanbul", District = "Arnavutköy", City = "İstanbul",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 15,
+                Latitude = 41.2611, Longitude = 28.7420,
                 MainImagePath = MainImg(r, "istanbul-havalimani-akaryakit-bina"), Images = Gallery(r, "istanbul-havalimani-akaryakit-bina") },
 
             new() {
@@ -304,6 +318,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Arnavutköy, İstanbul", District = "Arnavutköy", City = "İstanbul",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 16,
+                Latitude = 41.2620, Longitude = 28.7430,
                 MainImagePath = MainImg(r, "istanbul-havalimani-camii"), Images = Gallery(r, "istanbul-havalimani-camii") },
 
             new() {
@@ -314,6 +329,7 @@ using (var scope = app.Services.CreateScope())
                 Status = ProjectStatus.Completed, TotalArea = 1100,
                 EndDate = new DateTime(2003,12,31),
                 IsActive = true, OrderIndex = 17,
+                Latitude = 39.8961, Longitude = 32.6739,
                 MainImagePath = MainImg(r, "ankara-imitkoy-villa"), Images = Gallery(r, "ankara-imitkoy-villa") },
 
             new() {
@@ -323,6 +339,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Bakırköy, İstanbul", District = "Bakırköy", City = "İstanbul",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 18,
+                Latitude = 40.9825, Longitude = 28.8719,
                 MainImagePath = MainImg(r, "bakirkoy-senlik-mahallesi-bilgic-apartmani"), Images = Gallery(r, "bakirkoy-senlik-mahallesi-bilgic-apartmani") },
 
             new() {
@@ -332,6 +349,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Beşiktaş, İstanbul", District = "Beşiktaş", City = "İstanbul",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 19,
+                Latitude = 41.0425, Longitude = 29.0019,
                 MainImagePath = MainImg(r, "besiktas-yildiz-mahallesi-mor-apartmani"), Images = Gallery(r, "besiktas-yildiz-mahallesi-mor-apartmani") },
 
             new() {
@@ -341,6 +359,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Çankaya, Ankara", District = "Çankaya", City = "Ankara",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 20,
+                Latitude = 39.9060, Longitude = 32.8630,
                 MainImagePath = MainImg(r, "cankaya-mkb-mesleki-teknik-lisesi"), Images = Gallery(r, "cankaya-mkb-mesleki-teknik-lisesi") },
 
             new() {
@@ -350,6 +369,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Çukurambar, Ankara", District = "Çankaya", City = "Ankara",
                 Status = ProjectStatus.Completed, UnitCount = 30,
                 IsActive = true, OrderIndex = 21,
+                Latitude = 39.9180, Longitude = 32.8120,
                 MainImagePath = MainImg(r, "cukurambar-30-daire"), Images = Gallery(r, "cukurambar-30-daire") },
 
             new() {
@@ -359,6 +379,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Çukurambar, Ankara", District = "Çankaya", City = "Ankara",
                 Status = ProjectStatus.Completed, UnitCount = 32,
                 IsActive = true, OrderIndex = 22,
+                Latitude = 39.9185, Longitude = 32.8125,
                 MainImagePath = MainImg(r, "cukurambar-32-daire"), Images = Gallery(r, "cukurambar-32-daire") },
 
             new() {
@@ -368,6 +389,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Beytepe, Ankara", District = "Çankaya", City = "Ankara",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 23,
+                Latitude = 39.8675, Longitude = 32.7330,
                 MainImagePath = MainImg(r, "hacettepe-altyapi-kanalizasyon"), Images = Gallery(r, "hacettepe-altyapi-kanalizasyon") },
 
             new() {
@@ -377,6 +399,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Beytepe, Ankara", District = "Çankaya", City = "Ankara",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 24,
+                Latitude = 39.8705, Longitude = 32.7365,
                 MainImagePath = MainImg(r, "hacettepe-beytepe-anaokulu"), Images = Gallery(r, "hacettepe-beytepe-anaokulu") },
 
             new() {
@@ -386,6 +409,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Beytepe, Ankara", District = "Çankaya", City = "Ankara",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 25,
+                Latitude = 39.8710, Longitude = 32.7370,
                 MainImagePath = MainImg(r, "hacettepe-jeodezi-fotogrametri"), Images = Gallery(r, "hacettepe-jeodezi-fotogrametri") },
 
             new() {
@@ -395,6 +419,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Haymana, Ankara", District = "Haymana", City = "Ankara",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 26,
+                Latitude = 39.4316, Longitude = 32.4966,
                 MainImagePath = MainImg(r, "haymana-bumsuz-ilkogretim"), Images = Gallery(r, "haymana-bumsuz-ilkogretim") },
 
             new() {
@@ -404,6 +429,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Haymana, Ankara", District = "Haymana", City = "Ankara",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 27,
+                Latitude = 39.4350, Longitude = 32.5010,
                 MainImagePath = MainImg(r, "haymana-oyaca-ilkogretim"), Images = Gallery(r, "haymana-oyaca-ilkogretim") },
 
             new() {
@@ -413,6 +439,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Ankara", City = "Ankara",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 28,
+                Latitude = 39.9200, Longitude = 32.8550,
                 MainImagePath = MainImg(r, "ihlamur-apartmani"), Images = Gallery(r, "ihlamur-apartmani") },
 
             new() {
@@ -422,6 +449,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Karabük", City = "Karabük",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 29,
+                Latitude = 41.2061, Longitude = 32.6204,
                 MainImagePath = MainImg(r, "karabuk-uni-kongre-salonu"), Images = Gallery(r, "karabuk-uni-kongre-salonu") },
 
             new() {
@@ -431,6 +459,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Karabük", City = "Karabük",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 30,
+                Latitude = 41.2070, Longitude = 32.6215,
                 MainImagePath = MainImg(r, "karabuk-uni-teknik-egitim"), Images = Gallery(r, "karabuk-uni-teknik-egitim") },
 
             new() {
@@ -440,6 +469,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Karabük", City = "Karabük",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 31,
+                Latitude = 41.2080, Longitude = 32.6220,
                 MainImagePath = MainImg(r, "karabuk-universitesi"), Images = Gallery(r, "karabuk-universitesi") },
 
             new() {
@@ -449,6 +479,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Bodrum, Muğla", District = "Bodrum", City = "Muğla",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 32,
+                Latitude = 37.0342, Longitude = 27.4301,
                 MainImagePath = MainImg(r, "mugla-bodrum-degirmentepe"), Images = Gallery(r, "mugla-bodrum-degirmentepe") },
 
             new() {
@@ -458,6 +489,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Bodrum, Muğla", District = "Bodrum", City = "Muğla",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 33,
+                Latitude = 37.0360, Longitude = 27.4320,
                 MainImagePath = MainImg(r, "mugla-bodrum-firuze-tas-evler"), Images = Gallery(r, "mugla-bodrum-firuze-tas-evler") },
 
             new() {
@@ -467,6 +499,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Çankaya, Ankara", District = "Çankaya", City = "Ankara",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 34,
+                Latitude = 39.8917, Longitude = 32.7793,
                 MainImagePath = MainImg(r, "odtu-parlar-ogrenci-yurdu"), Images = Gallery(r, "odtu-parlar-ogrenci-yurdu") },
 
             new() {
@@ -476,6 +509,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Safranbolu, Karabük", District = "Safranbolu", City = "Karabük",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 35,
+                Latitude = 41.2498, Longitude = 32.6912,
                 MainImagePath = MainImg(r, "safranbolu-hatice-sultan-konagi"), Images = Gallery(r, "safranbolu-hatice-sultan-konagi") },
 
             new() {
@@ -485,6 +519,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Ankara", City = "Ankara",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 36,
+                Latitude = 39.9210, Longitude = 32.8560,
                 MainImagePath = MainImg(r, "turkan-hanim-apartmani"), Images = Gallery(r, "turkan-hanim-apartmani") },
 
             new() {
@@ -494,6 +529,7 @@ using (var scope = app.Services.CreateScope())
                 Location = "Zonguldak", City = "Zonguldak",
                 Status = ProjectStatus.Completed,
                 IsActive = true, OrderIndex = 37,
+                Latitude = 41.4564, Longitude = 31.7987,
                 MainImagePath = MainImg(r, "zonguldak-uni-yemekhane"), Images = Gallery(r, "zonguldak-uni-yemekhane") },
         };
 
