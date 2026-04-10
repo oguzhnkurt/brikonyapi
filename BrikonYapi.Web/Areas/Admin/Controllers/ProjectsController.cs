@@ -223,7 +223,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".jfif", ".png", ".webp", ".gif" };
 
         private static readonly HashSet<string> _convertVideoExtensions =
-            new(StringComparer.OrdinalIgnoreCase) { ".mov", ".avi", ".wmv", ".mkv" };
+            new(StringComparer.OrdinalIgnoreCase) { ".avi", ".wmv", ".mkv" };
 
         private static readonly HashSet<string> _allowedVideoExtensions =
             new(StringComparer.OrdinalIgnoreCase) { ".mp4", ".mov", ".avi", ".wmv", ".mkv" };
