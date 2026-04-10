@@ -8,167 +8,490 @@
 
 @section Styles {
 <style>
-/* ── Hero ── */
-.about-hero {
-    background: linear-gradient(135deg, #0c1420 0%, #1a2c42 60%, #0e1f33 100%);
-    padding: 100px 0 72px;
-    color: #fff;
+/* ══ HERO ══════════════════════════════════════════════════ */
+.ab-hero {
     position: relative;
+    min-height: 520px;
+    display: flex; align-items: center;
+    background: linear-gradient(135deg, #0a1628 0%, #0f2240 50%, #0a1628 100%);
     overflow: hidden;
+    color: #fff;
+    padding: 110px 0 80px;
 }
-.about-hero::after {
-    content: '';
-    position: absolute; right: -80px; top: -80px;
-    width: 420px; height: 420px;
-    background: radial-gradient(circle, rgba(245,158,11,.12) 0%, transparent 70%);
+.ab-hero-bg {
+    position: absolute; inset: 0;
+    background-image:
+        radial-gradient(ellipse 800px 600px at 80% 50%, rgba(245,158,11,.07) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 400px at 20% 80%, rgba(59,130,246,.06) 0%, transparent 70%);
     pointer-events: none;
 }
-.about-hero .sh-eyebrow {
+.ab-hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+}
+.ab-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
     font-size: .72rem; font-weight: 700; letter-spacing: 2.5px;
     text-transform: uppercase; color: #f59e0b;
-    display: block; margin-bottom: 12px;
+    margin-bottom: 18px;
 }
-.about-hero h1 {
-    font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800;
-    margin-bottom: 18px; line-height: 1.15;
+.ab-eyebrow::before { content:''; width:28px; height:2px; background:#f59e0b; display:block; }
+.ab-hero h1 {
+    font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+    font-weight: 900; line-height: 1.1;
+    margin-bottom: 20px;
+    letter-spacing: -.5px;
 }
-.about-hero p {
+.ab-hero h1 span { color: #f59e0b; }
+.ab-hero p {
     font-size: 1.05rem; color: rgba(255,255,255,.65);
-    max-width: 560px; line-height: 1.7;
+    max-width: 580px; line-height: 1.75; margin-bottom: 36px;
 }
-.about-hero-line {
-    width: 52px; height: 4px;
+.ab-hero-badges { display: flex; gap: 12px; flex-wrap: wrap; }
+.ab-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    color: rgba(255,255,255,.85);
+    padding: 8px 16px; border-radius: 50px;
+    font-size: .8rem; font-weight: 600;
+    backdrop-filter: blur(4px);
+}
+.ab-badge iconify-icon { color: #f59e0b; font-size: 1rem; }
+
+/* ══ STATS ══════════════════════════════════════════════════ */
+.ab-stats {
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 0;
+}
+.ab-stats-inner {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-left: 1px solid #f0f0f0;
+}
+.ab-stat {
+    padding: 44px 28px;
+    border-right: 1px solid #f0f0f0;
+    text-align: center;
+    position: relative;
+    transition: background .2s;
+}
+.ab-stat:hover { background: #fafbff; }
+.ab-stat::after {
+    content: '';
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 0; height: 3px;
     background: linear-gradient(90deg, #f59e0b, #e07b00);
-    border-radius: 2px; margin: 24px 0;
+    transition: width .3s;
+}
+.ab-stat:hover::after { width: 60%; }
+.ab-stat-num {
+    font-size: clamp(2.4rem, 3.5vw, 3.4rem);
+    font-weight: 900; line-height: 1;
+    background: linear-gradient(135deg, #0a1628, #1e3a5f);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    display: block; margin-bottom: 6px;
+}
+.ab-stat-label {
+    font-size: .78rem; font-weight: 700;
+    color: #999; text-transform: uppercase; letter-spacing: 1px;
+}
+@media(max-width:768px) {
+    .ab-stats-inner { grid-template-columns: repeat(2,1fr); }
 }
 
-/* ── Mission/Vision ── */
-.mv-section { padding: 80px 0; background: #f8f9fb; }
-.mv-card {
+/* ══ WHY US ═════════════════════════════════════════════════ */
+.ab-why { padding: 96px 0; background: #f8f9fb; }
+.ab-section-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: .72rem; font-weight: 700; letter-spacing: 2.5px;
+    text-transform: uppercase; color: #f59e0b; margin-bottom: 12px;
+}
+.ab-section-label::before { content:''; width:24px; height:2px; background:#f59e0b; display:block; }
+.ab-section-title {
+    font-size: clamp(1.7rem, 3vw, 2.4rem);
+    font-weight: 900; color: #0a1628; line-height: 1.2;
+    margin-bottom: 16px;
+}
+.ab-section-sub { font-size: .95rem; color: #6b7280; line-height: 1.7; max-width: 560px; }
+.why-card {
     background: #fff; border-radius: 16px;
-    padding: 36px 32px;
-    box-shadow: 0 2px 20px rgba(0,0,0,.06);
+    padding: 32px 28px;
+    box-shadow: 0 1px 12px rgba(0,0,0,.05);
     height: 100%;
-    border-top: 4px solid transparent;
+    transition: transform .25s, box-shadow .25s;
+    border: 1px solid #f0f0f0;
+    position: relative; overflow: hidden;
+}
+.why-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f59e0b, #e07b00);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .3s;
+}
+.why-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,.1); }
+.why-card:hover::before { transform: scaleX(1); }
+.why-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; margin-bottom: 18px;
+}
+.why-card h4 { font-size: 1rem; font-weight: 700; color: #0a1628; margin-bottom: 8px; }
+.why-card p  { font-size: .87rem; color: #6b7280; line-height: 1.65; margin: 0; }
+
+/* ══ STORY ══════════════════════════════════════════════════ */
+.ab-story { padding: 96px 0; background: #fff; }
+.story-img-outer {
+    position: relative;
+    border-radius: 20px; overflow: hidden;
+}
+.story-img-outer img {
+    width: 100%; aspect-ratio: 4/3;
+    object-fit: cover; display: block;
+}
+.story-img-placeholder {
+    width: 100%; aspect-ratio: 4/3;
+    background: linear-gradient(135deg, #0a1628 0%, #1e3a5f 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px; color: rgba(255,255,255,.25);
+    font-size: 5rem; border-radius: 20px;
+}
+.story-badge {
+    position: absolute; bottom: -1px; right: -1px;
+    background: linear-gradient(135deg, #f59e0b, #e07b00);
+    color: #fff; font-weight: 900;
+    padding: 20px 28px; border-radius: 20px 0 20px 0;
+    font-size: .85rem; line-height: 1.2;
+    box-shadow: 0 8px 24px rgba(245,158,11,.35);
+}
+.story-badge span { display: block; font-size: 2rem; font-weight: 900; }
+
+.timeline { margin-top: 32px; }
+.tl-item {
+    display: flex; gap: 16px;
+    padding-bottom: 24px;
+    position: relative;
+}
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    flex-shrink: 0; padding-top: 4px;
+}
+.tl-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #f59e0b;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 3px rgba(245,158,11,.2);
+    flex-shrink: 0;
+}
+.tl-line {
+    width: 2px; flex: 1; background: #e5e7eb; margin-top: 6px;
+}
+.tl-item:last-child .tl-line { display: none; }
+.tl-year { font-size: .72rem; font-weight: 800; color: #f59e0b; letter-spacing: 1px; margin-bottom: 2px; }
+.tl-title { font-size: .9rem; font-weight: 700; color: #0a1628; margin-bottom: 2px; }
+.tl-desc  { font-size: .82rem; color: #6b7280; line-height: 1.5; margin: 0; }
+
+/* ══ MVV ════════════════════════════════════════════════════ */
+.ab-mvv { padding: 96px 0; background: #f8f9fb; }
+.mvv-card {
+    background: #fff; border-radius: 20px;
+    padding: 40px 32px; height: 100%;
+    box-shadow: 0 2px 16px rgba(0,0,0,.05);
+    border-bottom: 4px solid transparent;
     transition: transform .2s, box-shadow .2s;
 }
-.mv-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,.1); }
-.mv-card.mission { border-top-color: #f59e0b; }
-.mv-card.vision  { border-top-color: #3b82f6; }
-.mv-card.values  { border-top-color: #10b981; }
-.mv-icon {
-    width: 56px; height: 56px; border-radius: 14px;
+.mvv-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,.1); }
+.mvv-card.mission { border-bottom-color: #f59e0b; }
+.mvv-card.vision  { border-bottom-color: #3b82f6; }
+.mvv-card.values  { border-bottom-color: #10b981; }
+.mvv-icon {
+    width: 60px; height: 60px; border-radius: 16px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.8rem; margin-bottom: 20px;
+    font-size: 1.9rem; margin-bottom: 22px;
 }
-.mv-card.mission .mv-icon { background: #fef3c7; color: #d97706; }
-.mv-card.vision  .mv-icon { background: #dbeafe; color: #2563eb; }
-.mv-card.values  .mv-icon { background: #d1fae5; color: #059669; }
-.mv-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; color: #1a2332; }
-.mv-card p  { font-size: .9rem; color: #5a6a7a; line-height: 1.7; margin: 0; }
-
-/* ── Stats ── */
-.about-stats { padding: 72px 0; background: #fff; }
-.astat-item { text-align: center; padding: 24px 16px; }
-.astat-num {
-    font-size: clamp(2.4rem, 4vw, 3.6rem); font-weight: 900;
-    color: #1a2332; line-height: 1;
-    background: linear-gradient(135deg, #1a2332, #f59e0b);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.astat-label { font-size: .82rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
-.astat-sep { width: 1px; background: #e5e7eb; align-self: stretch; margin: 8px 0; }
-
-/* ── Değerlerimiz listesi ── */
+.mvv-card.mission .mvv-icon { background: #fef3c7; color: #d97706; }
+.mvv-card.vision  .mvv-icon { background: #dbeafe; color: #2563eb; }
+.mvv-card.values  .mvv-icon { background: #d1fae5; color: #059669; }
+.mvv-card h3 { font-size: 1.2rem; font-weight: 800; color: #0a1628; margin-bottom: 14px; }
+.mvv-card p  { font-size: .9rem; color: #6b7280; line-height: 1.75; margin: 0; }
 .values-list { list-style: none; padding: 0; margin: 0; }
 .values-list li {
     display: flex; align-items: flex-start; gap: 10px;
-    margin-bottom: 10px; font-size: .9rem; color: #5a6a7a; line-height: 1.5;
+    margin-bottom: 10px; font-size: .88rem; color: #6b7280; line-height: 1.5;
 }
 .values-list li::before {
-    content: '✦';
-    color: #10b981; font-size: .7rem; margin-top: 3px; flex-shrink: 0;
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: #10b981; flex-shrink: 0; margin-top: 6px;
 }
 
-/* ── Story ── */
-.about-story { padding: 80px 0; background: #f8f9fb; }
-.story-img-wrap {
-    border-radius: 16px; overflow: hidden;
-    aspect-ratio: 4/3;
-    background: linear-gradient(135deg, #1a2c42, #0e1f33);
-    display: flex; align-items: center; justify-content: center;
-    color: rgba(255,255,255,.15); font-size: 5rem;
+/* ══ REFERENCES BAND ════════════════════════════════════════ */
+.ab-refs { padding: 80px 0; background: #fff; border-top: 1px solid #f0f0f0; }
+.refs-logo-grid {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    justify-content: center; align-items: center;
+    margin-top: 48px;
 }
-.story-tag {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: .72rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-    color: #f59e0b; margin-bottom: 14px;
+.ref-logo-item {
+    background: #f8f9fb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px 32px;
+    font-size: .88rem; font-weight: 700;
+    color: #374151;
+    transition: all .2s;
+    text-align: center; min-width: 160px;
 }
-.story-tag::before { content:''; display:inline-block; width:28px; height:2px; background:#f59e0b; }
-.story-title { font-size: clamp(1.4rem, 2.5vw, 2rem); font-weight: 800; color: #1a2332; margin-bottom: 16px; line-height: 1.2; }
-.story-text  { font-size: .92rem; color: #5a6a7a; line-height: 1.8; }
+.ref-logo-item:hover {
+    border-color: #f59e0b;
+    background: #fffbeb;
+    color: #92400e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(245,158,11,.15);
+}
 
-/* ── CTA ── */
-.about-cta {
-    padding: 72px 0;
-    background: linear-gradient(135deg, #1a2332 0%, #1e3a5f 100%);
+/* ══ CTA ════════════════════════════════════════════════════ */
+.ab-cta {
+    padding: 96px 0;
+    background: linear-gradient(135deg, #0a1628 0%, #1e3a5f 100%);
     text-align: center; color: #fff;
+    position: relative; overflow: hidden;
 }
-.about-cta h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 800; margin-bottom: 12px; }
-.about-cta p  { color: rgba(255,255,255,.6); font-size: .95rem; margin-bottom: 28px; }
+.ab-cta::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 700px 500px at 50% 50%, rgba(245,158,11,.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+.ab-cta h2 { font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 900; margin-bottom: 14px; }
+.ab-cta p  { color: rgba(255,255,255,.6); font-size: .95rem; margin-bottom: 32px; max-width: 480px; margin-left: auto; margin-right: auto; }
+
+/* ══ REVEAL ═════════════════════════════════════════════════ */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.visible { opacity: 1; transform: none; }
+.delay-1 { transition-delay: .1s; }
+.delay-2 { transition-delay: .2s; }
+.delay-3 { transition-delay: .3s; }
 </style>
 }
 
-<!-- ── Hero ── -->
-<section class="about-hero">
-    <div class="container">
-        <span class="sh-eyebrow">@(isEn ? "Who We Are" : "Biz Kimiz")</span>
-        <h1>@(isEn ? "Building the Future<br/>with Confidence" : "Güvenle<br/>Geleceği İnşa Ediyoruz")</h1>
-        <div class="about-hero-line"></div>
-        <p>@(isEn
-            ? "Since our founding, Brikon Yapı has been delivering high-quality residential and commercial construction projects with a commitment to trust, innovation, and excellence."
-            : "Kuruluşumuzdan bu yana Brikon Yapı; güven, yenilik ve mükemmeliyete olan bağlılığımızla yüksek kaliteli konut ve ticari inşaat projeleri hayata geçirmeye devam etmektedir.")</p>
+<!-- ══ HERO ════════════════════════════════════════════════ -->
+<section class="ab-hero">
+    <div class="ab-hero-bg"></div>
+    <div class="ab-hero-grid"></div>
+    <div class="container" style="position:relative;z-index:1;">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-7">
+                <div class="ab-eyebrow">@(isEn ? "Who We Are" : "Biz Kimiz")</div>
+                <h1>@(isEn
+                    ? "Building the Future<br/><span>with Confidence</span>"
+                    : "Güvenle<br/><span>Geleceği İnşa Ediyoruz</span>")</h1>
+                <p>@(isEn
+                    ? "Since our founding, Brikon Yapı has been delivering high-quality construction projects across Turkey with an unwavering commitment to quality, safety, and customer satisfaction."
+                    : "Kuruluşumuzdan bu yana Brikon Yapı; Türkiye'nin dört bir yanında yüksek kaliteli inşaat projeleri hayata geçirmekte, kalite, güvenlik ve müşteri memnuniyetine olan bağlılığından asla ödün vermemektedir.")</p>
+                <div class="ab-hero-badges">
+                    <span class="ab-badge"><iconify-icon icon="iconamoon:building-duotone"></iconify-icon> @(isEn ? "37 Completed Projects" : "37 Proje")</span>
+                    <span class="ab-badge"><iconify-icon icon="iconamoon:location-pin-duotone"></iconify-icon> @(isEn ? "10+ Cities" : "10+ Şehir")</span>
+                    <span class="ab-badge"><iconify-icon icon="iconamoon:calendar-duotone"></iconify-icon> @(isEn ? "25+ Years" : "25+ Yıllık Deneyim")</span>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block text-center" style="opacity:.15;font-size:14rem;line-height:1;">
+                <iconify-icon icon="iconamoon:building-apartment-duotone" style="color:#fff;"></iconify-icon>
+            </div>
+        </div>
     </div>
 </section>
 
-<!-- ── Mission / Vision / Values ── -->
-<section class="mv-section">
+<!-- ══ STATS ═══════════════════════════════════════════════ -->
+<section class="ab-stats">
     <div class="container">
+        <div class="ab-stats-inner">
+            <div class="ab-stat reveal">
+                <span class="ab-stat-num">37+</span>
+                <div class="ab-stat-label">@(isEn ? "Projects" : "Tamamlanan Proje")</div>
+            </div>
+            <div class="ab-stat reveal delay-1">
+                <span class="ab-stat-num">25+</span>
+                <div class="ab-stat-label">@(isEn ? "Years of Experience" : "Yıllık Deneyim")</div>
+            </div>
+            <div class="ab-stat reveal delay-2">
+                <span class="ab-stat-num">10+</span>
+                <div class="ab-stat-label">@(isEn ? "Cities" : "Farklı Şehir")</div>
+            </div>
+            <div class="ab-stat reveal delay-3">
+                <span class="ab-stat-num">6+</span>
+                <div class="ab-stat-label">@(isEn ? "Institutional Partners" : "Kurumsal İş Ortağı")</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══ WHY US ══════════════════════════════════════════════ -->
+<section class="ab-why">
+    <div class="container">
+        <div class="row g-5 align-items-center mb-5">
+            <div class="col-lg-5 reveal">
+                <div class="ab-section-label">@(isEn ? "Why Choose Us" : "Neden Brikon Yapı?")</div>
+                <h2 class="ab-section-title">@(isEn ? "Your Project,<br/>Our Expertise" : "Projeniz,<br/>Bizim Uzmanlığımız")</h2>
+                <p class="ab-section-sub">@(isEn
+                    ? "From concept to completion, we bring decades of expertise and a dedicated team to every project we undertake."
+                    : "Fikir aşamasından teslimata kadar her projede onlarca yıllık deneyimimizi ve özverili ekibimizi seferber ediyoruz.")</p>
+            </div>
+        </div>
         <div class="row g-4">
-            <div class="col-md-4">
-                <div class="mv-card mission reveal">
-                    <div class="mv-icon">
+            <div class="col-sm-6 col-lg-3 reveal">
+                <div class="why-card">
+                    <div class="why-icon" style="background:#fef3c7;">
+                        <iconify-icon icon="iconamoon:shield-yes-duotone" style="color:#d97706;"></iconify-icon>
+                    </div>
+                    <h4>@(isEn ? "Quality Assurance" : "Kalite Güvencesi")</h4>
+                    <p>@(isEn ? "Every project is built to the highest standards with rigorous quality controls at each stage." : "Her proje, her aşamada titiz kalite kontrolleriyle en yüksek standartlarda inşa edilir.")</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3 reveal delay-1">
+                <div class="why-card">
+                    <div class="why-icon" style="background:#dbeafe;">
+                        <iconify-icon icon="iconamoon:time-duotone" style="color:#2563eb;"></iconify-icon>
+                    </div>
+                    <h4>@(isEn ? "On-Time Delivery" : "Zamanında Teslimat")</h4>
+                    <p>@(isEn ? "We honor our commitments. Projects are delivered on schedule without compromising quality." : "Taahhütlerimize sadık kalıyoruz. Projeler kaliteden ödün vermeden zamanında teslim edilir.")</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3 reveal delay-2">
+                <div class="why-card">
+                    <div class="why-icon" style="background:#d1fae5;">
+                        <iconify-icon icon="iconamoon:certificate-duotone" style="color:#059669;"></iconify-icon>
+                    </div>
+                    <h4>@(isEn ? "Licensed & Certified" : "Lisanslı ve Sertifikalı")</h4>
+                    <p>@(isEn ? "Fully licensed contractor with all required certifications for public and private sector projects." : "Kamu ve özel sektör projeleri için gerekli tüm sertifikalara sahip, tam lisanslı müteahhit.")</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3 reveal delay-3">
+                <div class="why-card">
+                    <div class="why-icon" style="background:#ede9fe;">
+                        <iconify-icon icon="iconamoon:users-duotone" style="color:#7c3aed;"></iconify-icon>
+                    </div>
+                    <h4>@(isEn ? "Expert Team" : "Uzman Ekip")</h4>
+                    <p>@(isEn ? "Our experienced engineers and project managers ensure the highest level of execution on every job." : "Deneyimli mühendislerimiz ve proje yöneticilerimiz her işte en yüksek düzeyde uygulama sağlar.")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══ STORY + TİMELİNE ═══════════════════════════════════ -->
+<section class="ab-story">
+    <div class="container">
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-5 reveal">
+                <div class="story-img-outer">
+                    <div class="story-img-placeholder">
+                        <iconify-icon icon="iconamoon:building-apartment-duotone"></iconify-icon>
+                        <span style="font-size:1rem;letter-spacing:2px;text-transform:uppercase;">Brikon Yapı</span>
+                    </div>
+                    <div class="story-badge">
+                        <span>25+</span>
+                        @(isEn ? "Years of<br/>Experience" : "Yıllık<br/>Deneyim")
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7 reveal delay-1">
+                <div class="ab-section-label">@(isEn ? "Our Story" : "Hikayemiz")</div>
+                <h2 class="ab-section-title">@(isEn ? "Decades of Building<br/>Lasting Structures" : "On Yıllardır Kalıcı<br/>Yapılar İnşa Ediyoruz")</h2>
+                <p style="font-size:.93rem;color:#6b7280;line-height:1.75;margin-bottom:32px;">@(isEn
+                    ? "Brikon Yapı was founded with a simple but powerful vision: to build structures that stand the test of time. From mass housing projects with TOKİ to university campuses, hospitals, and luxury residences — every project reflects our commitment to quality and trust."
+                    : "Brikon Yapı; zamanın sınavına dayanacak yapılar inşa etmek gibi sade ama güçlü bir vizyonla kuruldu. TOKİ ile toplu konut projelerinden üniversite kampüslerine, hastanelerden lüks konutlara kadar her proje, kalite ve güvene olan bağlılığımızın yansımasıdır.")</p>
+
+                <div class="timeline">
+                    <div class="tl-item">
+                        <div class="tl-dot-wrap"><div class="tl-dot"></div><div class="tl-line"></div></div>
+                        <div>
+                            <div class="tl-year">2000'ler</div>
+                            <div class="tl-title">@(isEn ? "University Projects" : "Üniversite Projeleri")</div>
+                            <p class="tl-desc">@(isEn ? "Hacettepe University campus buildings: Congress Center, Faculty of Mechanical Engineering, Cafeteria and more." : "Hacettepe Üniversitesi kampüs binaları: Kongre Merkezi, Makina Mühendisliği Fakültesi, Kafeterya ve daha fazlası.")</p>
+                        </div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot-wrap"><div class="tl-dot"></div><div class="tl-line"></div></div>
+                        <div>
+                            <div class="tl-year">2011 – 2014</div>
+                            <div class="tl-title">@(isEn ? "TOKİ & Public Sector" : "TOKİ & Kamu Sektörü")</div>
+                            <p class="tl-desc">@(isEn ? "Mass housing villas in Afyonkarahisar and 100-bed Devrek State Hospital in Zonguldak." : "Afyonkarahisar'da toplu konut villaları ve Zonguldak Devrek'te 100 yataklı Devlet Hastanesi.")</p>
+                        </div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot-wrap"><div class="tl-dot"></div><div class="tl-line"></div></div>
+                        <div>
+                            <div class="tl-year">2017 – 2020</div>
+                            <div class="tl-title">@(isEn ? "Istanbul Airport" : "İstanbul Havalimanı")</div>
+                            <p class="tl-desc">@(isEn ? "IGA Istanbul Airport fuel management building and mosque interior finishing works." : "İGA İstanbul Havalimanı akaryakıt yönetim binası ve cami iç mekan ince işleri.")</p>
+                        </div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+                        <div>
+                            <div class="tl-year">@(isEn ? "Today" : "Günümüz")</div>
+                            <div class="tl-title">@(isEn ? "Trakpark Premium" : "Trakpark Premium")</div>
+                            <p class="tl-desc">@(isEn ? "42 luxury villas with social facilities in Çorlu, Tekirdağ — our latest landmark project." : "Çorlu, Tekirdağ'da 42 adet lüks villa ve sosyal tesisle Trakpark Premium — en son imza projemiz.")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══ MİSYON / VİZYON / DEĞERLER ═══════════════════════ -->
+<section class="ab-mvv">
+    <div class="container">
+        <div class="text-center mb-5 reveal">
+            <div class="ab-section-label" style="justify-content:center;">@(isEn ? "Our Principles" : "İlkelerimiz")</div>
+            <h2 class="ab-section-title">@(isEn ? "What Drives Us" : "Bizi Yönlendiren Değerler")</h2>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4 reveal">
+                <div class="mvv-card mission">
+                    <div class="mvv-icon">
                         <iconify-icon icon="iconamoon:target-duotone"></iconify-icon>
                     </div>
                     <h3>@(isEn ? "Our Mission" : "Misyonumuz")</h3>
                     <p>@(isEn
-                        ? "To develop sustainable, high-quality living spaces that go beyond merely constructing buildings — we create communities where people truly want to live."
-                        : "Yalnızca bina inşa etmenin ötesine geçerek insanların gerçekten yaşamak istediği, sürdürülebilir ve kaliteli yaşam alanları geliştirmek.")</p>
+                        ? "To develop sustainable, high-quality living and working spaces — going beyond merely constructing buildings to create communities where people truly want to be."
+                        : "Yalnızca bina inşa etmenin ötesine geçerek insanların gerçekten yaşamak ve çalışmak istediği, sürdürülebilir ve kaliteli alanlar geliştirmek.")</p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="mv-card vision reveal delay-1">
-                    <div class="mv-icon">
+            <div class="col-md-4 reveal delay-1">
+                <div class="mvv-card vision">
+                    <div class="mvv-icon">
                         <iconify-icon icon="iconamoon:eye-duotone"></iconify-icon>
                     </div>
                     <h3>@(isEn ? "Our Vision" : "Vizyonumuz")</h3>
                     <p>@(isEn
-                        ? "To become Turkey's most trusted construction company by delivering innovative projects that enhance the quality of life for thousands of families."
-                        : "Binlerce ailenin yaşam kalitesini artıran yenilikçi projelerle Türkiye'nin en güvenilir inşaat şirketi olmak.")</p>
+                        ? "To become Turkey's most trusted and respected construction company by delivering innovative projects that enhance the quality of life for thousands of families and institutions."
+                        : "Binlerce aile ve kurumun yaşam kalitesini artıran yenilikçi projelerle Türkiye'nin en güvenilir ve saygın inşaat şirketi olmak.")</p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="mv-card values reveal delay-2">
-                    <div class="mv-icon">
+            <div class="col-md-4 reveal delay-2">
+                <div class="mvv-card values">
+                    <div class="mvv-icon">
                         <iconify-icon icon="iconamoon:star-duotone"></iconify-icon>
                     </div>
                     <h3>@(isEn ? "Our Values" : "Değerlerimiz")</h3>
                     <ul class="values-list">
-                        <li>@(isEn ? "Quality & Craftsmanship" : "Kalite ve İşçilik")</li>
+                        <li>@(isEn ? "Quality & Craftsmanship" : "Kalite ve İşçilik Mükemmeliyeti")</li>
                         <li>@(isEn ? "Trust & Transparency" : "Güven ve Şeffaflık")</li>
                         <li>@(isEn ? "Innovation & Sustainability" : "Yenilik ve Sürdürülebilirlik")</li>
                         <li>@(isEn ? "Customer Satisfaction" : "Müşteri Memnuniyeti")</li>
                         <li>@(isEn ? "Timely Delivery" : "Zamanında Teslimat")</li>
+                        <li>@(isEn ? "Social Responsibility" : "Sosyal Sorumluluk")</li>
                     </ul>
                 </div>
             </div>
@@ -176,68 +499,53 @@
     </div>
 </section>
 
-<!-- ── İstatistikler ── -->
-<section class="about-stats">
+<!-- ══ REFERANSLAR ════════════════════════════════════════ -->
+<section class="ab-refs">
     <div class="container">
-        <div class="row g-0 text-center">
-            <div class="col-6 col-md-3">
-                <div class="astat-item">
-                    <div class="astat-num">45+</div>
-                    <div class="astat-label">@(isEn ? "Projects" : "Proje")</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="astat-item" style="border-left:1px solid #e5e7eb;">
-                    <div class="astat-num">15+</div>
-                    <div class="astat-label">@(isEn ? "Years of Experience" : "Yıllık Deneyim")</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="astat-item" style="border-left:1px solid #e5e7eb;border-top:1px solid #e5e7eb;">
-                    <div class="astat-num">5K+</div>
-                    <div class="astat-label">@(isEn ? "Happy Families" : "Mutlu Aile")</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="astat-item" style="border-left:1px solid #e5e7eb;border-top:1px solid #e5e7eb;">
-                    <div class="astat-num">10+</div>
-                    <div class="astat-label">@(isEn ? "Cities" : "Şehir")</div>
-                </div>
-            </div>
+        <div class="text-center reveal">
+            <div class="ab-section-label" style="justify-content:center;">@(isEn ? "Our Partners" : "İş Ortaklarımız")</div>
+            <h2 class="ab-section-title">@(isEn ? "Trusted by Leading Institutions" : "Önde Gelen Kurumların Güvendiği Firma")</h2>
+            <p class="ab-section-sub mx-auto text-center">@(isEn
+                ? "We are proud to have completed projects for some of Turkey's most reputable public institutions and private organizations."
+                : "Türkiye'nin en köklü kamu kurumları ve özel kuruluşları için projeler tamamlamış olmaktan gurur duyuyoruz.")</p>
+        </div>
+        <div class="refs-logo-grid reveal delay-1">
+            <div class="ref-logo-item">TOKİ</div>
+            <div class="ref-logo-item">T.C. Çevre ve Şehircilik Bakanlığı</div>
+            <div class="ref-logo-item">Hacettepe Üniversitesi</div>
+            <div class="ref-logo-item">İGA İstanbul Havalimanı</div>
+            <div class="ref-logo-item">Karabük Üniversitesi</div>
+            <div class="ref-logo-item">T.C. Milli Eğitim Bakanlığı</div>
         </div>
     </div>
 </section>
 
-<!-- ── Hikayemiz ── -->
-<section class="about-story">
-    <div class="container">
-        <div class="row g-5 align-items-center">
-            <div class="col-lg-6 reveal">
-                <div class="story-img-wrap">
-                    <iconify-icon icon="iconamoon:building-apartment-duotone"></iconify-icon>
-                </div>
-            </div>
-            <div class="col-lg-6 reveal delay-1">
-                <span class="story-tag">@(isEn ? "Our Story" : "Hikayemiz")</span>
-                <h2 class="story-title">@(isEn ? "Decades of Building Dreams" : "On Yıllardır Hayalleri İnşa Ediyoruz")</h2>
-                <p class="story-text">@(isEn
-                    ? "Brikon Yapı was founded with a simple but powerful vision: to build homes that families are proud to live in. Over the years, we have grown from a small regional contractor to one of the most respected names in Turkish construction, completing projects in over 10 cities across the country."
-                    : "Brikon Yapı; ailelerin gururla yaşadığı evler inşa etmek gibi sade ama güçlü bir vizyonla kuruldu. Yıllar içinde küçük bir bölgesel müteahhitten Türkiye'nin en saygın inşaat firmalarından biri haline geldik ve ülke genelinde 10'dan fazla şehirde projeler tamamladık.")</p>
-                <p class="story-text mt-3">@(isEn
-                    ? "From mass housing projects developed in partnership with TOKİ to luxury residential complexes, every project we undertake reflects our unwavering commitment to quality, safety, and customer satisfaction."
-                    : "TOKİ iş birliğiyle hayata geçirilen toplu konut projelerinden lüks konut komplekslerine kadar üstlendiğimiz her proje; kalite, güvenlik ve müşteri memnuniyetine olan sarsılmaz bağlılığımızın bir yansımasıdır.")</p>
-            </div>
+<!-- ══ CTA ════════════════════════════════════════════════ -->
+<section class="ab-cta">
+    <div class="container" style="position:relative;z-index:1;">
+        <h2 class="reveal">@(isEn ? "Ready to Start Your Project?" : "Projenize Başlamaya Hazır Mısınız?")</h2>
+        <p class="reveal delay-1">@(isEn
+            ? "Contact us today and let's build something great together."
+            : "Bugün bize ulaşın, birlikte harika şeyler inşa edelim.")</p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap reveal delay-2">
+            <a href="/Iletisim" class="btn btn-warning btn-lg fw-bold px-5" style="border-radius:10px;">
+                @(isEn ? "Contact Us" : "İletişime Geç")
+            </a>
+            <a href="/Projeler" class="btn btn-outline-light btn-lg px-5" style="border-radius:10px;">
+                @(isEn ? "View Projects" : "Projelerimiz")
+            </a>
         </div>
     </div>
 </section>
 
-<!-- ── CTA ── -->
-<section class="about-cta">
-    <div class="container">
-        <h2>@(isEn ? "Ready to Start Your Project?" : "Projenize Başlamaya Hazır Mısınız?")</h2>
-        <p>@(isEn ? "Contact us today and let's build something great together." : "Bugün bize ulaşın, birlikte harika şeyler inşa edelim.")</p>
-        <a href="/Projeler" class="btn btn-warning btn-lg fw-bold px-5" style="border-radius:10px;">
-            @(isEn ? "View Our Projects" : "Projelerimizi İncele")
-        </a>
-    </div>
-</section>
+@section Scripts {
+<script>
+(function(){
+    var els = document.querySelectorAll('.reveal');
+    var io  = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    els.forEach(function(el){ io.observe(el); });
+})();
+</script>
+}

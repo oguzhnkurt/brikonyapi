@@ -593,6 +593,21 @@ using (var scope = app.Services.CreateScope())
         await db.SaveChangesAsync();
     }
 
+    // ── Seed: Referanslar ───────────────────────────────────
+    if (!db.References.Any())
+    {
+        db.References.AddRange(new[]
+        {
+            new Reference { Name = "TOKİ",                                         LogoPath = null, OrderIndex = 1, IsActive = true, CreatedAt = DateTime.Now },
+            new Reference { Name = "T.C. Çevre ve Şehircilik Bakanlığı",          LogoPath = null, OrderIndex = 2, IsActive = true, CreatedAt = DateTime.Now },
+            new Reference { Name = "Hacettepe Üniversitesi",                       LogoPath = null, OrderIndex = 3, IsActive = true, CreatedAt = DateTime.Now },
+            new Reference { Name = "İGA İstanbul Havalimanı",                     LogoPath = null, OrderIndex = 4, IsActive = true, CreatedAt = DateTime.Now },
+            new Reference { Name = "Karabük Üniversitesi",                        LogoPath = null, OrderIndex = 5, IsActive = true, CreatedAt = DateTime.Now },
+            new Reference { Name = "T.C. Milli Eğitim Bakanlığı",                LogoPath = null, OrderIndex = 6, IsActive = true, CreatedAt = DateTime.Now },
+        });
+        await db.SaveChangesAsync();
+    }
+
     // ── Seed: İletişim Mesajları ─────────────────────────────
     if (!db.ContactMessages.Any())
     {
