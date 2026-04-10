@@ -192,25 +192,32 @@
                                     <div class="text-muted" style="font-size:.75rem;">Detay sayfasında arka planda sessizce oynar</div>
                                 </div>
                             </div>
-                            <label class="media-upload-box w-100" for="projectVideoInput" style="cursor:pointer;">
+                            <div id="video-preview-box" class="media-upload-box w-100" style="cursor:pointer;" onclick="document.getElementById('projectVideoInput').click()">
                                 @if (!string.IsNullOrEmpty(Model.VideoPath))
                                 {
-                                    <video src="@Model.VideoPath" class="w-100 rounded" style="height:170px;object-fit:cover;display:block;" muted playsinline></video>
+                                    <video id="video-preview-el" src="@Model.VideoPath" class="w-100 rounded" style="height:170px;object-fit:cover;display:block;" muted playsinline></video>
                                     <div class="media-upload-hint">
                                         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                        Değiştirmek için tıkla veya sürükle
+                                        Değiştirmek için tıkla
                                     </div>
                                 }
                                 else
                                 {
-                                    <div class="media-upload-empty">
+                                    <div id="video-empty-box" class="media-upload-empty">
                                         <svg width="32" height="32" fill="none" stroke="#adb5bd" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-                                        <span class="mt-2 d-block" style="font-size:.82rem;color:#adb5bd;">Video yükle (MP4 önerilir)</span>
+                                        <span class="mt-2 d-block" style="font-size:.82rem;color:#adb5bd;">Video seç ve yükle</span>
                                     </div>
                                 }
-                            </label>
-                            <input type="file" id="projectVideoInput" name="projectVideo" class="d-none" accept="video/mp4,video/*"
-                                   onchange="previewMedia(this,'projectVideoInput')" />
+                            </div>
+                            <!-- AJAX progress bar -->
+                            <div id="video-upload-progress" style="display:none;margin-top:8px;">
+                                <div style="background:#f0f0f0;border-radius:6px;height:6px;overflow:hidden;">
+                                    <div id="video-upload-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#0d6efd,#6ea8fe);border-radius:6px;transition:width .2s;"></div>
+                                </div>
+                                <div id="video-upload-status" style="font-size:.78rem;color:#888;margin-top:4px;">Yükleniyor...</div>
+                            </div>
+                            <!-- Video dosyası FORM'A dahil edilmez — AJAX ile ayrı yüklenir -->
+                            <input type="file" id="projectVideoInput" class="d-none" accept="video/mp4,video/quicktime,video/*" />
                         </div>
 
                     </div>
@@ -578,6 +585,77 @@ function showFileNames(input, inputId) {
     const el = document.getElementById(inputId + '-names');
     if (el) el.textContent = input.files.length + ' dosya seçildi: ' + names;
 }
+
+// ── Video AJAX Upload ────────────────────────────────────
+(function(){
+    var input    = document.getElementById('projectVideoInput');
+    var bar      = document.getElementById('video-upload-bar');
+    var status   = document.getElementById('video-upload-status');
+    var progress = document.getElementById('video-upload-progress');
+    var box      = document.getElementById('video-preview-box');
+    var projectId = @Model.Id;
+
+    input.addEventListener('change', function(){
+        var file = this.files[0];
+        if (!file) return;
+
+        // Preview
+        var url = URL.createObjectURL(file);
+        var existing = box.querySelector('video');
+        if (existing) existing.remove();
+        var emptyBox = document.getElementById('video-empty-box');
+        if (emptyBox) emptyBox.remove();
+        var vid = document.createElement('video');
+        vid.src = url; vid.className = 'w-100 rounded';
+        vid.style.cssText = 'height:170px;object-fit:cover;display:block;';
+        vid.muted = true; vid.playsInline = true;
+        box.insertBefore(vid, box.firstChild);
+
+        // AJAX upload
+        var fd = new FormData();
+        fd.append('projectId', projectId);
+        fd.append('videoFile', file);
+        fd.append('__RequestVerificationToken', _aft);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/Admin/Projects/UploadVideo');
+
+        xhr.upload.addEventListener('progress', function(e){
+            if (e.lengthComputable) {
+                var pct = Math.round(e.loaded / e.total * 100);
+                bar.style.width = pct + '%';
+                status.textContent = pct + '% yüklendi (' + (e.loaded/1024/1024).toFixed(1) + ' / ' + (e.total/1024/1024).toFixed(1) + ' MB)';
+            }
+        });
+
+        xhr.addEventListener('load', function(){
+            progress.style.display = 'none';
+            if (xhr.status === 200) {
+                status.textContent = 'Video kaydedildi.';
+                status.style.color = '#198754';
+                progress.style.display = 'block';
+                bar.style.width = '100%';
+                bar.style.background = '#198754';
+            } else {
+                status.textContent = 'Hata: ' + xhr.status;
+                status.style.color = '#dc3545';
+                progress.style.display = 'block';
+            }
+        });
+
+        xhr.addEventListener('error', function(){
+            progress.style.display = 'none';
+            alert('Video yüklenemedi. Bağlantıyı kontrol edin.');
+        });
+
+        progress.style.display = 'block';
+        bar.style.width = '0%';
+        bar.style.background = 'linear-gradient(90deg,#0d6efd,#6ea8fe)';
+        status.style.color = '#888';
+        status.textContent = 'Yükleniyor...';
+        xhr.send(fd);
+    });
+})();
 
 // Loading overlay on save
 document.getElementById('project-form').addEventListener('submit', function() {

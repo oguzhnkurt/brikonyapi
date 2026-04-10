@@ -176,6 +176,25 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadVideo(int projectId, IFormFile videoFile)
+        {
+            if (videoFile == null || videoFile.Length == 0)
+                return BadRequest(new { error = "Dosya boş." });
+
+            var existing = await _projects.GetByIdAsync(projectId);
+            if (existing == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(existing.VideoPath))
+                DeleteFile(existing.VideoPath);
+
+            var path = await SaveFileAsync(videoFile, "videos/projects");
+            existing.VideoPath = path;
+            await _projects.UpdateAsync(existing);
+
+            return Json(new { success = true, path });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Reorder()
         {
             var all = await _projects.GetAllAsync(); // ongoing first, then by date
