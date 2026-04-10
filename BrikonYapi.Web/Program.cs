@@ -10,6 +10,14 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(o =>
+{
+    o.Limits.MaxRequestBodySize       = 500 * 1024 * 1024; // 500 MB
+    o.Limits.KeepAliveTimeout         = TimeSpan.FromMinutes(10);
+    o.Limits.RequestHeadersTimeout    = TimeSpan.FromMinutes(5);
+    o.Limits.MinRequestBodyDataRate   = null; // yavaş bağlantılarda zaman aşımı olmasın
+});
+
 var dbProvider = builder.Configuration["DatabaseProvider"] ?? "PostgreSQL";
 var connStr    = builder.Configuration.GetConnectionString("DefaultConnection")!;
 
@@ -45,6 +53,11 @@ builder.Services.AddScoped<SiteSettingService>();
 builder.Services.AddScoped<ReferenceService>();
 
 builder.Services.AddLocalization();
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o =>
+{
+    o.MultipartBodyLengthLimit = 500 * 1024 * 1024; // 500 MB
+    o.ValueLengthLimit         = int.MaxValue;
+});
 builder.Services.AddControllersWithViews()
     .AddViewLocalization()
     .AddRazorRuntimeCompilation();
