@@ -13,10 +13,8 @@ namespace BrikonYapi.Web.Services
         {
             var q = _db.Projects.Include(p => p.Images).Where(p => p.IsActive);
             if (status.HasValue) q = q.Where(p => p.Status == status.Value);
-            // Devam edenler önce, sonra tamamlananlar; her grupta en yeni başlangıç tarihi üstte
             return await q
-                .OrderBy(p => p.Status == ProjectStatus.Ongoing ? 0 : 1)
-                .ThenByDescending(p => p.StartDate ?? p.CreatedAt)
+                .OrderBy(p => p.OrderIndex)
                 .ToListAsync();
         }
 
