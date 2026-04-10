@@ -159,28 +159,25 @@
                                     }
                                 </td>
                                 <td class="order-cell text-muted">@p.OrderIndex</td>
-                                <td class="text-end">
-                                    <div class="d-flex gap-1 justify-content-end">
-                                        <a href="/Admin/Projects/Edit/@p.Id" class="btn btn-sm btn-outline-secondary">
-                                            <iconify-icon icon="iconamoon:edit-duotone"></iconify-icon>
-                                            Düzenle
-                                        </a>
-                                        <a href="/Admin/Projects/Images/@p.Id" class="btn btn-sm btn-outline-primary" title="Görseller (@p.Images.Count)">
-                                            <iconify-icon icon="iconamoon:image-duotone"></iconify-icon>
-                                            <span class="ms-1">@p.Images.Count</span>
-                                        </a>
-                                        <a href="/Projeler/@p.Slug" target="_blank" class="btn btn-sm btn-outline-info">
-                                            <iconify-icon icon="iconamoon:link-external-duotone"></iconify-icon>
-                                        </a>
-                                        <form asp-area="Admin" asp-controller="Projects" asp-action="Delete" method="post" class="d-inline"
-                                              onsubmit="return confirm('Projeyi silmek istediğinize emin misiniz?')">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@p.Id" />
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <iconify-icon icon="iconamoon:trash-duotone"></iconify-icon>
-                                            </button>
-                                        </form>
-                                    </div>
+                                <td class="text-end" style="white-space:nowrap;">
+                                    <a href="/Admin/Projects/Edit/@p.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle">
+                                        <iconify-icon icon="iconamoon:edit-duotone"></iconify-icon>
+                                    </a>
+                                    <a href="/Admin/Projects/Images/@p.Id" class="btn btn-sm btn-outline-primary" title="Görseller (@p.Images.Count)">
+                                        <iconify-icon icon="iconamoon:image-duotone"></iconify-icon>
+                                        <span class="ms-1 badge bg-primary-subtle text-primary">@p.Images.Count</span>
+                                    </a>
+                                    <a href="/Projeler/@p.Slug" target="_blank" class="btn btn-sm btn-outline-info" title="Siteyi Görüntüle">
+                                        <iconify-icon icon="iconamoon:link-external-duotone"></iconify-icon>
+                                    </a>
+                                    <form asp-area="Admin" asp-controller="Projects" asp-action="Delete" method="post" class="d-inline"
+                                          onsubmit="return confirm('Projeyi silmek istediğinize emin misiniz?')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@p.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Sil">
+                                            <iconify-icon icon="iconamoon:trash-duotone"></iconify-icon>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         }
