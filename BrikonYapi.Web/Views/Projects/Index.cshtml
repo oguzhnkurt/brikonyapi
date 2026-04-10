@@ -490,17 +490,17 @@ body { background: #030608; }
         </div>
     </div>
     <div class="prj-header-bottom">
-        <button class="prj-stat-btn active" data-status-filter="ongoing">
+        <button class="prj-stat-btn active" data-status-filter="all">
+            <span class="prj-stat-val">@(Model.OngoingCount+Model.CompletedCount)</span>
+            <span class="prj-stat-lbl">@(isEn?"All":"Tümü")</span>
+        </button>
+        <button class="prj-stat-btn" data-status-filter="ongoing">
             <span class="prj-stat-val"><em>@Model.OngoingCount</em></span>
             <span class="prj-stat-lbl">@(isEn?"Ongoing":"Devam Eden")</span>
         </button>
         <button class="prj-stat-btn" data-status-filter="completed">
             <span class="prj-stat-val"><em>@Model.CompletedCount</em></span>
             <span class="prj-stat-lbl">@(isEn?"Completed":"Tamamlanan")</span>
-        </button>
-        <button class="prj-stat-btn" data-status-filter="all">
-            <span class="prj-stat-val">@(Model.OngoingCount+Model.CompletedCount)</span>
-            <span class="prj-stat-lbl">@(isEn?"Total":"Toplam")</span>
         </button>
         <span class="prj-count">@projects.Count @(isEn?"projects":"proje")</span>
     </div>
@@ -645,7 +645,7 @@ var countEl      = document.getElementById('prj-filter-count');
 var pgEl         = document.getElementById('prj-pagination');
 var cards        = Array.from(document.querySelectorAll('.prj-card'));
 var activeCat    = '';
-var activeStatus = 'ongoing';
+var activeStatus = 'all';
 var currentPage  = 1;
 var PAGE_SIZE    = 8;
 var filteredCards = [];
