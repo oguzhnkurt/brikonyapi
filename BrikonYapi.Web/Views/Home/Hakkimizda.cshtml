@@ -207,69 +207,100 @@
 }
 .hk-ref-chip:hover .hk-ref-chip-name { color: var(--ink); }
 
-/* ── CONTACT SECTION ─────────────────────────────────────── */
-.hk-contact {
+/* ── CTA BAND ────────────────────────────────────────────── */
+.hk-cta {
     background: var(--ink); color: #fff;
-    padding: 100px 0;
+    padding: 96px 0; text-align: center;
 }
-.hk-contact-left h2 {
+.hk-cta h2 {
     font-size: clamp(1.8rem, 3vw, 2.6rem);
-    font-weight: 800; line-height: 1.2; margin-bottom: 18px;
+    font-weight: 800; margin-bottom: 12px;
 }
-.hk-contact-left p {
-    font-size: .93rem; color: rgba(255,255,255,.55);
-    line-height: 1.75; margin-bottom: 32px;
+.hk-cta p {
+    font-size: .95rem; color: rgba(255,255,255,.45);
+    margin-bottom: 36px;
 }
-.hk-contact-detail {
-    display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;
+.hk-cta-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--gold); color: var(--ink);
+    font-size: .88rem; font-weight: 700; letter-spacing: .4px;
+    border: none; padding: 14px 40px; border-radius: 3px;
+    cursor: pointer; transition: opacity .2s;
 }
-.hk-contact-detail iconify-icon {
-    color: var(--gold); font-size: 1.2rem; flex-shrink: 0; margin-top: 1px;
-}
-.hk-contact-detail span { font-size: .88rem; color: rgba(255,255,255,.6); line-height: 1.5; }
+.hk-cta-btn:hover { opacity: .85; }
 
-.hk-form {
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.09);
-    border-radius: 4px; padding: 36px;
+/* ── CONTACT MODAL ───────────────────────────────────────── */
+.hk-modal-backdrop {
+    position: fixed; inset: 0; z-index: 1050;
+    background: rgba(5,10,20,.72);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
 }
+.hk-modal-backdrop.open { opacity: 1; pointer-events: all; }
+.hk-modal-box {
+    background: #111827; color: #fff;
+    border-radius: 6px; width: 100%; max-width: 560px;
+    max-height: 90svh; overflow-y: auto;
+    transform: translateY(20px); transition: transform .25s;
+    position: relative;
+}
+.hk-modal-backdrop.open .hk-modal-box { transform: translateY(0); }
+.hk-modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 28px 20px; border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.hk-modal-head h3 { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.hk-modal-close {
+    background: none; border: none; color: rgba(255,255,255,.4);
+    font-size: 1.4rem; line-height: 1; cursor: pointer; padding: 0;
+    transition: color .15s;
+}
+.hk-modal-close:hover { color: #fff; }
+.hk-modal-body { padding: 28px; }
+
+/* form inside modal */
 .hk-form .form-label {
-    font-size: .72rem; font-weight: 700;
+    font-size: .68rem; font-weight: 700;
     letter-spacing: 1.5px; text-transform: uppercase;
-    color: rgba(255,255,255,.5); margin-bottom: 6px;
+    color: rgba(255,255,255,.45); margin-bottom: 6px;
 }
-.hk-form .form-control, .hk-form .form-select {
+.hk-form .form-control {
     background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.1);
     color: #fff; border-radius: 3px;
     font-size: .9rem; padding: 11px 14px;
 }
-.hk-form .form-control::placeholder { color: rgba(255,255,255,.25); }
+.hk-form .form-control::placeholder { color: rgba(255,255,255,.2); }
 .hk-form .form-control:focus {
     background: rgba(255,255,255,.09);
     border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(200,150,12,.15);
+    box-shadow: 0 0 0 3px rgba(200,150,12,.12);
     color: #fff;
 }
 .hk-form textarea.form-control { resize: none; }
 .hk-btn-send {
-    background: var(--gold); color: #0d1117;
+    background: var(--gold); color: var(--ink);
     border: none; padding: 13px 36px;
     font-size: .88rem; font-weight: 700;
-    letter-spacing: .5px; border-radius: 3px;
-    transition: opacity .2s;
+    letter-spacing: .4px; border-radius: 3px;
+    transition: opacity .2s; cursor: pointer; width: 100%;
 }
 .hk-btn-send:hover { opacity: .88; }
 
+/* alerts */
 .hk-alert-ok {
     background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3);
     color: #6ee7b7; border-radius: 3px;
-    padding: 12px 16px; font-size: .88rem; margin-bottom: 20px;
+    padding: 12px 16px; font-size: .88rem; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
 }
 .hk-alert-err {
     background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
     color: #fca5a5; border-radius: 3px;
-    padding: 12px 16px; font-size: .88rem; margin-bottom: 20px;
+    padding: 12px 16px; font-size: .88rem; margin-bottom: 16px;
 }
 
 /* ── REVEAL ──────────────────────────────────────────────── */
@@ -505,96 +536,97 @@
     }
 </section>
 
-<!-- ── İLETİŞİM ──────────────────────────────────────────── -->
-<section class="hk-contact" id="iletisim">
+<!-- ── CTA BAND ────────────────────────────────────────────── -->
+<section class="hk-cta rv">
     <div class="container">
-        <div class="row g-5 align-items-start">
-            <div class="col-lg-4 hk-contact-left rv">
-                <span class="hk-label" style="color:var(--gold);">@(isEn ? "Get in Touch" : "İletişime Geçin")</span>
-                <h2>
-                    @if (isEn) { @Html.Raw("Let's Build<br/>Something Together") }
-                    else       { @Html.Raw("Birlikte Bir Şeyler<br/>İnşa Edelim") }
-                </h2>
-                <p>@(isEn
-                    ? "Tell us about your project. Our team will reach back within 24 hours."
-                    : "Projeniz hakkında bize bilgi verin. Ekibimiz 24 saat içinde size ulaşacaktır.")</p>
-                <div class="hk-contact-detail">
-                    <iconify-icon icon="iconamoon:location-pin-duotone"></iconify-icon>
-                    <span>Konya, Türkiye</span>
-                </div>
-                <div class="hk-contact-detail">
-                    <iconify-icon icon="iconamoon:phone-duotone"></iconify-icon>
-                    <span>+90 332 XXX XX XX</span>
-                </div>
-                <div class="hk-contact-detail">
-                    <iconify-icon icon="iconamoon:email-duotone"></iconify-icon>
-                    <span>info@@brikonyapi.com</span>
-                </div>
-            </div>
-            <div class="col-lg-8 rv d1">
-                @if (ViewBag.ContactSuccess == true)
-                {
-                    <div class="hk-alert-ok">
-                        <iconify-icon icon="iconamoon:check-circle-duotone" style="margin-right:8px;"></iconify-icon>
-                        @(isEn ? "Your message has been sent. We'll get back to you shortly." : "Mesajınız iletildi. En kısa sürede size geri döneceğiz.")
-                    </div>
-                }
-                @if (ViewBag.ContactError != null)
-                {
-                    <div class="hk-alert-err">@ViewBag.ContactError</div>
-                }
-                <form class="hk-form" method="post" action="/Hakkimizda">
-                    @Html.AntiForgeryToken()
-                    <div class="row g-3">
-                        <div class="col-sm-6">
-                            <label class="form-label">@(isEn ? "Full Name" : "Ad Soyad") *</label>
-                            <input type="text" name="fullName" class="form-control" placeholder="@(isEn ? "John Doe" : "Adınız Soyadınız")" required />
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label">@(isEn ? "E-mail" : "E-posta") *</label>
-                            <input type="email" name="email" class="form-control" placeholder="ornek@mail.com" required />
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label">@(isEn ? "Phone" : "Telefon")</label>
-                            <input type="tel" name="phone" class="form-control" placeholder="+90 5XX XXX XX XX" />
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label">@(isEn ? "Subject" : "Konu")</label>
-                            <input type="text" name="subject" class="form-control" placeholder="@(isEn ? "Project inquiry" : "Proje talebi")" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">@(isEn ? "Message" : "Mesaj") *</label>
-                            <textarea name="message" class="form-control" rows="5"
-                                placeholder="@(isEn ? "Tell us about your project..." : "Projeniz hakkında bilgi verin...")" required></textarea>
-                        </div>
-                        <div class="col-12">
-                            <button type="submit" class="hk-btn-send">
-                                @(isEn ? "Send Message" : "Mesaj Gönder")
-                                <iconify-icon icon="iconamoon:arrow-right-2-bold" style="margin-left:8px;font-size:.9rem;"></iconify-icon>
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <h2>@(isEn ? "Ready to Start Your Project?" : "Projenizi Hayata Geçirmeye Hazır Mısınız?")</h2>
+        <p>@(isEn ? "Tell us about your idea — our team will get back within 24 hours." : "Fikrinizi bize anlatın, ekibimiz 24 saat içinde size ulaşsın.")</p>
+        <button class="hk-cta-btn" id="hkContactOpen">
+            @(isEn ? "Get in Touch" : "İletişime Geçin")
+            <iconify-icon icon="iconamoon:arrow-right-2-bold"></iconify-icon>
+        </button>
     </div>
 </section>
+
+<!-- ── İLETİŞİM MODAL ─────────────────────────────────────── -->
+<div class="hk-modal-backdrop" id="hkModal" role="dialog" aria-modal="true" aria-label="@(isEn ? "Contact" : "İletişim")">
+    <div class="hk-modal-box">
+        <div class="hk-modal-head">
+            <h3>@(isEn ? "Send us a Message" : "Mesaj Gönderin")</h3>
+            <button class="hk-modal-close" id="hkModalClose" aria-label="Kapat">&times;</button>
+        </div>
+        <div class="hk-modal-body">
+            @if (ViewBag.ContactSuccess == true)
+            {
+                <div class="hk-alert-ok">
+                    <iconify-icon icon="iconamoon:check-circle-duotone"></iconify-icon>
+                    @(isEn ? "Your message has been sent. We'll get back to you shortly." : "Mesajınız iletildi. En kısa sürede size geri döneceğiz.")
+                </div>
+            }
+            @if (ViewBag.ContactError != null)
+            {
+                <div class="hk-alert-err">@ViewBag.ContactError</div>
+            }
+            <form class="hk-form" method="post" action="/Hakkimizda">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label">@(isEn ? "Full Name" : "Ad Soyad") *</label>
+                        <input type="text" name="fullName" class="form-control" placeholder="@(isEn ? "John Doe" : "Adınız Soyadınız")" required />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label">@(isEn ? "E-mail" : "E-posta") *</label>
+                        <input type="email" name="email" class="form-control" placeholder="ornek@mail.com" required />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label">@(isEn ? "Phone" : "Telefon")</label>
+                        <input type="tel" name="phone" class="form-control" placeholder="+90 5XX XXX XX XX" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label">@(isEn ? "Subject" : "Konu")</label>
+                        <input type="text" name="subject" class="form-control" placeholder="@(isEn ? "Project inquiry" : "Proje talebi")" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">@(isEn ? "Message" : "Mesaj") *</label>
+                        <textarea name="message" class="form-control" rows="5"
+                            placeholder="@(isEn ? "Tell us about your project..." : "Projeniz hakkında bilgi verin...")" required></textarea>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="hk-btn-send">
+                            @(isEn ? "Send Message" : "Mesaj Gönder")
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
 <script>
 (function(){
+    // reveal
     var io = new IntersectionObserver(function(entries){
         entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); } });
     }, { threshold: 0.08 });
     document.querySelectorAll('.rv').forEach(function(el){ io.observe(el); });
 
-    // scroll to form if success/error anchor
-    if(window.location.hash === '#iletisim'){
-        setTimeout(function(){
-            var el = document.getElementById('iletisim');
-            if(el) el.scrollIntoView({ behavior:'smooth' });
-        }, 300);
-    }
+    // modal
+    var backdrop = document.getElementById('hkModal');
+    var openBtn  = document.getElementById('hkContactOpen');
+    var closeBtn = document.getElementById('hkModalClose');
+    var hasResult = @(ViewBag.ContactSuccess == true || ViewBag.ContactError != null ? "true" : "false");
+
+    function openModal()  { backdrop.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeModal() { backdrop.classList.remove('open'); document.body.style.overflow = ''; }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', function(e){ if(e.target === backdrop) closeModal(); });
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeModal(); });
+
+    // auto-open on success or error (after form submit redirect)
+    if(hasResult) openModal();
 })();
 </script>
 }
