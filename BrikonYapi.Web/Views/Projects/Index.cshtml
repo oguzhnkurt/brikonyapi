@@ -376,8 +376,6 @@ body { background: #030608; }
 }
 .prj-modal-desc {
   font-size: .85rem; color: #666; line-height: 1.75; margin: 0 0 1.6rem;
-  overflow: hidden;
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
 }
 .prj-modal-btn {
   display: block; text-align: center;
@@ -577,7 +575,7 @@ else
            data-units="@(p.UnitCount.HasValue ? p.UnitCount.ToString() : "")"
            data-floors="@(p.FloorCount.HasValue ? p.FloorCount.ToString() : "")"
            data-area="@(p.TotalArea.HasValue ? p.TotalArea.Value.ToString("N0") : "")"
-           data-desc="@(p.ShortDescription ?? "")"
+           data-desc="@(p.Description ?? p.ShortDescription ?? "")"
            data-mainimg="@(p.MainImagePath ?? "")"
            data-images="@Html.Raw(System.Web.HttpUtility.HtmlEncode(imagesJson))"
            style="transition-delay:@(((idx-1)%4)*65)ms">
