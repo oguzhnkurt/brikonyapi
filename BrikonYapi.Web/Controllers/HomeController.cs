@@ -36,10 +36,11 @@ namespace BrikonYapi.Web.Controllers
         }
 
         [Route("Hakkimizda")]
-        public IActionResult Hakkimizda()
+        public async Task<IActionResult> Hakkimizda()
         {
             if (TempData["ContactSuccess"] != null) ViewBag.ContactSuccess = true;
             if (TempData["ContactError"]   != null) ViewBag.ContactError   = TempData["ContactError"];
+            ViewBag.References = await _refs.GetActiveAsync();
             return View();
         }
 

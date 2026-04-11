@@ -171,20 +171,41 @@
 }
 @@media(max-width:768px) { .hk-mvv-grid { grid-template-columns: 1fr; } }
 
-/* ── REFERENCES ──────────────────────────────────────────── */
-.hk-refs-list {
-    display: flex; flex-wrap: wrap; gap: 0;
-    border: 1px solid var(--line);
+/* ── REFERENCES MARQUEE ──────────────────────────────────── */
+.hk-refs-outer {
+    overflow: hidden; margin-top: 48px;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%);
 }
-.hk-ref-item {
-    flex: 1 1 160px; padding: 28px 24px;
+.hk-refs-track {
+    display: flex; gap: 0; width: max-content;
+    animation: hkRefsScroll 28s linear infinite;
+    will-change: transform;
+}
+.hk-refs-track:hover { animation-play-state: paused; }
+@@keyframes hkRefsScroll {
+    from { transform: translate3d(0,0,0); }
+    to   { transform: translate3d(-50%,0,0); }
+}
+.hk-ref-chip {
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px 40px;
     border-right: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    text-align: center; font-size: .82rem;
-    font-weight: 700; color: var(--ink2);
-    transition: color .2s, background .2s;
+    min-width: 200px; transition: background .2s;
+    cursor: default;
 }
-.hk-ref-item:hover { color: var(--ink); background: var(--gold-l); }
+.hk-ref-chip:hover { background: var(--gold-l); }
+.hk-ref-chip img {
+    height: 48px; width: auto; max-width: 140px;
+    object-fit: contain; opacity: .7; transition: opacity .25s;
+}
+.hk-ref-chip:hover img { opacity: 1; }
+.hk-ref-chip-name {
+    font-size: .82rem; font-weight: 700; color: var(--ink2);
+    white-space: nowrap; letter-spacing: .03em;
+    transition: color .2s;
+}
+.hk-ref-chip:hover .hk-ref-chip-name { color: var(--ink); }
 
 /* ── CONTACT SECTION ─────────────────────────────────────── */
 .hk-contact {
@@ -437,21 +458,51 @@
 </section>
 
 <!-- ── REFERANSLAR ───────────────────────────────────────── -->
+@{
+    var refs = ViewBag.References as List<BrikonYapi.Web.Data.Entities.Reference> ?? new List<BrikonYapi.Web.Data.Entities.Reference>();
+}
 <section class="hk-sec hk-sec-alt">
     <div class="container">
-        <div class="text-center mb-5 rv">
+        <div class="text-center rv">
             <span class="hk-label">@(isEn ? "Our Partners" : "İş Ortaklarımız")</span>
             <h2 class="hk-h2">@(isEn ? "Trusted by Leading Institutions" : "Önde Gelen Kurumların Güveni")</h2>
         </div>
-        <div class="hk-refs-list rv d1">
-            <div class="hk-ref-item">TOKİ</div>
-            <div class="hk-ref-item">T.C. Çevre ve Şehircilik Bakanlığı</div>
-            <div class="hk-ref-item">Hacettepe Üniversitesi</div>
-            <div class="hk-ref-item">İGA İstanbul Havalimanı</div>
-            <div class="hk-ref-item">Karabük Üniversitesi</div>
-            <div class="hk-ref-item">T.C. Milli Eğitim Bakanlığı</div>
+    </div>
+    @if (refs.Any())
+    {
+    <div class="hk-refs-outer rv d1">
+        <div class="hk-refs-track">
+            @* first pass *@
+            @foreach (var r in refs)
+            {
+                <div class="hk-ref-chip">
+                    @if (!string.IsNullOrEmpty(r.LogoPath))
+                    {
+                        <img src="@r.LogoPath" alt="@r.Name" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="hk-ref-chip-name">@r.Name</span>
+                    }
+                </div>
+            }
+            @* second pass — seamless loop *@
+            @foreach (var r in refs)
+            {
+                <div class="hk-ref-chip" aria-hidden="true">
+                    @if (!string.IsNullOrEmpty(r.LogoPath))
+                    {
+                        <img src="@r.LogoPath" alt="@r.Name" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="hk-ref-chip-name">@r.Name</span>
+                    }
+                </div>
+            }
         </div>
     </div>
+    }
 </section>
 
 <!-- ── İLETİŞİM ──────────────────────────────────────────── -->
