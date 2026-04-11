@@ -10,12 +10,14 @@ namespace BrikonYapi.Web.Controllers
         private readonly ProjectService _projects;
         private readonly SiteSettingService _settings;
         private readonly ReferenceService _refs;
+        private readonly ContactService _contact;
 
-        public HomeController(ProjectService projects, SiteSettingService settings, ReferenceService refs)
+        public HomeController(ProjectService projects, SiteSettingService settings, ReferenceService refs, ContactService contact)
         {
             _projects = projects;
             _settings = settings;
             _refs     = refs;
+            _contact  = contact;
         }
 
         public async Task<IActionResult> Index()
@@ -34,7 +36,33 @@ namespace BrikonYapi.Web.Controllers
         }
 
         [Route("Hakkimizda")]
-        public IActionResult Hakkimizda() => View();
+        public IActionResult Hakkimizda()
+        {
+            if (TempData["ContactSuccess"] != null) ViewBag.ContactSuccess = true;
+            if (TempData["ContactError"]   != null) ViewBag.ContactError   = TempData["ContactError"];
+            return View();
+        }
+
+        [HttpPost, Route("Hakkimizda"), ValidateAntiForgeryToken]
+        public async Task<IActionResult> HakkimizdaContact(string fullName, string email, string? phone, string? subject, string message)
+        {
+            if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(message))
+            {
+                TempData["ContactError"] = "Lütfen zorunlu alanları doldurun.";
+                return Redirect("/Hakkimizda#iletisim");
+            }
+            await _contact.SendAsync(new ContactMessage
+            {
+                FullName  = fullName.Trim(),
+                Email     = email.Trim(),
+                Phone     = phone?.Trim(),
+                Subject   = subject?.Trim(),
+                Message   = message.Trim(),
+                CreatedAt = DateTime.Now
+            });
+            TempData["ContactSuccess"] = true;
+            return Redirect("/Hakkimizda#iletisim");
+        }
 
         [Route("Hizmetlerimiz")]
         public IActionResult Hizmetlerimiz() => View();

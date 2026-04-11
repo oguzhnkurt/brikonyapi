@@ -2,510 +2,529 @@
     bool isEn = ViewBag.IsEn == true;
     ViewData["Title"]       = isEn ? "About Us" : "Hakkımızda";
     ViewData["Description"] = isEn
-        ? "Brikon Yapı – Urban transformation and construction excellence since our foundation."
-        : "Brikon Yapı – Kentsel dönüşüm ve inşaat alanında köklü deneyim.";
+        ? "Brikon Yapı – Urban transformation and construction excellence since 1998."
+        : "Brikon Yapı – 1998'den bu yana kentsel dönüşüm ve inşaat alanında köklü deneyim.";
 }
 
 @section Styles {
 <style>
-/* ══ HERO ══════════════════════════════════════════════════ */
-.ab-hero {
-    position: relative;
-    min-height: 100svh;
-    display: flex; align-items: center;
-    overflow: hidden;
-    color: #fff;
-    padding: 120px 0 80px;
+/* ── RESET / TOKENS ─────────────────────────────────────── */
+:root {
+    --ink:    #0d1117;
+    --ink2:   #4b5563;
+    --gold:   #c8960c;
+    --gold-l: #fef3c7;
+    --line:   #e5e7eb;
+    --bg:     #f9fafb;
 }
-.ab-hero-video {
+
+/* ── HERO ────────────────────────────────────────────────── */
+.hk-hero {
+    position: relative;
+    height: 100svh; min-height: 560px;
+    display: flex; align-items: flex-end;
+    overflow: hidden; color: #fff;
+}
+.hk-hero-video {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover; object-position: center;
     z-index: 0;
 }
-.ab-hero-overlay {
+.hk-hero-overlay {
     position: absolute; inset: 0; z-index: 1;
-    background: linear-gradient(
-        135deg,
-        rgba(5,12,25,.82) 0%,
-        rgba(10,22,40,.70) 50%,
-        rgba(5,12,25,.75) 100%
-    );
+    background: linear-gradient(to top,
+        rgba(5,10,20,.88) 0%,
+        rgba(5,10,20,.50) 55%,
+        rgba(5,10,20,.20) 100%);
 }
-.ab-hero-content { position: relative; z-index: 2; }
+.hk-hero-body {
+    position: relative; z-index: 2;
+    padding-bottom: 80px; width: 100%;
+}
+.hk-tag {
+    display: inline-block;
+    font-size: .68rem; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--gold);
+    border-left: 2px solid var(--gold); padding-left: 10px;
+    margin-bottom: 20px;
+}
+.hk-hero h1 {
+    font-size: clamp(2.2rem, 4.5vw, 3.8rem);
+    font-weight: 800; line-height: 1.1;
+    max-width: 720px; margin-bottom: 20px;
+}
+.hk-hero p {
+    font-size: 1rem; color: rgba(255,255,255,.65);
+    max-width: 540px; line-height: 1.8;
+}
+.hk-hero-scroll {
+    position: absolute; right: 40px; bottom: 40px; z-index: 2;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    color: rgba(255,255,255,.3); font-size: .6rem; letter-spacing: 2.5px;
+    text-transform: uppercase;
+}
+.hk-hero-scroll-line {
+    width: 1px; height: 48px;
+    background: linear-gradient(to bottom, rgba(255,255,255,.25), transparent);
+    animation: scrollLine 1.8s ease-in-out infinite;
+}
+@@keyframes scrollLine {
+    0%,100% { opacity: .4; transform: scaleY(1); transform-origin: top; }
+    50%      { opacity: 1;  transform: scaleY(1.15); }
+}
 
-.ab-eyebrow {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: .72rem; font-weight: 700; letter-spacing: 2.5px;
-    text-transform: uppercase; color: #f59e0b;
+/* ── STATS ───────────────────────────────────────────────── */
+.hk-stats {
+    background: var(--ink); color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.hk-stats-grid {
+    display: grid; grid-template-columns: repeat(4,1fr);
+    border-left: 1px solid rgba(255,255,255,.08);
+}
+.hk-stat {
+    padding: 40px 24px; text-align: center;
+    border-right: 1px solid rgba(255,255,255,.08);
+}
+.hk-stat-n {
+    font-size: clamp(2.2rem, 3vw, 3rem);
+    font-weight: 800; color: var(--gold); display: block;
+    line-height: 1; margin-bottom: 8px;
+}
+.hk-stat-l {
+    font-size: .72rem; font-weight: 600;
+    color: rgba(255,255,255,.4);
+    text-transform: uppercase; letter-spacing: 1px;
+}
+@@media(max-width:640px) { .hk-stats-grid { grid-template-columns: repeat(2,1fr); } }
+
+/* ── SECTION COMMON ──────────────────────────────────────── */
+.hk-sec { padding: 100px 0; }
+.hk-sec-alt { background: var(--bg); }
+.hk-label {
+    font-size: .68rem; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 14px; display: block;
+}
+.hk-h2 {
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-weight: 800; color: var(--ink); line-height: 1.2;
     margin-bottom: 18px;
 }
-.ab-eyebrow::before { content:''; width:28px; height:2px; background:#f59e0b; display:block; }
-.ab-hero h1 {
-    font-size: clamp(2.4rem, 5vw, 4rem);
-    font-weight: 900; line-height: 1.1;
-    margin-bottom: 22px;
-    letter-spacing: -.5px;
-    text-shadow: 0 2px 20px rgba(0,0,0,.4);
-}
-.ab-hero h1 span { color: #f59e0b; }
-.ab-hero p {
-    font-size: 1.08rem; color: rgba(255,255,255,.7);
-    max-width: 600px; line-height: 1.8; margin-bottom: 36px;
-}
-.ab-hero-badges { display: flex; gap: 12px; flex-wrap: wrap; }
-.ab-badge {
-    display: inline-flex; align-items: center; gap: 7px;
-    background: rgba(255,255,255,.1);
-    border: 1px solid rgba(255,255,255,.18);
-    color: rgba(255,255,255,.9);
-    padding: 9px 18px; border-radius: 50px;
-    font-size: .8rem; font-weight: 600;
-    backdrop-filter: blur(8px);
-    transition: all .2s;
-}
-.ab-badge:hover { background: rgba(245,158,11,.2); border-color: #f59e0b; color: #f59e0b; }
-.ab-badge iconify-icon { color: #f59e0b; font-size: 1rem; }
+.hk-lead { font-size: .95rem; color: var(--ink2); line-height: 1.8; }
 
-/* scroll indicator */
-.ab-scroll {
-    position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
-    z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px;
-    color: rgba(255,255,255,.4); font-size: .62rem; letter-spacing: 2px; text-transform: uppercase;
-    animation: bounce 2s infinite;
+/* ── SERVICE GRID ────────────────────────────────────────── */
+.hk-svc-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.hk-svc-item {
+    background: #fff; padding: 36px 32px;
+    transition: background .2s;
 }
-.ab-scroll-line {
-    width: 1px; height: 40px;
-    background: linear-gradient(to bottom, rgba(255,255,255,.3), transparent);
+.hk-svc-item:hover { background: #fffdf5; }
+.hk-svc-num {
+    font-size: .68rem; font-weight: 800;
+    letter-spacing: 2px; color: var(--gold); margin-bottom: 14px; display: block;
 }
-@@keyframes bounce {
-    0%,100% { transform: translateX(-50%) translateY(0); }
-    50%      { transform: translateX(-50%) translateY(6px); }
-}
+.hk-svc-item h4 { font-size: 1rem; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.hk-svc-item p  { font-size: .87rem; color: var(--ink2); line-height: 1.65; margin: 0; }
+@@media(max-width:560px) { .hk-svc-grid { grid-template-columns: 1fr; } }
 
-/* ══ STATS ══════════════════════════════════════════════════ */
-.ab-stats { background: #fff; border-bottom: 1px solid #f0f0f0; padding: 0; }
-.ab-stats-inner {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    border-left: 1px solid #f0f0f0;
+/* ── TIMELINE ────────────────────────────────────────────── */
+.hk-tl { margin-top: 48px; }
+.hk-tl-item { display: flex; gap: 20px; padding-bottom: 32px; position: relative; }
+.hk-tl-left { flex-shrink: 0; width: 64px; text-align: right; padding-top: 2px; }
+.hk-tl-yr { font-size: .72rem; font-weight: 800; color: var(--gold); letter-spacing: .5px; }
+.hk-tl-spine {
+    flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
 }
-.ab-stat {
-    padding: 44px 28px; border-right: 1px solid #f0f0f0;
-    text-align: center; position: relative; transition: background .2s;
+.hk-tl-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--gold); margin-top: 4px; flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(200,150,12,.15);
 }
-.ab-stat:hover { background: #fffbeb; }
-.ab-stat::after {
-    content: ''; position: absolute; bottom: 0; left: 50%;
-    transform: translateX(-50%); width: 0; height: 3px;
-    background: linear-gradient(90deg, #f59e0b, #e07b00);
-    transition: width .3s;
-}
-.ab-stat:hover::after { width: 60%; }
-.ab-stat-num {
-    font-size: clamp(2.4rem, 3.5vw, 3.4rem); font-weight: 900; line-height: 1;
-    background: linear-gradient(135deg, #0a1628, #1e3a5f);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    display: block; margin-bottom: 6px;
-}
-.ab-stat-label { font-size: .78rem; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 1px; }
-@@media(max-width:768px) { .ab-stats-inner { grid-template-columns: repeat(2,1fr); } }
+.hk-tl-bar { width: 1px; background: var(--line); flex: 1; margin-top: 6px; }
+.hk-tl-item:last-child .hk-tl-bar { display: none; }
+.hk-tl-body h5 { font-size: .9rem; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.hk-tl-body p  { font-size: .83rem; color: var(--ink2); line-height: 1.55; margin: 0; }
 
-/* ══ KENTSEL DÖNÜŞÜM ════════════════════════════════════════ */
-.ab-urban { padding: 96px 0; background: #f8f9fb; }
-.ab-section-label {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: .72rem; font-weight: 700; letter-spacing: 2.5px;
-    text-transform: uppercase; color: #f59e0b; margin-bottom: 12px;
+/* ── MVV ─────────────────────────────────────────────────── */
+.hk-mvv-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.hk-mvv-item {
+    background: #fff; padding: 44px 36px;
 }
-.ab-section-label::before { content:''; width:24px; height:2px; background:#f59e0b; display:block; }
-.ab-section-title {
-    font-size: clamp(1.7rem, 3vw, 2.4rem); font-weight: 900;
-    color: #0a1628; line-height: 1.2; margin-bottom: 16px;
+.hk-mvv-item h3 {
+    font-size: 1.05rem; font-weight: 800; color: var(--ink);
+    margin-bottom: 14px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
 }
-.ab-section-sub { font-size: .95rem; color: #6b7280; line-height: 1.7; }
+.hk-mvv-item p  { font-size: .88rem; color: var(--ink2); line-height: 1.75; margin: 0; }
+.hk-values-list { list-style: none; padding: 0; margin: 0; }
+.hk-values-list li {
+    font-size: .88rem; color: var(--ink2); line-height: 1.6;
+    padding: 5px 0; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px;
+}
+.hk-values-list li:last-child { border: none; }
+.hk-values-list li::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--gold); flex-shrink: 0;
+}
+@@media(max-width:768px) { .hk-mvv-grid { grid-template-columns: 1fr; } }
 
-.urban-card {
-    background: #fff; border-radius: 16px; padding: 32px 28px; height: 100%;
-    box-shadow: 0 1px 12px rgba(0,0,0,.05); border: 1px solid #f0f0f0;
-    transition: transform .25s, box-shadow .25s;
-    position: relative; overflow: hidden;
+/* ── REFERENCES ──────────────────────────────────────────── */
+.hk-refs-list {
+    display: flex; flex-wrap: wrap; gap: 0;
+    border: 1px solid var(--line);
 }
-.urban-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, #f59e0b, #e07b00);
-    transform: scaleX(0); transform-origin: left; transition: transform .3s;
+.hk-ref-item {
+    flex: 1 1 160px; padding: 28px 24px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    text-align: center; font-size: .82rem;
+    font-weight: 700; color: var(--ink2);
+    transition: color .2s, background .2s;
 }
-.urban-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,.1); }
-.urban-card:hover::before { transform: scaleX(1); }
-.urban-icon {
-    width: 52px; height: 52px; border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.6rem; margin-bottom: 18px;
-}
-.urban-card h4 { font-size: 1rem; font-weight: 700; color: #0a1628; margin-bottom: 8px; }
-.urban-card p  { font-size: .87rem; color: #6b7280; line-height: 1.65; margin: 0; }
+.hk-ref-item:hover { color: var(--ink); background: var(--gold-l); }
 
-/* ══ STORY + TİMELİNE ═══════════════════════════════════════ */
-.ab-story { padding: 96px 0; background: #fff; }
-.story-img-outer { position: relative; border-radius: 20px; overflow: hidden; }
-.story-img-placeholder {
-    width: 100%; aspect-ratio: 4/3;
-    background: linear-gradient(135deg, #0a1628 0%, #1e3a5f 100%);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 12px; color: rgba(255,255,255,.2); font-size: 5rem;
+/* ── CONTACT SECTION ─────────────────────────────────────── */
+.hk-contact {
+    background: var(--ink); color: #fff;
+    padding: 100px 0;
 }
-.story-badge {
-    position: absolute; bottom: -1px; right: -1px;
-    background: linear-gradient(135deg, #f59e0b, #e07b00);
-    color: #fff; font-weight: 900;
-    padding: 20px 28px; border-radius: 20px 0 20px 0;
-    font-size: .85rem; line-height: 1.2;
-    box-shadow: 0 8px 24px rgba(245,158,11,.35);
+.hk-contact-left h2 {
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-weight: 800; line-height: 1.2; margin-bottom: 18px;
 }
-.story-badge span { display: block; font-size: 2rem; font-weight: 900; }
+.hk-contact-left p {
+    font-size: .93rem; color: rgba(255,255,255,.55);
+    line-height: 1.75; margin-bottom: 32px;
+}
+.hk-contact-detail {
+    display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;
+}
+.hk-contact-detail iconify-icon {
+    color: var(--gold); font-size: 1.2rem; flex-shrink: 0; margin-top: 1px;
+}
+.hk-contact-detail span { font-size: .88rem; color: rgba(255,255,255,.6); line-height: 1.5; }
 
-.timeline { margin-top: 32px; }
-.tl-item { display: flex; gap: 16px; padding-bottom: 24px; }
-.tl-item:last-child { padding-bottom: 0; }
-.tl-dot-wrap { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding-top: 4px; }
-.tl-dot {
-    width: 12px; height: 12px; border-radius: 50%; background: #f59e0b;
-    border: 2px solid #fff; box-shadow: 0 0 0 3px rgba(245,158,11,.2); flex-shrink: 0;
+.hk-form {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 4px; padding: 36px;
 }
-.tl-line { width: 2px; flex: 1; background: #e5e7eb; margin-top: 6px; }
-.tl-item:last-child .tl-line { display: none; }
-.tl-year { font-size: .72rem; font-weight: 800; color: #f59e0b; letter-spacing: 1px; margin-bottom: 2px; }
-.tl-title { font-size: .9rem; font-weight: 700; color: #0a1628; margin-bottom: 2px; }
-.tl-desc  { font-size: .82rem; color: #6b7280; line-height: 1.5; margin: 0; }
+.hk-form .form-label {
+    font-size: .72rem; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(255,255,255,.5); margin-bottom: 6px;
+}
+.hk-form .form-control, .hk-form .form-select {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.12);
+    color: #fff; border-radius: 3px;
+    font-size: .9rem; padding: 11px 14px;
+}
+.hk-form .form-control::placeholder { color: rgba(255,255,255,.25); }
+.hk-form .form-control:focus {
+    background: rgba(255,255,255,.09);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(200,150,12,.15);
+    color: #fff;
+}
+.hk-form textarea.form-control { resize: none; }
+.hk-btn-send {
+    background: var(--gold); color: #0d1117;
+    border: none; padding: 13px 36px;
+    font-size: .88rem; font-weight: 700;
+    letter-spacing: .5px; border-radius: 3px;
+    transition: opacity .2s;
+}
+.hk-btn-send:hover { opacity: .88; }
 
-/* ══ MVV ════════════════════════════════════════════════════ */
-.ab-mvv { padding: 96px 0; background: #f8f9fb; }
-.mvv-card {
-    background: #fff; border-radius: 20px; padding: 40px 32px; height: 100%;
-    box-shadow: 0 2px 16px rgba(0,0,0,.05); border-bottom: 4px solid transparent;
-    transition: transform .2s, box-shadow .2s;
+.hk-alert-ok {
+    background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3);
+    color: #6ee7b7; border-radius: 3px;
+    padding: 12px 16px; font-size: .88rem; margin-bottom: 20px;
 }
-.mvv-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,.1); }
-.mvv-card.mission { border-bottom-color: #f59e0b; }
-.mvv-card.vision  { border-bottom-color: #3b82f6; }
-.mvv-card.values  { border-bottom-color: #10b981; }
-.mvv-icon {
-    width: 60px; height: 60px; border-radius: 16px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.9rem; margin-bottom: 22px;
-}
-.mvv-card.mission .mvv-icon { background: #fef3c7; color: #d97706; }
-.mvv-card.vision  .mvv-icon { background: #dbeafe; color: #2563eb; }
-.mvv-card.values  .mvv-icon { background: #d1fae5; color: #059669; }
-.mvv-card h3 { font-size: 1.2rem; font-weight: 800; color: #0a1628; margin-bottom: 14px; }
-.mvv-card p  { font-size: .9rem; color: #6b7280; line-height: 1.75; margin: 0; }
-.values-list { list-style: none; padding: 0; margin: 0; }
-.values-list li {
-    display: flex; align-items: flex-start; gap: 10px;
-    margin-bottom: 10px; font-size: .88rem; color: #6b7280; line-height: 1.5;
-}
-.values-list li::before {
-    content: ''; width: 6px; height: 6px; border-radius: 50%;
-    background: #10b981; flex-shrink: 0; margin-top: 6px;
+.hk-alert-err {
+    background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
+    color: #fca5a5; border-radius: 3px;
+    padding: 12px 16px; font-size: .88rem; margin-bottom: 20px;
 }
 
-/* ══ REFERENCES BAND ════════════════════════════════════════ */
-.ab-refs { padding: 80px 0; background: #fff; border-top: 1px solid #f0f0f0; }
-.refs-logo-grid {
-    display: flex; flex-wrap: wrap; gap: 16px;
-    justify-content: center; align-items: center; margin-top: 48px;
-}
-.ref-logo-item {
-    background: #f8f9fb; border: 1px solid #e5e7eb; border-radius: 12px;
-    padding: 20px 32px; font-size: .88rem; font-weight: 700;
-    color: #374151; transition: all .2s; text-align: center; min-width: 160px;
-}
-.ref-logo-item:hover {
-    border-color: #f59e0b; background: #fffbeb; color: #92400e;
-    transform: translateY(-2px); box-shadow: 0 4px 16px rgba(245,158,11,.15);
-}
-
-/* ══ CTA ════════════════════════════════════════════════════ */
-.ab-cta {
-    padding: 96px 0;
-    background: linear-gradient(135deg, #0a1628 0%, #1e3a5f 100%);
-    text-align: center; color: #fff; position: relative; overflow: hidden;
-}
-.ab-cta::before {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(ellipse 700px 500px at 50% 50%, rgba(245,158,11,.08) 0%, transparent 70%);
-    pointer-events: none;
-}
-.ab-cta h2 { font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 900; margin-bottom: 14px; }
-.ab-cta p  { color: rgba(255,255,255,.6); font-size: .95rem; margin-bottom: 32px; max-width: 480px; margin-left: auto; margin-right: auto; }
-
-/* ══ REVEAL ═════════════════════════════════════════════════ */
-.reveal { opacity: 0; transform: translateY(28px); transition: opacity .6s ease, transform .6s ease; }
-.reveal.visible { opacity: 1; transform: none; }
-.delay-1 { transition-delay: .1s; }
-.delay-2 { transition-delay: .2s; }
-.delay-3 { transition-delay: .3s; }
+/* ── REVEAL ──────────────────────────────────────────────── */
+.rv { opacity: 0; transform: translateY(24px); transition: opacity .55s ease, transform .55s ease; }
+.rv.on { opacity: 1; transform: none; }
+.d1 { transition-delay: .1s; }
+.d2 { transition-delay: .2s; }
+.d3 { transition-delay: .3s; }
 </style>
 }
 
-<!-- ══ HERO (Video Arka Plan) ══════════════════════════════ -->
-<section class="ab-hero">
-    <video class="ab-hero-video" autoplay muted loop playsinline>
+<!-- ── HERO ─────────────────────────────────────────────── -->
+<section class="hk-hero">
+    <video class="hk-hero-video" autoplay muted loop playsinline>
         <source src="/videos/hakkimizda-hero.mp4" type="video/mp4" />
     </video>
-    <div class="ab-hero-overlay"></div>
-    <div class="container ab-hero-content">
-        <div class="row align-items-center g-5">
-            <div class="col-lg-8">
-                <div class="ab-eyebrow">@(isEn ? "Who We Are" : "Biz Kimiz")</div>
-                <h1>
-                    @if (isEn) {
-                        @Html.Raw("Shaping Cities,<br/><span>Building the Future</span>")
-                    } else {
-                        @Html.Raw("Şehirleri Dönüştürüyor,<br/><span>Geleceği İnşa Ediyoruz</span>")
-                    }
-                </h1>
+    <div class="hk-hero-overlay"></div>
+    <div class="container hk-hero-body">
+        <span class="hk-tag">@(isEn ? "About Brikon Yapı" : "Brikon Yapı Hakkında")</span>
+        <h1>
+            @if (isEn) { @Html.Raw("Building Turkey's<br/>Urban Future") }
+            else       { @Html.Raw("Türkiye'nin Kentsel<br/>Geleceğini İnşa Ediyoruz") }
+        </h1>
+        <p>@(isEn
+            ? "25 years of landmark projects — from TOKİ housing to university campuses, state hospitals and luxury residences."
+            : "25 yıldır TOKİ projelerinden üniversite kampüslerine, devlet hastanelerinden lüks konutlara kadar imza niteliğinde yapılar.")</p>
+    </div>
+    <div class="hk-hero-scroll">
+        <div class="hk-hero-scroll-line"></div>
+        <span>scroll</span>
+    </div>
+</section>
+
+<!-- ── STATS ─────────────────────────────────────────────── -->
+<section class="hk-stats">
+    <div class="container-fluid px-0">
+        <div class="hk-stats-grid">
+            <div class="hk-stat rv">
+                <span class="hk-stat-n">37+</span>
+                <div class="hk-stat-l">@(isEn ? "Completed Projects" : "Tamamlanan Proje")</div>
+            </div>
+            <div class="hk-stat rv d1">
+                <span class="hk-stat-n">25+</span>
+                <div class="hk-stat-l">@(isEn ? "Years Experience" : "Yıllık Deneyim")</div>
+            </div>
+            <div class="hk-stat rv d2">
+                <span class="hk-stat-n">10+</span>
+                <div class="hk-stat-l">@(isEn ? "Cities" : "Farklı Şehir")</div>
+            </div>
+            <div class="hk-stat rv d3">
+                <span class="hk-stat-n">6+</span>
+                <div class="hk-stat-l">@(isEn ? "Institutional Partners" : "Kurumsal İş Ortağı")</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── HİZMET ALANLARI ───────────────────────────────────── -->
+<section class="hk-sec">
+    <div class="container">
+        <div class="row g-5 align-items-start">
+            <div class="col-lg-4 rv">
+                <span class="hk-label">@(isEn ? "What We Do" : "Ne Yapıyoruz")</span>
+                <h2 class="hk-h2">
+                    @if (isEn) { @Html.Raw("Four Decades of<br/>Construction Excellence") }
+                    else       { @Html.Raw("Güvenli, Modern<br/>ve Sürdürülebilir Yapılar") }
+                </h2>
+                <p class="hk-lead">@(isEn
+                    ? "Brikon Yapı operates across mass housing, higher education, public health and premium residential sectors."
+                    : "Brikon Yapı; toplu konut, yükseköğretim, kamu sağlığı ve premium konut sektörlerinde faaliyet göstermektedir.")</p>
+            </div>
+            <div class="col-lg-8 rv d1">
+                <div class="hk-svc-grid">
+                    <div class="hk-svc-item">
+                        <span class="hk-svc-num">01</span>
+                        <h4>@(isEn ? "Mass Housing (TOKİ)" : "Toplu Konut (TOKİ)")</h4>
+                        <p>@(isEn ? "State-sponsored housing projects across multiple cities in partnership with TOKİ, delivered on time and within budget." : "TOKİ iş birliğiyle çok sayıda şehirde zamanında ve bütçe dahilinde teslim edilen devlet destekli konut projeleri.")</p>
+                    </div>
+                    <div class="hk-svc-item">
+                        <span class="hk-svc-num">02</span>
+                        <h4>@(isEn ? "Campus & Education" : "Kampüs & Eğitim")</h4>
+                        <p>@(isEn ? "University faculties, congress centers, dormitories and vocational schools. Including Hacettepe University's 22,000 m² Congress Center." : "Hacettepe Üniversitesi'nin 22.000 m² Kongre Merkezi dahil fakülteler, yurtlar ve meslek yüksekokulları.")</p>
+                    </div>
+                    <div class="hk-svc-item">
+                        <span class="hk-svc-num">03</span>
+                        <h4>@(isEn ? "Healthcare Infrastructure" : "Sağlık Yapıları")</h4>
+                        <p>@(isEn ? "State hospitals and healthcare infrastructure to the highest safety standards — including Devrek State Hospital (22,500 m², 600 piled foundations)." : "Devrek Devlet Hastanesi (22.500 m², 600 kazıklı temel) dahil en yüksek güvenlik standartlarında devlet hastaneleri.")</p>
+                    </div>
+                    <div class="hk-svc-item">
+                        <span class="hk-svc-num">04</span>
+                        <h4>@(isEn ? "Premium Residences" : "Premium Konut")</h4>
+                        <p>@(isEn ? "Luxury apartments and villa complexes in Istanbul, Tekirdağ, Bodrum and beyond — including Trakpark Premium with 42 villas." : "Trakpark Premium (42 villa) dahil İstanbul, Tekirdağ, Bodrum ve daha birçok şehirde lüks daire ve villa kompleksleri.")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── HİKAYE + TİMELİNE ────────────────────────────────── -->
+<section class="hk-sec hk-sec-alt">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-5 rv">
+                <span class="hk-label">@(isEn ? "Our Story" : "Hikayemiz")</span>
+                <h2 class="hk-h2">
+                    @if (isEn) { @Html.Raw("From First Foundations<br/>to Landmark Projects") }
+                    else       { @Html.Raw("İlk Temellerden<br/>İmza Projelere") }
+                </h2>
+                <p class="hk-lead">@(isEn
+                    ? "From Safranbolu's UNESCO-listed restoration to IGA Istanbul Airport — every milestone reflects our commitment to quality and trust."
+                    : "Safranbolu'nun UNESCO listesindeki tarihi konak restorasyonundan İGA İstanbul Havalimanı'na kadar her kilometre taşı kalite ve güven taahhüdümüzü yansıtır.")</p>
+            </div>
+            <div class="col-lg-7 rv d1">
+                <div class="hk-tl">
+                    <div class="hk-tl-item">
+                        <div class="hk-tl-left"><span class="hk-tl-yr">1998</span></div>
+                        <div class="hk-tl-spine"><div class="hk-tl-dot"></div><div class="hk-tl-bar"></div></div>
+                        <div class="hk-tl-body">
+                            <h5>@(isEn ? "Foundation" : "Kuruluş")</h5>
+                            <p>@(isEn ? "Zonguldak Alaplı MYO and Safranbolu Fine Arts High School — our first signature projects." : "Zonguldak Alaplı MYO ve Safranbolu Güzel Sanatlar Lisesi — ilk imza projelerimiz.")</p>
+                        </div>
+                    </div>
+                    <div class="hk-tl-item">
+                        <div class="hk-tl-left"><span class="hk-tl-yr">2005</span></div>
+                        <div class="hk-tl-spine"><div class="hk-tl-dot"></div><div class="hk-tl-bar"></div></div>
+                        <div class="hk-tl-body">
+                            <h5>@(isEn ? "Campus Expansion" : "Kampüs Büyümesi")</h5>
+                            <p>@(isEn ? "Hacettepe University Congress Center (22,000 m²) and Mechanical Engineering Faculty." : "Hacettepe Üniversitesi Kongre Merkezi (22.000 m²) ve Makina Mühendisliği Fakültesi.")</p>
+                        </div>
+                    </div>
+                    <div class="hk-tl-item">
+                        <div class="hk-tl-left"><span class="hk-tl-yr">2011</span></div>
+                        <div class="hk-tl-spine"><div class="hk-tl-dot"></div><div class="hk-tl-bar"></div></div>
+                        <div class="hk-tl-body">
+                            <h5>@(isEn ? "TOKİ & Public Health" : "TOKİ & Kamu Sağlığı")</h5>
+                            <p>@(isEn ? "110 TOKİ villas in Afyonkarahisar and Devrek State Hospital (22,500 m²)." : "Afyonkarahisar'da 110 TOKİ villası ve Devrek Devlet Hastanesi (22.500 m²).")</p>
+                        </div>
+                    </div>
+                    <div class="hk-tl-item">
+                        <div class="hk-tl-left"><span class="hk-tl-yr">@(isEn ? "Now" : "Bugün")</span></div>
+                        <div class="hk-tl-spine"><div class="hk-tl-dot"></div><div class="hk-tl-bar"></div></div>
+                        <div class="hk-tl-body">
+                            <h5>@(isEn ? "Airport & Luxury" : "Havalimanı & Lüks Konut")</h5>
+                            <p>@(isEn ? "IGA Istanbul Airport and Trakpark Premium — 42-villa complex in Tekirdağ." : "İGA İstanbul Havalimanı ve Tekirdağ'da 42 villalı Trakpark Premium kompleksi.")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── MİSYON / VİZYON / DEĞERLER ───────────────────────── -->
+<section class="hk-sec">
+    <div class="container">
+        <div class="text-center mb-5 rv">
+            <span class="hk-label" style="justify-content:center;">@(isEn ? "Our Principles" : "İlkelerimiz")</span>
+            <h2 class="hk-h2">@(isEn ? "What Drives Us" : "Bizi Yönlendiren Değerler")</h2>
+        </div>
+        <div class="hk-mvv-grid rv d1">
+            <div class="hk-mvv-item">
+                <h3>@(isEn ? "Mission" : "Misyon")</h3>
                 <p>@(isEn
-                    ? "Brikon Yapı has been at the forefront of urban transformation in Turkey for over 25 years — delivering landmark projects in partnership with TOKİ, universities, hospitals, and major institutions across the country."
-                    : "Brikon Yapı; 25 yılı aşkın süredir Türkiye'nin kentsel dönüşümünde öncü bir rol üstlenerek TOKİ, üniversiteler, hastaneler ve köklü kurumlarla iş birliği içinde hayata geçirdiği imza projelerle fark yaratmaktadır.")</p>
-                <div class="ab-hero-badges">
-                    <span class="ab-badge"><iconify-icon icon="iconamoon:building-duotone"></iconify-icon> @(isEn ? "37 Projects" : "37 Proje")</span>
-                    <span class="ab-badge"><iconify-icon icon="iconamoon:location-pin-duotone"></iconify-icon> @(isEn ? "10+ Cities" : "10+ Şehir")</span>
-                    <span class="ab-badge"><iconify-icon icon="iconamoon:calendar-duotone"></iconify-icon> @(isEn ? "25+ Years" : "25+ Yıllık Deneyim")</span>
-                    <span class="ab-badge"><iconify-icon icon="iconamoon:star-duotone"></iconify-icon> @(isEn ? "TOKİ Partner" : "TOKİ İş Ortağı")</span>
-                </div>
+                    ? "To lead Turkey's urban transformation through safe, sustainable and high-quality construction that improves the lives of communities."
+                    : "Toplulukların yaşamını iyileştiren güvenli, sürdürülebilir ve yüksek kaliteli yapılarla Türkiye'nin kentsel dönüşümüne öncülük etmek.")</p>
             </div>
-        </div>
-    </div>
-    <div class="ab-scroll">
-        <div class="ab-scroll-line"></div>
-    </div>
-</section>
-
-<!-- ══ STATS ═══════════════════════════════════════════════ -->
-<section class="ab-stats">
-    <div class="container">
-        <div class="ab-stats-inner">
-            <div class="ab-stat reveal">
-                <span class="ab-stat-num">37+</span>
-                <div class="ab-stat-label">@(isEn ? "Completed Projects" : "Tamamlanan Proje")</div>
+            <div class="hk-mvv-item">
+                <h3>@(isEn ? "Vision" : "Vizyon")</h3>
+                <p>@(isEn
+                    ? "To be Turkey's most trusted construction partner for public institutions and private sector — known for quality, reliability and innovation."
+                    : "Kalite, güvenilirlik ve yenilikçiliğiyle tanınan; kamu ve özel sektör için Türkiye'nin en güvenilir inşaat ortağı olmak.")</p>
             </div>
-            <div class="ab-stat reveal delay-1">
-                <span class="ab-stat-num">25+</span>
-                <div class="ab-stat-label">@(isEn ? "Years of Experience" : "Yıllık Deneyim")</div>
-            </div>
-            <div class="ab-stat reveal delay-2">
-                <span class="ab-stat-num">10+</span>
-                <div class="ab-stat-label">@(isEn ? "Cities" : "Farklı Şehir")</div>
-            </div>
-            <div class="ab-stat reveal delay-3">
-                <span class="ab-stat-num">6+</span>
-                <div class="ab-stat-label">@(isEn ? "Institutional Partners" : "Kurumsal İş Ortağı")</div>
+            <div class="hk-mvv-item">
+                <h3>@(isEn ? "Values" : "Değerler")</h3>
+                <ul class="hk-values-list">
+                    <li>@(isEn ? "Quality & Craftsmanship" : "Kalite ve İşçilik")</li>
+                    <li>@(isEn ? "Trust & Transparency" : "Güven ve Şeffaflık")</li>
+                    <li>@(isEn ? "Innovation & Sustainability" : "Yenilik ve Sürdürülebilirlik")</li>
+                    <li>@(isEn ? "Customer Satisfaction" : "Müşteri Memnuniyeti")</li>
+                    <li>@(isEn ? "On-Time Delivery" : "Zamanında Teslimat")</li>
+                </ul>
             </div>
         </div>
     </div>
 </section>
 
-<!-- ══ KENTSEL DÖNÜŞÜM HİZMETLERİ ════════════════════════ -->
-<section class="ab-urban">
+<!-- ── REFERANSLAR ───────────────────────────────────────── -->
+<section class="hk-sec hk-sec-alt">
     <div class="container">
-        <div class="row g-5 align-items-center mb-5">
-            <div class="col-lg-6 reveal">
-                <div class="ab-section-label">@(isEn ? "Urban Transformation" : "Kentsel Dönüşüm")</div>
-                <h2 class="ab-section-title">
-                    @if (isEn) { @Html.Raw("Rebuilding Cities,<br/>One Project at a Time") }
-                    else       { @Html.Raw("Şehirleri Yeniden<br/>İnşa Ediyoruz") }
+        <div class="text-center mb-5 rv">
+            <span class="hk-label">@(isEn ? "Our Partners" : "İş Ortaklarımız")</span>
+            <h2 class="hk-h2">@(isEn ? "Trusted by Leading Institutions" : "Önde Gelen Kurumların Güveni")</h2>
+        </div>
+        <div class="hk-refs-list rv d1">
+            <div class="hk-ref-item">TOKİ</div>
+            <div class="hk-ref-item">T.C. Çevre ve Şehircilik Bakanlığı</div>
+            <div class="hk-ref-item">Hacettepe Üniversitesi</div>
+            <div class="hk-ref-item">İGA İstanbul Havalimanı</div>
+            <div class="hk-ref-item">Karabük Üniversitesi</div>
+            <div class="hk-ref-item">T.C. Milli Eğitim Bakanlığı</div>
+        </div>
+    </div>
+</section>
+
+<!-- ── İLETİŞİM ──────────────────────────────────────────── -->
+<section class="hk-contact" id="iletisim">
+    <div class="container">
+        <div class="row g-5 align-items-start">
+            <div class="col-lg-4 hk-contact-left rv">
+                <span class="hk-label" style="color:var(--gold);">@(isEn ? "Get in Touch" : "İletişime Geçin")</span>
+                <h2>
+                    @if (isEn) { @Html.Raw("Let's Build<br/>Something Together") }
+                    else       { @Html.Raw("Birlikte Bir Şeyler<br/>İnşa Edelim") }
                 </h2>
-                <p class="ab-section-sub">@(isEn
-                    ? "From mass housing to university campuses and state hospitals, Brikon Yapı has been transforming Turkey's urban landscape through safe, modern, and sustainable construction."
-                    : "Toplu konuttan üniversite kampüslerine, devlet hastanelerinden köy dönüşüm projelerine kadar Brikon Yapı; güvenli, modern ve sürdürülebilir yapılarla Türkiye'nin kentsel dokusunu yeniden şekillendiriyor.")</p>
-            </div>
-        </div>
-        <div class="row g-4">
-            <div class="col-sm-6 col-lg-3 reveal">
-                <div class="urban-card">
-                    <div class="urban-icon" style="background:#fef3c7;">
-                        <iconify-icon icon="iconamoon:home-duotone" style="color:#d97706;"></iconify-icon>
-                    </div>
-                    <h4>@(isEn ? "Mass Housing (TOKİ)" : "Toplu Konut (TOKİ)")</h4>
-                    <p>@(isEn ? "State-sponsored affordable housing projects across multiple cities in partnership with TOKİ." : "TOKİ iş birliğiyle birden fazla şehirde hayata geçirilen devlet destekli uygun fiyatlı konut projeleri.")</p>
+                <p>@(isEn
+                    ? "Tell us about your project. Our team will reach back within 24 hours."
+                    : "Projeniz hakkında bize bilgi verin. Ekibimiz 24 saat içinde size ulaşacaktır.")</p>
+                <div class="hk-contact-detail">
+                    <iconify-icon icon="iconamoon:location-pin-duotone"></iconify-icon>
+                    <span>Konya, Türkiye</span>
+                </div>
+                <div class="hk-contact-detail">
+                    <iconify-icon icon="iconamoon:phone-duotone"></iconify-icon>
+                    <span>+90 332 XXX XX XX</span>
+                </div>
+                <div class="hk-contact-detail">
+                    <iconify-icon icon="iconamoon:email-duotone"></iconify-icon>
+                    <span>info@@brikonyapi.com</span>
                 </div>
             </div>
-            <div class="col-sm-6 col-lg-3 reveal delay-1">
-                <div class="urban-card">
-                    <div class="urban-icon" style="background:#dbeafe;">
-                        <iconify-icon icon="iconamoon:building-apartment-duotone" style="color:#2563eb;"></iconify-icon>
+            <div class="col-lg-8 rv d1">
+                @if (ViewBag.ContactSuccess == true)
+                {
+                    <div class="hk-alert-ok">
+                        <iconify-icon icon="iconamoon:check-circle-duotone" style="margin-right:8px;"></iconify-icon>
+                        @(isEn ? "Your message has been sent. We'll get back to you shortly." : "Mesajınız iletildi. En kısa sürede size geri döneceğiz.")
                     </div>
-                    <h4>@(isEn ? "Campus & Education" : "Kampüs ve Eğitim")</h4>
-                    <p>@(isEn ? "University faculties, congress centers, dormitories and vocational schools across Turkey." : "Türkiye genelinde üniversite fakülteleri, kongre merkezleri, yurtlar ve meslek yüksekokulları.")</p>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-3 reveal delay-2">
-                <div class="urban-card">
-                    <div class="urban-icon" style="background:#d1fae5;">
-                        <iconify-icon icon="iconamoon:heart-duotone" style="color:#059669;"></iconify-icon>
-                    </div>
-                    <h4>@(isEn ? "Healthcare Facilities" : "Sağlık Yapıları")</h4>
-                    <p>@(isEn ? "State hospitals and healthcare infrastructure built to the highest safety standards." : "En yüksek güvenlik standartlarında inşa edilen devlet hastaneleri ve sağlık altyapısı.")</p>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-3 reveal delay-3">
-                <div class="urban-card">
-                    <div class="urban-icon" style="background:#ede9fe;">
-                        <iconify-icon icon="iconamoon:star-duotone" style="color:#7c3aed;"></iconify-icon>
-                    </div>
-                    <h4>@(isEn ? "Luxury Residences" : "Lüks Konut")</h4>
-                    <p>@(isEn ? "Premium apartment and villa projects in Istanbul, Ankara, Bodrum and beyond." : "İstanbul, Ankara, Bodrum ve daha birçok şehirde premium daire ve villa projeleri.")</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ══ HİKAYE + TİMELİNE ══════════════════════════════════ -->
-<section class="ab-story">
-    <div class="container">
-        <div class="row g-5 align-items-center">
-            <div class="col-lg-5 reveal">
-                <div class="story-img-outer">
-                    <div class="story-img-placeholder">
-                        <iconify-icon icon="iconamoon:building-apartment-duotone"></iconify-icon>
-                        <span style="font-size:1rem;letter-spacing:2px;text-transform:uppercase;">Brikon Yapı</span>
-                    </div>
-                    <div class="story-badge">
-                        <span>25+</span>
-                        @(isEn ? "Years of<br/>Experience" : "Yıllık<br/>Deneyim")
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-7 reveal delay-1">
-                <div class="ab-section-label">@(isEn ? "Our Story" : "Hikayemiz")</div>
-                <h2 class="ab-section-title">
-                    @if (isEn) { @Html.Raw("Decades of Urban<br/>Transformation") }
-                    else       { @Html.Raw("On Yıllardır Kentsel<br/>Dönüşümün Öncüsü") }
-                </h2>
-                <p style="font-size:.93rem;color:#6b7280;line-height:1.75;margin-bottom:32px;">@(isEn
-                    ? "From TOKİ-backed village villas in Afyonkarahisar to Hacettepe University's grand congress center, from Istanbul Airport facilities to Safranbolu's UNESCO-listed historic mansion restoration — every project tells a story of transformation."
-                    : "Afyonkarahisar'daki TOKİ tarımköy villalarından Hacettepe Üniversitesi'nin büyük kongre merkezine, İstanbul Havalimanı tesislerinden Safranbolu'nun UNESCO listesindeki tarihi konak restorasyonuna kadar her proje bir dönüşüm hikayesi anlatıyor.")</p>
-                <div class="timeline">
-                    <div class="tl-item">
-                        <div class="tl-dot-wrap"><div class="tl-dot"></div><div class="tl-line"></div></div>
-                        <div>
-                            <div class="tl-year">1998 – 2005</div>
-                            <div class="tl-title">@(isEn ? "Foundation & First Projects" : "Kuruluş ve İlk Projeler")</div>
-                            <p class="tl-desc">@(isEn ? "Zonguldak Alaplı MYO, Safranbolu Fine Arts High School and early Hacettepe University projects." : "Zonguldak Alaplı MYO, Safranbolu Güzel Sanatlar Lisesi ve ilk Hacettepe Üniversitesi projeleri.")</p>
+                }
+                @if (ViewBag.ContactError != null)
+                {
+                    <div class="hk-alert-err">@ViewBag.ContactError</div>
+                }
+                <form class="hk-form" method="post" action="/Hakkimizda">
+                    @Html.AntiForgeryToken()
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="form-label">@(isEn ? "Full Name" : "Ad Soyad") *</label>
+                            <input type="text" name="fullName" class="form-control" placeholder="@(isEn ? "John Doe" : "Adınız Soyadınız")" required />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">@(isEn ? "E-mail" : "E-posta") *</label>
+                            <input type="email" name="email" class="form-control" placeholder="ornek@mail.com" required />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">@(isEn ? "Phone" : "Telefon")</label>
+                            <input type="tel" name="phone" class="form-control" placeholder="+90 5XX XXX XX XX" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">@(isEn ? "Subject" : "Konu")</label>
+                            <input type="text" name="subject" class="form-control" placeholder="@(isEn ? "Project inquiry" : "Proje talebi")" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">@(isEn ? "Message" : "Mesaj") *</label>
+                            <textarea name="message" class="form-control" rows="5"
+                                placeholder="@(isEn ? "Tell us about your project..." : "Projeniz hakkında bilgi verin...")" required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="hk-btn-send">
+                                @(isEn ? "Send Message" : "Mesaj Gönder")
+                                <iconify-icon icon="iconamoon:arrow-right-2-bold" style="margin-left:8px;font-size:.9rem;"></iconify-icon>
+                            </button>
                         </div>
                     </div>
-                    <div class="tl-item">
-                        <div class="tl-dot-wrap"><div class="tl-dot"></div><div class="tl-line"></div></div>
-                        <div>
-                            <div class="tl-year">2005 – 2010</div>
-                            <div class="tl-title">@(isEn ? "Campus Expansion" : "Kampüs Genişlemesi")</div>
-                            <p class="tl-desc">@(isEn ? "Hacettepe University Congress Center (22,000 m²), Mechanical Engineering Faculty and more." : "Hacettepe Üniversitesi Kongre Merkezi (22.000 m²), Makina Mühendisliği Fakültesi ve daha fazlası.")</p>
-                        </div>
-                    </div>
-                    <div class="tl-item">
-                        <div class="tl-dot-wrap"><div class="tl-dot"></div><div class="tl-line"></div></div>
-                        <div>
-                            <div class="tl-year">2011 – 2015</div>
-                            <div class="tl-title">@(isEn ? "TOKİ & Public Health" : "TOKİ & Kamu Sağlığı")</div>
-                            <p class="tl-desc">@(isEn ? "110 TOKİ villas in Afyonkarahisar and Devrek State Hospital (22,500 m²) with 600 piled foundations." : "Afyonkarahisar'da 110 TOKİ villası ve 600 kazıklı temelli Devrek Devlet Hastanesi (22.500 m²).")</p>
-                        </div>
-                    </div>
-                    <div class="tl-item">
-                        <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
-                        <div>
-                            <div class="tl-year">@(isEn ? "Today" : "Günümüz")</div>
-                            <div class="tl-title">@(isEn ? "Airport & Luxury" : "Havalimanı & Lüks Konut")</div>
-                            <p class="tl-desc">@(isEn ? "IGA Istanbul Airport, Trakpark Premium 42-villa complex in Tekirdağ and ongoing luxury projects." : "İGA İstanbul Havalimanı, Tekirdağ'da 42 villalı Trakpark Premium ve devam eden lüks projeler.")</p>
-                        </div>
-                    </div>
-                </div>
+                </form>
             </div>
-        </div>
-    </div>
-</section>
-
-<!-- ══ MİSYON / VİZYON / DEĞERLER ═══════════════════════ -->
-<section class="ab-mvv">
-    <div class="container">
-        <div class="text-center mb-5 reveal">
-            <div class="ab-section-label" style="justify-content:center;">@(isEn ? "Our Principles" : "İlkelerimiz")</div>
-            <h2 class="ab-section-title">@(isEn ? "What Drives Us" : "Bizi Yönlendiren Değerler")</h2>
-        </div>
-        <div class="row g-4">
-            <div class="col-md-4 reveal">
-                <div class="mvv-card mission">
-                    <div class="mvv-icon"><iconify-icon icon="iconamoon:target-duotone"></iconify-icon></div>
-                    <h3>@(isEn ? "Our Mission" : "Misyonumuz")</h3>
-                    <p>@(isEn
-                        ? "To lead Turkey's urban transformation through safe, sustainable and high-quality construction that improves the lives of communities."
-                        : "Toplulukların yaşamını iyileştiren güvenli, sürdürülebilir ve yüksek kaliteli yapılarla Türkiye'nin kentsel dönüşümüne öncülük etmek.")</p>
-                </div>
-            </div>
-            <div class="col-md-4 reveal delay-1">
-                <div class="mvv-card vision">
-                    <div class="mvv-icon"><iconify-icon icon="iconamoon:eye-duotone"></iconify-icon></div>
-                    <h3>@(isEn ? "Our Vision" : "Vizyonumuz")</h3>
-                    <p>@(isEn
-                        ? "To be Turkey's most trusted construction partner for public institutions and private sector alike — known for quality, reliability and innovation."
-                        : "Kalite, güvenilirlik ve yenilikçiliğiyle tanınan; kamu kurumları ve özel sektör için Türkiye'nin en güvenilir inşaat ortağı olmak.")</p>
-                </div>
-            </div>
-            <div class="col-md-4 reveal delay-2">
-                <div class="mvv-card values">
-                    <div class="mvv-icon"><iconify-icon icon="iconamoon:star-duotone"></iconify-icon></div>
-                    <h3>@(isEn ? "Our Values" : "Değerlerimiz")</h3>
-                    <ul class="values-list">
-                        <li>@(isEn ? "Quality & Craftsmanship" : "Kalite ve İşçilik Mükemmeliyeti")</li>
-                        <li>@(isEn ? "Trust & Transparency" : "Güven ve Şeffaflık")</li>
-                        <li>@(isEn ? "Innovation & Sustainability" : "Yenilik ve Sürdürülebilirlik")</li>
-                        <li>@(isEn ? "Customer Satisfaction" : "Müşteri Memnuniyeti")</li>
-                        <li>@(isEn ? "On-Time Delivery" : "Zamanında Teslimat")</li>
-                        <li>@(isEn ? "Social Responsibility" : "Sosyal Sorumluluk")</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ══ REFERANSLAR ════════════════════════════════════════ -->
-<section class="ab-refs">
-    <div class="container">
-        <div class="text-center reveal">
-            <div class="ab-section-label" style="justify-content:center;">@(isEn ? "Our Partners" : "İş Ortaklarımız")</div>
-            <h2 class="ab-section-title">@(isEn ? "Trusted by Leading Institutions" : "Önde Gelen Kurumların Güvendiği Firma")</h2>
-            <p class="ab-section-sub mx-auto text-center" style="max-width:540px;">@(isEn
-                ? "We are proud to have completed projects for some of Turkey's most reputable public institutions and private organizations."
-                : "Türkiye'nin en köklü kamu kurumları ve özel kuruluşları için projeler tamamlamış olmaktan gurur duyuyoruz.")</p>
-        </div>
-        <div class="refs-logo-grid reveal delay-1">
-            <div class="ref-logo-item">TOKİ</div>
-            <div class="ref-logo-item">T.C. Çevre ve Şehircilik Bakanlığı</div>
-            <div class="ref-logo-item">Hacettepe Üniversitesi</div>
-            <div class="ref-logo-item">İGA İstanbul Havalimanı</div>
-            <div class="ref-logo-item">Karabük Üniversitesi</div>
-            <div class="ref-logo-item">T.C. Milli Eğitim Bakanlığı</div>
-        </div>
-    </div>
-</section>
-
-<!-- ══ CTA ════════════════════════════════════════════════ -->
-<section class="ab-cta">
-    <div class="container" style="position:relative;z-index:1;">
-        <h2 class="reveal">@(isEn ? "Ready to Transform Your Project?" : "Projenizi Dönüştürmeye Hazır Mısınız?")</h2>
-        <p class="reveal delay-1">@(isEn
-            ? "Contact us today and let's build something that lasts."
-            : "Bugün bize ulaşın, kalıcı şeyler birlikte inşa edelim.")</p>
-        <div class="d-flex gap-3 justify-content-center flex-wrap reveal delay-2">
-            <a href="/Iletisim" class="btn btn-warning btn-lg fw-bold px-5" style="border-radius:10px;">
-                @(isEn ? "Contact Us" : "İletişime Geç")
-            </a>
-            <a href="/Projeler" class="btn btn-outline-light btn-lg px-5" style="border-radius:10px;">
-                @(isEn ? "View Projects" : "Projelerimiz")
-            </a>
         </div>
     </div>
 </section>
@@ -513,13 +532,18 @@
 @section Scripts {
 <script>
 (function(){
-    var els = document.querySelectorAll('.reveal');
-    var io  = new IntersectionObserver(function(entries){
-        entries.forEach(function(e){
-            if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }
-        });
-    }, { threshold: 0.1 });
-    els.forEach(function(el){ io.observe(el); });
+    var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.rv').forEach(function(el){ io.observe(el); });
+
+    // scroll to form if success/error anchor
+    if(window.location.hash === '#iletisim'){
+        setTimeout(function(){
+            var el = document.getElementById('iletisim');
+            if(el) el.scrollIntoView({ behavior:'smooth' });
+        }, 300);
+    }
 })();
 </script>
 }
