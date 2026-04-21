@@ -128,6 +128,18 @@ static List<ProjectImage> Gallery(string root, string folder)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // Eski migration adını yenisiyle eşleştir (rename sonrası uyumsuzluk giderme)
+    try
+    {
+        db.Database.ExecuteSqlRaw(@"
+            UPDATE ""__EFMigrationsHistory""
+            SET ""MigrationId"" = '20260418085723_InitialCreate'
+            WHERE ""MigrationId"" = '20260407104040_InitialCreate'
+        ");
+    }
+    catch { /* Tablo henüz yoksa yoksay */ }
+
     db.Database.Migrate();
 
     var um = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
