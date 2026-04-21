@@ -129,13 +129,16 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-    // Eski migration adını yenisiyle eşleştir (rename sonrası uyumsuzluk giderme)
+    // Eski migration adlarını yenisiyle eşleştir
     try
     {
         db.Database.ExecuteSqlRaw(@"
             UPDATE ""__EFMigrationsHistory""
-            SET ""MigrationId"" = '20260418085723_InitialCreate'
-            WHERE ""MigrationId"" = '20260407104040_InitialCreate'
+            SET ""MigrationId"" = '20260421195047_InitialCreate'
+            WHERE ""MigrationId"" IN (
+                '20260407104040_InitialCreate',
+                '20260418085723_InitialCreate'
+            )
         ");
     }
     catch { /* Tablo henüz yoksa yoksay */ }
