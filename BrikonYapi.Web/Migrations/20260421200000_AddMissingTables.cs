@@ -34,7 +34,7 @@ namespace BrikonYapi.Web.Migrations
                 );
 
                 INSERT INTO ""SiteSettings"" (""Key"", ""Value"", ""Description"")
-                SELECT k.key, k.val, k.desc FROM (VALUES
+                SELECT k.skey, k.sval, k.sdesc FROM (VALUES
                     ('MarqueeMode',    'image',                                  'Kayan bant modu'),
                     ('AboutTitle',     'Güvenilir Bir Yapı Ortağı',              'Hakkımızda başlık'),
                     ('AboutText2',     'Her projemizde kaliteli malzeme kullanımı, zamanında teslimat ve müşteri memnuniyetini ön planda tutuyoruz.',  'Hakkımızda 2. paragraf'),
@@ -49,9 +49,9 @@ namespace BrikonYapi.Web.Migrations
                     ('AboutCard4Title','Sürdürülebilirlik',                      'Kart 4 başlık'),
                     ('AboutCard4Desc', 'Çevre dostu ve enerji verimli yapılar',  'Kart 4 açıklama'),
                     ('AboutMediaPath', '',                                        'Hakkımızda görsel/video yolu')
-                ) AS k(key, val, desc)
+                ) AS k(skey, sval, sdesc)
                 WHERE NOT EXISTS (
-                    SELECT 1 FROM ""SiteSettings"" WHERE ""Key"" = k.key
+                    SELECT 1 FROM ""SiteSettings"" WHERE ""Key"" = k.skey
                 );
             ");
         }
