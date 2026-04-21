@@ -108,13 +108,23 @@
                             <label class="form-label">Bitiş / Teslim Tarihi</label>
                             <input asp-for="EndDate" type="date" class="form-control" />
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Enlem (Harita)</label>
-                            <input asp-for="Latitude" type="number" step="any" class="form-control" placeholder="41.0082" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Boylam (Harita)</label>
-                            <input asp-for="Longitude" type="number" step="any" class="form-control" placeholder="28.9784" />
+                        <div class="col-12">
+                            <label class="form-label">Konum (Harita)</label>
+                            <div class="d-flex gap-2 mb-2">
+                                <input asp-for="Latitude" type="number" step="any" class="form-control" placeholder="Enlem" id="inputLat" />
+                                <input asp-for="Longitude" type="number" step="any" class="form-control" placeholder="Boylam" id="inputLng" />
+                                <button type="button" class="btn btn-outline-primary text-nowrap" id="btnToggleMap">
+                                    <iconify-icon icon="iconamoon:location-pin-duotone" class="me-1"></iconify-icon>
+                                    Haritadan Seç
+                                </button>
+                            </div>
+                            <div id="pick-map-wrap" style="display:none; border-radius:6px; overflow:hidden; border:1px solid #dee2e6;">
+                                <div id="pick-map" style="height:360px;"></div>
+                                <div class="px-3 py-2 bg-light border-top small text-muted">
+                                    <iconify-icon icon="iconamoon:information-circle-duotone" class="me-1"></iconify-icon>
+                                    Konumu seçmek için haritaya tıklayın veya işaretçiyi sürükleyin.
+                                </div>
+                            </div>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Kısa Açıklama</label>
@@ -196,6 +206,46 @@
 </div>
 
 @section Scripts {
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script>
+(function(){
+    var btn      = document.getElementById('btnToggleMap');
+    var wrap     = document.getElementById('pick-map-wrap');
+    var inputLat = document.getElementById('inputLat');
+    var inputLng = document.getElementById('inputLng');
+    var map, marker, initialized = false;
+    var initLat  = parseFloat(inputLat.value) || 39.0;
+    var initLng  = parseFloat(inputLng.value) || 35.0;
+    var initZoom = (inputLat.value && inputLng.value) ? 13 : 6;
+
+    btn.addEventListener('click', function(){
+        var open = wrap.style.display !== 'none';
+        wrap.style.display = open ? 'none' : 'block';
+        btn.innerHTML = open
+            ? '<iconify-icon icon="iconamoon:location-pin-duotone" class="me-1"></iconify-icon>Haritadan Seç'
+            : '<iconify-icon icon="iconamoon:close-circle-duotone" class="me-1"></iconify-icon>Kapat';
+        if (!open && !initialized) {
+            initialized = true;
+            map = L.map('pick-map').setView([initLat, initLng], initZoom);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+            if (inputLat.value && inputLng.value) {
+                marker = L.marker([initLat, initLng], { draggable: true }).addTo(map);
+                marker.on('dragend', function(e){ var ll = e.target.getLatLng(); inputLat.value = ll.lat.toFixed(6); inputLng.value = ll.lng.toFixed(6); });
+            }
+            map.on('click', function(e){
+                inputLat.value = e.latlng.lat.toFixed(6);
+                inputLng.value = e.latlng.lng.toFixed(6);
+                if (marker) { marker.setLatLng(e.latlng); }
+                else {
+                    marker = L.marker(e.latlng, { draggable: true }).addTo(map);
+                    marker.on('dragend', function(ev){ var ll = ev.target.getLatLng(); inputLat.value = ll.lat.toFixed(6); inputLng.value = ll.lng.toFixed(6); });
+                }
+            });
+        } else if (!open) { setTimeout(function(){ map.invalidateSize(); }, 50); }
+    });
+})();
+</script>
 <script>
 document.getElementById('project-form').addEventListener('submit', function() {
     var overlay = document.getElementById('save-overlay');

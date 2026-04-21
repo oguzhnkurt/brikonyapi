@@ -43,7 +43,8 @@
         _               => "iconamoon:settings-duotone"
     };
 
-    var handled = new[]{"PhoneNumber","Email","Address","WhatsApp","Instagram","Facebook","LinkedIn","CompanySlogan","AboutText","MarqueeMode"};
+    var aboutKeys = new[]{"AboutTitle","AboutText","AboutText2","AboutYearFounded","AboutYearLabel","AboutCard1Title","AboutCard1Desc","AboutCard2Title","AboutCard2Desc","AboutCard3Title","AboutCard3Desc","AboutCard4Title","AboutCard4Desc","AboutMediaPath"};
+    var handled = new[]{"PhoneNumber","Email","Address","WhatsApp","Instagram","Facebook","LinkedIn","CompanySlogan","AboutText","MarqueeMode"}.Concat(aboutKeys).ToArray();
 }
 
 <div class="row justify-content-center">
@@ -108,6 +109,70 @@
                         </div>
                     }
 
+                    <hr class="my-4" />
+
+                    <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size:.7rem;letter-spacing:.12em;">
+                        <iconify-icon icon="iconamoon:home-duotone" class="me-1"></iconify-icon> Ana Sayfa — Hakkımızda Bölümü
+                    </h6>
+
+                    @if (Model.ContainsKey("AboutTitle"))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Başlık</label>
+                            <input type="text" name="settings[AboutTitle]" value="@Model["AboutTitle"]" class="form-control" />
+                            <div class="form-text">Örn: Güvenilir Bir Yapı Ortağı</div>
+                        </div>
+                    }
+                    @if (Model.ContainsKey("AboutText"))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">1. Paragraf</label>
+                            <textarea name="settings[AboutText]" class="form-control" rows="2">@Model["AboutText"]</textarea>
+                        </div>
+                    }
+                    @if (Model.ContainsKey("AboutText2"))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">2. Paragraf</label>
+                            <textarea name="settings[AboutText2]" class="form-control" rows="3">@Model["AboutText2"]</textarea>
+                        </div>
+                    }
+                    <div class="row g-2 mb-2">
+                        @if (Model.ContainsKey("AboutYearFounded"))
+                        {
+                            <div class="col-md-3">
+                                <label class="form-label fw-medium">Kuruluş Yılı</label>
+                                <input type="text" name="settings[AboutYearFounded]" value="@Model["AboutYearFounded"]" class="form-control" placeholder="2005" />
+                            </div>
+                        }
+                        @if (Model.ContainsKey("AboutYearLabel"))
+                        {
+                            <div class="col-md-9">
+                                <label class="form-label fw-medium">Yıl Etiketi</label>
+                                <input type="text" name="settings[AboutYearLabel]" value="@Model["AboutYearLabel"]" class="form-control" placeholder="2005'ten Bu Yana" />
+                            </div>
+                        }
+                    </div>
+
+                    <p class="form-text mb-2 mt-3">Özellik Kartları (4 adet)</p>
+                    @for (int i = 1; i <= 4; i++)
+                    {
+                        var tKey = $"AboutCard{i}Title";
+                        var dKey = $"AboutCard{i}Desc";
+                        <div class="border rounded p-3 mb-2">
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-medium small">Kart @i — Başlık</label>
+                                    <input type="text" name="settings[@tKey]" value="@(Model.ContainsKey(tKey) ? Model[tKey] : "")" class="form-control form-control-sm" />
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label fw-medium small">Kart @i — Açıklama</label>
+                                    <input type="text" name="settings[@dKey]" value="@(Model.ContainsKey(dKey) ? Model[dKey] : "")" class="form-control form-control-sm" />
+                                </div>
+                            </div>
+                        </div>
+                    }
+
                     @if (Model.ContainsKey("MarqueeMode"))
                     {
                         var modeVal = Model["MarqueeMode"] ?? "image";
@@ -145,6 +210,50 @@
                             <iconify-icon icon="iconamoon:check-duotone" class="me-1"></iconify-icon>
                             Kaydet
                         </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @{
+            var mediaPath = Model.ContainsKey("AboutMediaPath") ? Model["AboutMediaPath"] : "";
+            bool isVideo  = !string.IsNullOrEmpty(mediaPath) && (mediaPath!.EndsWith(".mp4") || mediaPath.EndsWith(".mov") || mediaPath.EndsWith(".webm"));
+        }
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <iconify-icon icon="iconamoon:image-duotone" class="me-2"></iconify-icon>
+                    Hakkımızda — Görsel / Video
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(mediaPath))
+                {
+                    <div class="mb-3">
+                        @if (isVideo)
+                        {
+                            <video src="@mediaPath" controls style="max-width:260px;border-radius:8px;display:block"></video>
+                        }
+                        else
+                        {
+                            <img src="@mediaPath" style="max-width:260px;border-radius:8px;display:block" />
+                        }
+                        <form asp-area="Admin" asp-controller="Settings" asp-action="DeleteAboutMedia" method="post" class="mt-2">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Kaldır</button>
+                        </form>
+                    </div>
+                }
+                <form asp-area="Admin" asp-controller="Settings" asp-action="UploadAboutMedia" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="input-group">
+                        <input type="file" name="file" class="form-control" accept="image/*,video/mp4,video/webm,video/quicktime" />
+                        <button type="submit" class="btn btn-primary">Yükle</button>
+                    </div>
+                    <div class="form-text mt-1">
+                        Desteklenen formatlar: JPG, PNG, WEBP, MP4, MOV, WEBM<br/>
+                        <strong>Önerilen boyut: 1200 × 900 piksel (4:3 oran)</strong> — görsel bu oranda kırpılarak gösterilir.<br/>
+                        Dikey (9:16) veya kare (1:1) yüklemekten kaçının; yatay dikdörtgen en iyi sonucu verir.
                     </div>
                 </form>
             </div>

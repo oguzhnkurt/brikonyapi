@@ -51,6 +51,7 @@ builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<SiteSettingService>();
 builder.Services.AddScoped<ReferenceService>();
+builder.Services.AddScoped<CatalogGeneratorService>();
 
 builder.Services.AddLocalization();
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o =>

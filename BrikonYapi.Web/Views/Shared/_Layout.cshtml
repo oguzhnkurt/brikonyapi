@@ -44,7 +44,20 @@
     </a>
     @{ var lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName; bool isEn = lang == "en"; }
     <nav class="header-nav">
-        <a href="/" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">@(isEn ? "Home" : "Ana Sayfa")</a>
+        <a href="/" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">@(isEn ? "Home" : "Ana Sayfa")</a>
+
+        <div class="nav-dropdown">
+            @{ var isCorp = Context.Request.Path.StartsWithSegments("/Hakkimizda") || Context.Request.Path.StartsWithSegments("/Hizmetlerimiz") || Context.Request.Path.StartsWithSegments("/Sertifikalar"); }
+            <button class="nav-link nav-dropdown-toggle @(isCorp ? "active" : "")" type="button">
+                @(isEn ? "Corporate" : "Kurumsal") <svg class="dropdown-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="nav-dropdown-menu">
+                <a href="/Hakkimizda" class="nav-dropdown-item">@(isEn ? "About Us" : "Hakkımızda")</a>
+                <a href="/Hizmetlerimiz" class="nav-dropdown-item">@(isEn ? "Our Services" : "Hizmetlerimiz")</a>
+                <a href="/Sertifikalar" class="nav-dropdown-item">@(isEn ? "Certificates" : "Sertifikalar")</a>
+            </div>
+        </div>
+
         <div class="nav-dropdown">
             <button class="nav-link nav-dropdown-toggle @(ViewContext.RouteData.Values["controller"]?.ToString() == "Projects" ? "active" : "")" type="button">
                 @(isEn ? "Projects" : "Projeler") <svg class="dropdown-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -56,17 +69,9 @@
             </div>
         </div>
 
-        <a href="/ProjeHaritasi" class="nav-link @(Context.Request.Path.StartsWithSegments("/ProjeHaritasi") ? "active" : "")">@(isEn ? "Project Map" : "Proje Haritası")</a>
+        <a href="/E-Katalog" class="nav-link @(Context.Request.Path.StartsWithSegments("/E-Katalog") ? "active" : "")">@(isEn ? "E-Catalog" : "E-Katalog")</a>
 
-        <div class="nav-dropdown">
-            <button class="nav-link nav-dropdown-toggle" type="button">
-                @(isEn ? "Corporate" : "Kurumsal") <svg class="dropdown-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <div class="nav-dropdown-menu">
-                <a href="/Hakkimizda" class="nav-dropdown-item">@(isEn ? "About Us" : "Hakkımızda")</a>
-                <a href="/Hizmetlerimiz" class="nav-dropdown-item">@(isEn ? "Our Services" : "Hizmetlerimiz")</a>
-            </div>
-        </div>
+        <a href="/Iletisim" class="nav-link @(Context.Request.Path.StartsWithSegments("/Iletisim") ? "active" : "")">@(isEn ? "Contact" : "İletişim")</a>
 
         <!-- Dil Seçimi -->
         <div class="nav-lang">
@@ -100,102 +105,85 @@
     <button class="mobile-nav-close" id="mobile-nav-close">&times;</button>
     <a href="/">@(isEn ? "Home" : "Ana Sayfa")</a>
     <div class="mobile-nav-group">
-        <span class="mobile-nav-group-label">@(isEn ? "Projects" : "Projeler")</span>
-        <a href="/Projeler" class="mobile-nav-sub">@(isEn ? "All Projects" : "Tüm Projeler")</a>
-        <a href="/Projeler?tab=ongoing" class="mobile-nav-sub">@(isEn ? "Ongoing" : "Devam Eden")</a>
-        <a href="/Projeler?tab=completed" class="mobile-nav-sub">@(isEn ? "Completed" : "Tamamlanan")</a>
-    </div>
-    <a href="/ProjeHaritasi">@(isEn ? "Project Map" : "Proje Haritası")</a>
-    <div class="mobile-nav-group">
         <span class="mobile-nav-group-label">@(isEn ? "Corporate" : "Kurumsal")</span>
         <a href="/Hakkimizda" class="mobile-nav-sub">@(isEn ? "About Us" : "Hakkımızda")</a>
         <a href="/Hizmetlerimiz" class="mobile-nav-sub">@(isEn ? "Our Services" : "Hizmetlerimiz")</a>
+        <a href="/Sertifikalar" class="mobile-nav-sub">@(isEn ? "Certificates" : "Sertifikalar")</a>
     </div>
+    <div class="mobile-nav-group">
+        <span class="mobile-nav-group-label">@(isEn ? "Projects" : "Projeler")</span>
+        <a href="/Projeler" class="mobile-nav-sub">@(isEn ? "All Projects" : "Tüm Projeler")</a>
+        <a href="/Projeler?tab=ongoing" class="mobile-nav-sub">@(isEn ? "Ongoing Projects" : "Devam Eden Projeler")</a>
+        <a href="/Projeler?tab=completed" class="mobile-nav-sub">@(isEn ? "Completed Projects" : "Tamamlanan Projeler")</a>
+    </div>
+    <a href="/E-Katalog">@(isEn ? "E-Catalog" : "E-Katalog")</a>
+    <a href="/Iletisim">@(isEn ? "Contact" : "İletişim")</a>
 </nav>
 
 @RenderBody()
 
-<footer class="site-footer">
-    <div class="footer-inner">
-        <div class="container">
-            <div class="footer-grid">
+<footer class="ft">
+    <div class="ft-top">
+        <div class="ft-inner">
 
-                <!-- Brand -->
-                <div class="footer-brand-col">
-                    <a href="/" class="footer-logo-wrap">
-                        <img src="/images/logo.png" alt="Brikon Yapı" />
-                    </a>
-                    <p class="footer-tagline">@(ViewBag.AboutText ?? "Kaliteli ve güvenilir inşaat hizmetleriyle geleceği inşa ediyoruz.")</p>
-                    <div class="footer-social">
-                        @if (!string.IsNullOrEmpty(ViewBag.Instagram?.ToString()))
-                        {
-                            <a href="@ViewBag.Instagram" target="_blank" rel="noopener" aria-label="Instagram" class="fsoc">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5" fill="currentColor" stroke="none"/></svg>
-                            </a>
-                        }
-                        @if (!string.IsNullOrEmpty(ViewBag.Facebook?.ToString()))
-                        {
-                            <a href="@ViewBag.Facebook" target="_blank" rel="noopener" aria-label="Facebook" class="fsoc">
-                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-                            </a>
-                        }
-                        @if (!string.IsNullOrEmpty(ViewBag.LinkedIn?.ToString()))
-                        {
-                            <a href="@ViewBag.LinkedIn" target="_blank" rel="noopener" aria-label="LinkedIn" class="fsoc">
-                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-                            </a>
-                        }
-                    </div>
+            <!-- Logo + tagline -->
+            <div class="ft-brand">
+                <a href="/" class="ft-logo">
+                    <img src="/images/logo.png" alt="Brikon Yapı" />
+                </a>
+                <p class="ft-tagline">@(ViewBag.AboutText ?? "Kaliteli ve güvenilir inşaat hizmetleriyle geleceği inşa ediyoruz.")</p>
+                <div class="ft-social">
+                    @if (!string.IsNullOrEmpty(ViewBag.Instagram?.ToString()))
+                    {
+                        <a href="@ViewBag.Instagram" target="_blank" rel="noopener" aria-label="Instagram" class="ft-soc">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5" fill="currentColor" stroke="none"/></svg>
+                        </a>
+                    }
+                    @if (!string.IsNullOrEmpty(ViewBag.Facebook?.ToString()))
+                    {
+                        <a href="@ViewBag.Facebook" target="_blank" rel="noopener" aria-label="Facebook" class="ft-soc">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                        </a>
+                    }
+                    @if (!string.IsNullOrEmpty(ViewBag.LinkedIn?.ToString()))
+                    {
+                        <a href="@ViewBag.LinkedIn" target="_blank" rel="noopener" aria-label="LinkedIn" class="ft-soc">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                        </a>
+                    }
                 </div>
-
-                <!-- Contact -->
-                <div class="footer-col">
-                    <h5 class="footer-col-title">@(isEn ? "Contact" : "İletişim")</h5>
-                    <ul class="footer-contact">
-                        <li>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.4a2 2 0 0 1 1.99-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            @(ViewBag.Phone ?? "+90 555 000 00 00")
-                        </li>
-                        <li>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                            @(ViewBag.Email ?? "info@brikonyapi.com")
-                        </li>
-                        <li>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                            @(ViewBag.Address ?? "İstanbul, Türkiye")
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Project Links -->
-                <div class="footer-col">
-                    <h5 class="footer-col-title">@(isEn ? "Our Projects" : "Projelerimiz")</h5>
-                    <div class="footer-proj-links">
-                        <a href="/Projeler" class="footer-proj-link">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M9 21V7l3-4 3 4v14"/><path d="M3 21V11l6-6"/><path d="M21 21V11l-6-6"/></svg>
-                            @(isEn ? "All Projects" : "Tüm Projeler")
-                        </a>
-                        <a href="/Projeler?tab=ongoing" class="footer-proj-link">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            @(isEn ? "Ongoing" : "Devam Eden")
-                        </a>
-                        <a href="/Projeler?tab=completed" class="footer-proj-link">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
-                            @(isEn ? "Completed" : "Tamamlanan")
-                        </a>
-                        <a href="/ProjeHaritasi" class="footer-proj-link">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                            @(isEn ? "Project Map" : "Proje Haritası")
-                        </a>
-                    </div>
-                </div>
-
             </div>
+
+            <!-- Hızlı Bağlantılar -->
+            <div class="ft-col">
+                <h6 class="ft-heading">@(isEn ? "Quick Links" : "Hızlı Bağlantılar")</h6>
+                <ul class="ft-links">
+                    <li><a href="/">@(isEn ? "Home" : "Ana Sayfa")</a></li>
+                    <li><a href="/Hakkimizda">@(isEn ? "About Us" : "Hakkımızda")</a></li>
+                    <li><a href="/Hizmetlerimiz">@(isEn ? "Services" : "Hizmetlerimiz")</a></li>
+                    <li><a href="/Sertifikalar">@(isEn ? "Certificates" : "Sertifikalar")</a></li>
+                    <li><a href="/E-Katalog">@(isEn ? "E-Catalog" : "E-Katalog")</a></li>
+                    <li><a href="/Iletisim">@(isEn ? "Contact" : "İletişim")</a></li>
+                </ul>
+            </div>
+
+            <!-- Projeler -->
+            <div class="ft-col">
+                <h6 class="ft-heading">@(isEn ? "Projects" : "Projeler")</h6>
+                <ul class="ft-links">
+                    <li><a href="/Projeler">@(isEn ? "All Projects" : "Tüm Projeler")</a></li>
+                    <li><a href="/Projeler?tab=ongoing">@(isEn ? "Ongoing Projects" : "Devam Eden Projeler")</a></li>
+                    <li><a href="/Projeler?tab=completed">@(isEn ? "Completed Projects" : "Tamamlanan Projeler")</a></li>
+                    <li><a href="/ProjeHaritasi">@(isEn ? "Project Map" : "Proje Haritası")</a></li>
+                </ul>
+            </div>
+
+
         </div>
     </div>
 
-    <div class="footer-bar">
-        <div class="container footer-bar-inner" style="justify-content:center;">
+    <div class="ft-bar">
+        <div class="ft-inner">
             <span>&copy; @DateTime.Now.Year Brikon Yapı. @(isEn ? "All rights reserved." : "Tüm hakları saklıdır.")</span>
         </div>
     </div>

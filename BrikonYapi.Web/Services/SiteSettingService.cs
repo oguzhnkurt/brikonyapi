@@ -19,7 +19,8 @@ namespace BrikonYapi.Web.Services
             foreach (var kv in values)
             {
                 var s = await _db.SiteSettings.FirstOrDefaultAsync(x => x.Key == kv.Key);
-                if (s != null) { s.Value = kv.Value; }
+                if (s != null) s.Value = kv.Value;
+                else _db.SiteSettings.Add(new Data.Entities.SiteSetting { Key = kv.Key, Value = kv.Value });
             }
             await _db.SaveChangesAsync();
         }

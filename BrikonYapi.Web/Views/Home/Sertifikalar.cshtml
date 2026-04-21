@@ -1,0 +1,335 @@
+@model List<BrikonYapi.Web.Data.Entities.Certificate>
+@{
+    ViewData["Title"] = "Sertifikalar";
+    ViewData["Description"] = "Brikon Yapı kalite ve uluslararası standart sertifikaları.";
+    ViewData["BodyClass"] = "cert-page";
+}
+
+@section Styles {
+<style>
+body { background: #030608; }
+
+.cert-header {
+    background: #0f1724;
+    padding: calc(68px + 2.8rem) 3rem 2.2rem;
+}
+.cert-header-top {
+    display: flex; align-items: flex-end;
+    justify-content: space-between; gap: 2rem; flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+.cert-eyebrow {
+    font-size: .58rem; font-weight: 700; letter-spacing: .3em;
+    text-transform: uppercase; color: var(--c-primary);
+    display: block; margin-bottom: .5rem;
+}
+.cert-title {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    color: #fff; letter-spacing: -.025em; line-height: 1; margin: 0 0 .6rem;
+}
+.cert-breadcrumb {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .68rem; color: rgba(255,255,255,.28);
+}
+.cert-breadcrumb a { color: rgba(255,255,255,.38); text-decoration: none; transition: color .2s; }
+.cert-breadcrumb a:hover { color: var(--c-primary); }
+
+/* Grid */
+.cert-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    width: 100%;
+    gap: 3px;
+    background: #030608;
+    min-height: 30vh;
+}
+
+/* Card */
+.cert-card {
+    display: block; position: relative; overflow: hidden;
+    background: #080d14;
+    height: 56vh; min-height: 340px;
+    cursor: pointer;
+    border: none; outline: none;
+}
+.cert-card-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center; display: block;
+    transition: transform .75s cubic-bezier(.25,0,.05,1), filter .5s;
+    will-change: transform;
+}
+.cert-card:hover .cert-card-img {
+    transform: scale(1.09);
+    filter: brightness(.5) saturate(1.1);
+}
+.cert-card-grad {
+    position: absolute; inset: 0; z-index: 2;
+    background: linear-gradient(to bottom, transparent 20%, rgba(0,0,0,.12) 50%, rgba(0,0,0,.88) 100%);
+}
+.cert-card-line {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--c-primary); z-index: 8;
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .5s cubic-bezier(.4,0,.2,1);
+}
+.cert-card:hover .cert-card-line { transform: scaleX(1); }
+.cert-card::before {
+    content: '';
+    position: absolute; inset: 0; z-index: 7;
+    box-shadow: inset 0 0 0 1.5px rgba(0,130,180,.0);
+    transition: box-shadow .35s;
+    pointer-events: none;
+}
+.cert-card:hover::before {
+    box-shadow: inset 0 0 0 1.5px rgba(0,130,180,.55);
+}
+.cert-card-no-img {
+    position: absolute; inset: 0; display: flex;
+    align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #0d1929 0%, #0f2540 100%);
+}
+.cert-card-no-img svg { opacity: .15; width: 64px; height: 64px; color: #fff; }
+
+.cert-card-body {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 5;
+    padding: 1.6rem 1.3rem 1.4rem;
+}
+.cert-card-name {
+    font-family: 'Inter', sans-serif; font-weight: 800;
+    font-size: 1rem; color: #fff; line-height: 1.3; margin: 0 0 .35rem;
+    text-shadow: 0 2px 10px rgba(0,0,0,.5);
+    transition: transform .38s cubic-bezier(.4,0,.2,1);
+    overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.cert-card:hover .cert-card-name { transform: translateY(-5px); }
+.cert-card-desc {
+    font-size: .7rem; color: rgba(255,255,255,.45);
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    transition: transform .38s .05s cubic-bezier(.4,0,.2,1);
+}
+.cert-card:hover .cert-card-desc { transform: translateY(-5px); }
+
+.cert-card-zoom {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 6;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(0,130,180,.85); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; opacity: 0;
+    transition: opacity .3s;
+}
+.cert-card:hover .cert-card-zoom { opacity: 1; }
+
+.cert-empty {
+    grid-column: 1/-1; text-align: center; padding: 6rem 2rem;
+    color: rgba(255,255,255,.25); background: #0f1724;
+}
+
+/* Anim */
+.cert-anim { opacity: 0; transform: translateY(20px); transition: opacity .55s, transform .55s; }
+.cert-anim.visible { opacity: 1; transform: none; }
+
+/* ── LIGHTBOX ─────────────────────────────────────── */
+.cert-lb {
+    position: fixed; inset: 0; z-index: 9500;
+    background: rgba(0,0,0,.88); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1.5rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s;
+}
+.cert-lb.open { opacity: 1; pointer-events: all; }
+.cert-lb-inner {
+    position: relative;
+    max-width: min(860px, 94vw);
+    max-height: min(90vh, 90vh);
+    display: flex; flex-direction: column; align-items: center;
+    transform: translateY(24px) scale(.97);
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+.cert-lb.open .cert-lb-inner { transform: none; }
+.cert-lb-img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(90vh - 90px);
+    border-radius: 10px;
+    object-fit: contain;
+    box-shadow: 0 32px 80px rgba(0,0,0,.6);
+}
+.cert-lb-caption {
+    margin-top: 1.2rem; text-align: center;
+    color: rgba(255,255,255,.85);
+}
+.cert-lb-caption strong { font-size: 1.05rem; font-weight: 700; display: block; }
+.cert-lb-caption span { font-size: .8rem; color: rgba(255,255,255,.45); }
+.cert-lb-close {
+    position: absolute; top: -14px; right: -14px;
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(255,255,255,.15); border: none; cursor: pointer;
+    font-size: 1.4rem; line-height: 1; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s; backdrop-filter: blur(4px);
+    z-index: 2;
+}
+.cert-lb-close:hover { background: rgba(255,255,255,.3); }
+.cert-lb-nav {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,.12); border: none; cursor: pointer;
+    color: #fff; font-size: 1.6rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s; z-index: 9501;
+}
+.cert-lb-nav:hover { background: rgba(255,255,255,.28); }
+.cert-lb-prev { left: 16px; }
+.cert-lb-next { right: 16px; }
+
+@@media (max-width: 1200px) { .cert-grid { grid-template-columns: repeat(3, 1fr); } }
+@@media (max-width: 800px)  { .cert-grid { grid-template-columns: repeat(2, 1fr); } .cert-card { height: 48vw; min-height: 200px; } }
+@@media (max-width: 480px)  { .cert-grid { grid-template-columns: 1fr 1fr; } .cert-card { height: 52vw; min-height: 170px; } }
+</style>
+}
+
+<!-- Header -->
+<div class="cert-header">
+    <div class="cert-header-top">
+        <div>
+            <span class="cert-eyebrow">Kurumsal</span>
+            <h1 class="cert-title">Sertifikalar</h1>
+            <div class="cert-breadcrumb">
+                <a href="/">Ana Sayfa</a>
+                <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Kurumsal</span>
+                <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Sertifikalar</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grid -->
+<div class="cert-grid">
+    @if (!Model.Any())
+    {
+        <div class="cert-empty">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:.3;display:block;margin:0 auto .8rem"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            Henüz sertifika eklenmemiş.
+        </div>
+    }
+    else
+    {
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            var c = Model[i];
+            <button class="cert-card cert-anim" data-index="@i" aria-label="@c.Title büyüt">
+                @if (!string.IsNullOrEmpty(c.ImagePath))
+                {
+                    <img class="cert-card-img" src="@c.ImagePath" alt="@c.Title" loading="lazy" />
+                }
+                else
+                {
+                    <div class="cert-card-no-img">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+                    </div>
+                }
+                <div class="cert-card-grad"></div>
+                <div class="cert-card-line"></div>
+                <div class="cert-card-zoom">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                </div>
+                <div class="cert-card-body">
+                    <div class="cert-card-name">@c.Title</div>
+                    @if (!string.IsNullOrEmpty(c.Description))
+                    {
+                        <div class="cert-card-desc">@c.Description</div>
+                    }
+                </div>
+            </button>
+        }
+    }
+</div>
+
+<!-- Lightbox -->
+<div class="cert-lb" id="certLb" role="dialog" aria-modal="true">
+    <div class="cert-lb-inner">
+        <button class="cert-lb-close" id="certLbClose" aria-label="Kapat">&times;</button>
+        <img class="cert-lb-img" id="certLbImg" src="" alt="" />
+        <div class="cert-lb-caption">
+            <strong id="certLbTitle"></strong>
+            <span id="certLbDesc"></span>
+        </div>
+    </div>
+    <button class="cert-lb-nav cert-lb-prev" id="certLbPrev" aria-label="Önceki">&#8249;</button>
+    <button class="cert-lb-nav cert-lb-next" id="certLbNext" aria-label="Sonraki">&#8250;</button>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    var certs = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(c => new {
+        title = c.Title,
+        desc = c.Description ?? "",
+        img = c.ImagePath ?? ""
+    })));
+
+    var lb = document.getElementById('certLb');
+    var lbImg = document.getElementById('certLbImg');
+    var lbTitle = document.getElementById('certLbTitle');
+    var lbDesc = document.getElementById('certLbDesc');
+    var lbClose = document.getElementById('certLbClose');
+    var lbPrev = document.getElementById('certLbPrev');
+    var lbNext = document.getElementById('certLbNext');
+    var current = 0;
+
+    function open(idx) {
+        current = (idx + certs.length) % certs.length;
+        var c = certs[current];
+        lbImg.src = c.img || '';
+        lbImg.alt = c.title;
+        lbTitle.textContent = c.title;
+        lbDesc.textContent = c.desc;
+        lbImg.style.display = c.img ? 'block' : 'none';
+        lb.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        lbPrev.style.display = certs.length > 1 ? 'flex' : 'none';
+        lbNext.style.display = certs.length > 1 ? 'flex' : 'none';
+    }
+
+    function close() {
+        lb.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.cert-card').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            open(parseInt(this.dataset.index));
+        });
+    });
+
+    lbClose.addEventListener('click', close);
+    lbPrev.addEventListener('click', function () { open(current - 1); });
+    lbNext.addEventListener('click', function () { open(current + 1); });
+
+    lb.addEventListener('click', function (e) {
+        if (e.target === lb) close();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (!lb.classList.contains('open')) return;
+        if (e.key === 'Escape') close();
+        if (e.key === 'ArrowLeft') open(current - 1);
+        if (e.key === 'ArrowRight') open(current + 1);
+    });
+
+    // Scroll animasyon
+    var obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+            if (en.isIntersecting) { en.target.classList.add('visible'); obs.unobserve(en.target); }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.cert-anim').forEach(function (el) { obs.observe(el); });
+})();
+</script>
+}

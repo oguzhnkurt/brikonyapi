@@ -85,6 +85,26 @@
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Certificates" ? "active" : "")"
+                       href="/Admin/Certificates">
+                        <span class="nav-icon">
+                            <iconify-icon icon="iconamoon:award-duotone"></iconify-icon>
+                        </span>
+                        <span class="nav-text">Sertifikalar</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Catalog" ? "active" : "")"
+                       href="/Admin/Catalog">
+                        <span class="nav-icon">
+                            <iconify-icon icon="iconamoon:file-document-duotone"></iconify-icon>
+                        </span>
+                        <span class="nav-text">E-Katalog</span>
+                    </a>
+                </li>
+
                 <li class="menu-title">Sistem</li>
 
                 <li class="nav-item">

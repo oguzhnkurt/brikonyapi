@@ -874,6 +874,12 @@ renderPage(1);
       openModal(card);
     });
   });
+
+  var openSlug = new URLSearchParams(window.location.search).get('open');
+  if (openSlug) {
+    var target = document.querySelector('.prj-card[data-slug="' + openSlug + '"]');
+    if (target) { setTimeout(function(){ openModal(target); }, 300); }
+  }
 })();
 
 /* Video autoplay — ekrana girince otomatik başlar */
