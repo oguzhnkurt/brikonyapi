@@ -8,6 +8,9 @@ namespace BrikonYapi.Web.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Sadece PostgreSQL production için — local SQL Server'da tablolar zaten mevcut
+            if (migrationBuilder.ActiveProvider != "Npgsql.EntityFrameworkCore.PostgreSQL") return;
+
             migrationBuilder.Sql(@"
                 CREATE TABLE IF NOT EXISTS ""Certificates"" (
                     ""Id""          SERIAL PRIMARY KEY,
@@ -55,6 +58,8 @@ namespace BrikonYapi.Web.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            if (migrationBuilder.ActiveProvider != "Npgsql.EntityFrameworkCore.PostgreSQL") return;
+
             migrationBuilder.Sql(@"
                 DROP TABLE IF EXISTS ""Certificates"";
                 DROP TABLE IF EXISTS ""Catalogs"";
