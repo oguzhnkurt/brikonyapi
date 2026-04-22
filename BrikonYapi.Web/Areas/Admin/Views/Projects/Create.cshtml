@@ -152,8 +152,21 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Proje Videosu (MP4)</label>
-                            <input type="file" name="projectVideo" class="form-control" accept="video/mp4,video/*" />
+                            <label class="form-label">Proje Videosu</label>
+                            <div id="video-preview-box" class="border rounded d-flex align-items-center justify-content-center bg-light" style="height:80px;cursor:pointer;" onclick="document.getElementById('projectVideoInput').click()">
+                                <div id="video-empty-box" class="text-center text-muted" style="font-size:.82rem;">
+                                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" class="d-block mx-auto mb-1"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                                    Video seç ve yükle
+                                </div>
+                            </div>
+                            <div id="video-upload-progress" style="display:none;margin-top:6px;">
+                                <div style="background:#f0f0f0;border-radius:6px;height:6px;overflow:hidden;">
+                                    <div id="video-upload-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#0d6efd,#6ea8fe);border-radius:6px;transition:width .2s;"></div>
+                                </div>
+                                <div id="video-upload-status" style="font-size:.78rem;color:#888;margin-top:4px;">Yükleniyor...</div>
+                            </div>
+                            <input type="file" id="projectVideoInput" class="d-none" accept="video/mp4,video/quicktime,video/*" />
+                            <input type="hidden" id="tempVideoPath" name="tempVideoPath" />
                             <div class="form-text">Video yüklenirse açılış ekranında arka planda oynatılır.</div>
                         </div>
                     </div>
@@ -251,16 +264,116 @@
 })();
 </script>
 <script>
+// ── Video Chunked Upload ──────────────────────────────────
+(function(){
+    var input    = document.getElementById('projectVideoInput');
+    var bar      = document.getElementById('video-upload-bar');
+    var statusEl = document.getElementById('video-upload-status');
+    var progress = document.getElementById('video-upload-progress');
+    var box      = document.getElementById('video-preview-box');
+    var pathField= document.getElementById('tempVideoPath');
+    var CHUNK    = 2 * 1024 * 1024;
+    var uploading = false;
+
+    var _aft = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+    input.addEventListener('change', function(){
+        var file = this.files[0];
+        if (!file) return;
+
+        // Önizleme
+        var emptyBox = document.getElementById('video-empty-box');
+        if (emptyBox) emptyBox.remove();
+        var existingVid = box.querySelector('video');
+        if (existingVid) existingVid.remove();
+        var vid = document.createElement('video');
+        vid.src = URL.createObjectURL(file);
+        vid.style.cssText = 'width:100%;height:80px;object-fit:cover;border-radius:4px;display:block;';
+        vid.muted = true; vid.playsInline = true;
+        box.insertBefore(vid, box.firstChild);
+
+        // Chunked upload
+        uploading = true;
+        pathField.value = '';
+        var totalChunks = Math.ceil(file.size / CHUNK);
+        var uploadId    = Date.now().toString(36) + Math.random().toString(36).slice(2);
+        var ext         = file.name.substring(file.name.lastIndexOf('.')) || '.mp4';
+        var totalMB     = (file.size / 1024 / 1024).toFixed(1);
+
+        progress.style.display = 'block';
+        bar.style.width = '0%';
+        bar.style.background = 'linear-gradient(90deg,#0d6efd,#6ea8fe)';
+        statusEl.style.color = '#888';
+
+        function uploadChunk(index) {
+            if (index >= totalChunks) return;
+            var start = index * CHUNK;
+            var fd = new FormData();
+            fd.append('chunk',       file.slice(start, Math.min(start + CHUNK, file.size)), file.name);
+            fd.append('chunkIndex',  index);
+            fd.append('totalChunks', totalChunks);
+            fd.append('uploadId',    uploadId);
+            fd.append('originalExt', ext);
+            fd.append('__RequestVerificationToken', _aft);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/Admin/Projects/UploadTempVideoChunk');
+            xhr.upload.addEventListener('progress', function(e){
+                if (e.lengthComputable) {
+                    var pct = ((index * CHUNK + e.loaded) / file.size * 100).toFixed(0);
+                    bar.style.width = pct + '%';
+                    statusEl.textContent = pct + '% yüklendi (' + ((index * CHUNK + e.loaded)/1024/1024).toFixed(1) + ' / ' + totalMB + ' MB)';
+                }
+            });
+            xhr.addEventListener('load', function(){
+                if (xhr.status !== 200) {
+                    statusEl.textContent = 'Hata: parça ' + index + ' yüklenemedi';
+                    statusEl.style.color = '#dc3545';
+                    uploading = false;
+                    return;
+                }
+                var res = JSON.parse(xhr.responseText);
+                if (res.done) {
+                    bar.style.width = '100%';
+                    bar.style.background = '#198754';
+                    statusEl.textContent = 'Video yüklendi ✓';
+                    statusEl.style.color = '#198754';
+                    pathField.value = res.path;
+                    uploading = false;
+                } else {
+                    uploadChunk(index + 1);
+                }
+            });
+            xhr.addEventListener('error', function(){
+                statusEl.textContent = 'Bağlantı hatası';
+                statusEl.style.color = '#dc3545';
+                uploading = false;
+            });
+            xhr.send(fd);
+        }
+        uploadChunk(0);
+    });
+
+    document.getElementById('project-form').addEventListener('submit', function(e){
+        if (uploading) {
+            e.preventDefault();
+            alert('Video henüz yükleniyor, lütfen tamamlanmasını bekleyin.');
+        }
+    });
+})();
+
 document.getElementById('project-form').addEventListener('submit', function() {
-    var overlay = document.getElementById('save-overlay');
-    var bar = document.getElementById('save-progress-bar');
-    overlay.style.display = 'flex';
-    var pct = 0;
-    var interval = setInterval(function() {
-        pct += pct < 70 ? Math.random() * 8 : pct < 90 ? Math.random() * 2 : 0;
-        if (pct > 95) pct = 95;
-        bar.style.width = pct + '%';
-    }, 400);
+    if (document.getElementById('tempVideoPath').value === '' && !document.getElementById('projectVideoInput').files.length) {
+        var overlay = document.getElementById('save-overlay');
+        var bar2 = document.getElementById('save-progress-bar');
+        overlay.style.display = 'flex';
+        var pct = 0;
+        setInterval(function() {
+            pct += pct < 70 ? Math.random() * 8 : pct < 90 ? Math.random() * 2 : 0;
+            if (pct > 95) pct = 95;
+            bar2.style.width = pct + '%';
+        }, 400);
+    }
 });
 </script>
 }

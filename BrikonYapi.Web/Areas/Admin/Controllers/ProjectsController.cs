@@ -43,7 +43,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Project project, IFormFile? mainImage, IFormFile? projectVideo, IFormFile[]? galleryImages, IFormFile[]? planImages)
+        public async Task<IActionResult> Create(Project project, IFormFile? mainImage, IFormFile? projectVideo, string? tempVideoPath, IFormFile[]? galleryImages, IFormFile[]? planImages)
         {
             ModelState.Remove("Slug"); ModelState.Remove("Images"); ModelState.Remove("HeroSlides"); ModelState.Remove("Category");
             if (!ModelState.IsValid) { await LoadCategoriesAsync(project.CategoryId); return View(project); }
@@ -51,6 +51,8 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             project.Slug = _projects.GenerateSlug(project.Name);
             if (mainImage?.Length > 0) project.MainImagePath = await SaveFileAsync(mainImage, "uploads/projects");
             if (projectVideo?.Length > 0) project.VideoPath = await SaveFileAsync(projectVideo, "videos/projects");
+            else if (!string.IsNullOrEmpty(tempVideoPath) && tempVideoPath.StartsWith("/videos/projects/"))
+                project.VideoPath = tempVideoPath;
 
             await _projects.CreateAsync(project);
 
@@ -221,6 +223,46 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 }
 
                 return Json(new { done = true, path = urlPath });
+            }
+
+            return Json(new { done = false });
+        }
+
+        // Yeni proje oluşturulurken (projectId henüz yok) temp video yükleme
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadTempVideoChunk(
+            IFormFile chunk, int chunkIndex, int totalChunks, string uploadId, string originalExt)
+        {
+            if (chunk == null || chunk.Length == 0)
+                return BadRequest(new { error = "Chunk boş." });
+
+            var tempDir = Path.Combine(_env.WebRootPath, "temp-uploads");
+            Directory.CreateDirectory(tempDir);
+
+            var chunkPath = Path.Combine(tempDir, $"{uploadId}_{chunkIndex}");
+            await using (var fs = new FileStream(chunkPath, FileMode.Create))
+                await chunk.CopyToAsync(fs);
+
+            if (chunkIndex == totalChunks - 1)
+            {
+                var finalDir = Path.Combine(_env.WebRootPath, "videos/projects");
+                Directory.CreateDirectory(finalDir);
+                var ext      = string.IsNullOrEmpty(originalExt) ? ".mp4" : originalExt;
+                var fileName = $"{Guid.NewGuid()}{ext}";
+                var finalPath = Path.Combine(finalDir, fileName);
+
+                await using (var output = new FileStream(finalPath, FileMode.Create))
+                {
+                    for (int i = 0; i < totalChunks; i++)
+                    {
+                        var cp = Path.Combine(tempDir, $"{uploadId}_{i}");
+                        var bytes = await System.IO.File.ReadAllBytesAsync(cp);
+                        await output.WriteAsync(bytes);
+                        System.IO.File.Delete(cp);
+                    }
+                }
+
+                return Json(new { done = true, path = $"/videos/projects/{fileName}" });
             }
 
             return Json(new { done = false });
