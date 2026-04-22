@@ -7,7 +7,9 @@
     var phone    = Model.Settings.GetValueOrDefault("PhoneNumber","") ?? "";
     var email    = Model.Settings.GetValueOrDefault("Email","") ?? "";
     var address  = Model.Settings.GetValueOrDefault("Address","") ?? "";
-    var slogan   = Model.Settings.GetValueOrDefault("CompanySlogan","Geleceği İnşa Ediyoruz") ?? "";
+    var sloganTr = Model.Settings.GetValueOrDefault("CompanySlogan","Geleceği İnşa Ediyoruz") ?? "";
+    var sloganEn = Model.Settings.GetValueOrDefault("CompanySloganEn","Building the Future") ?? "Building the Future";
+    var slogan   = isEn ? sloganEn : sloganTr;
     var about        = Model.Settings.GetValueOrDefault("AboutText","Brikon Yapı olarak kaliteli inşaat hizmetleri sunuyoruz.") ?? "";
     var about2       = Model.Settings.GetValueOrDefault("AboutText2","Her projemizde kaliteli malzeme kullanımı, zamanında teslimat ve müşteri memnuniyetini ön planda tutuyoruz.") ?? "";
     var aboutTitle   = Model.Settings.GetValueOrDefault("AboutTitle","Güvenilir Bir Yapı Ortağı") ?? "Güvenilir Bir Yapı Ortağı";

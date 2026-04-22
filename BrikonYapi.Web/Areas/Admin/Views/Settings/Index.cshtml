@@ -43,8 +43,9 @@
         _               => "iconamoon:settings-duotone"
     };
 
-    var aboutKeys = new[]{"AboutTitle","AboutText","AboutText2","AboutYearFounded","AboutYearLabel","AboutCard1Title","AboutCard1Desc","AboutCard2Title","AboutCard2Desc","AboutCard3Title","AboutCard3Desc","AboutCard4Title","AboutCard4Desc","AboutMediaPath"};
-    var handled = new[]{"PhoneNumber","Email","Address","WhatsApp","Instagram","Facebook","LinkedIn","CompanySlogan","AboutText","MarqueeMode"}.Concat(aboutKeys).ToArray();
+    var aboutKeys = new[]{"AboutTitle","AboutTitleEn","AboutText","AboutTextEn","AboutText2","AboutText2En","AboutYearFounded","AboutYearLabel","AboutYearLabelEn","AboutCard1Title","AboutCard1TitleEn","AboutCard1Desc","AboutCard1DescEn","AboutCard2Title","AboutCard2TitleEn","AboutCard2Desc","AboutCard2DescEn","AboutCard3Title","AboutCard3TitleEn","AboutCard3Desc","AboutCard3DescEn","AboutCard4Title","AboutCard4TitleEn","AboutCard4Desc","AboutCard4DescEn","AboutMediaPath"};
+    var handled = new[]{"PhoneNumber","Email","Address","WhatsApp","Instagram","Facebook","LinkedIn","CompanySlogan","CompanySloganEn","AboutText","MarqueeMode"}.Concat(aboutKeys).ToArray();
+    string V(string key) => Model.ContainsKey(key) ? (Model[key] ?? "") : "";
 }
 
 <div class="row justify-content-center">
@@ -97,17 +98,20 @@
                     <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size:.7rem;letter-spacing:.12em;">
                         <iconify-icon icon="iconamoon:file-document-duotone" class="me-1"></iconify-icon> İçerik & Görünüm
                     </h6>
-                    @foreach (var key in new[]{"CompanySlogan","AboutText"})
-                    {
-                        if (!Model.ContainsKey(key)) continue;
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">
-                                <iconify-icon icon="@Icon(key)" class="me-1 text-primary"></iconify-icon>@Label(key)
-                            </label>
-                            <input type="text" name="settings[@key]" value="@Model[key]" class="form-control" />
-                            <div class="form-text">@Hint(key)</div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">
+                            <iconify-icon icon="iconamoon:quote-left-duotone" class="me-1 text-primary"></iconify-icon>Şirket Sloganı
+                        </label>
+                        <div class="input-group mb-1">
+                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
+                            <input type="text" name="settings[CompanySlogan]" value="@V("CompanySlogan")" class="form-control" placeholder="Geleceği İnşa Ediyoruz" />
                         </div>
-                    }
+                        <div class="input-group">
+                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
+                            <input type="text" name="settings[CompanySloganEn]" value="@V("CompanySloganEn")" class="form-control" placeholder="Building the Future" />
+                        </div>
+                        <div class="form-text">Hero bölümünde ana başlık olarak gösterilir</div>
+                    </div>
 
                     <hr class="my-4" />
 
@@ -115,59 +119,89 @@
                         <iconify-icon icon="iconamoon:home-duotone" class="me-1"></iconify-icon> Ana Sayfa — Hakkımızda Bölümü
                     </h6>
 
-                    @if (Model.ContainsKey("AboutTitle"))
-                    {
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">Başlık</label>
-                            <input type="text" name="settings[AboutTitle]" value="@Model["AboutTitle"]" class="form-control" />
-                            <div class="form-text">Örn: Güvenilir Bir Yapı Ortağı</div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Hakkımızda — Başlık</label>
+                        <div class="input-group mb-1">
+                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
+                            <input type="text" name="settings[AboutTitle]" value="@V("AboutTitle")" class="form-control" placeholder="Güvenilir Bir Yapı Ortağı" />
                         </div>
-                    }
-                    @if (Model.ContainsKey("AboutText"))
-                    {
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">1. Paragraf</label>
-                            <textarea name="settings[AboutText]" class="form-control" rows="2">@Model["AboutText"]</textarea>
+                        <div class="input-group">
+                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
+                            <input type="text" name="settings[AboutTitleEn]" value="@V("AboutTitleEn")" class="form-control" placeholder="A Reliable Construction Partner" />
                         </div>
-                    }
-                    @if (Model.ContainsKey("AboutText2"))
-                    {
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">2. Paragraf</label>
-                            <textarea name="settings[AboutText2]" class="form-control" rows="3">@Model["AboutText2"]</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">1. Paragraf</label>
+                        <div class="input-group mb-1 align-items-start">
+                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
+                            <textarea name="settings[AboutText]" class="form-control" rows="2">@V("AboutText")</textarea>
                         </div>
-                    }
-                    <div class="row g-2 mb-2">
-                        @if (Model.ContainsKey("AboutYearFounded"))
-                        {
-                            <div class="col-md-3">
-                                <label class="form-label fw-medium">Kuruluş Yılı</label>
-                                <input type="text" name="settings[AboutYearFounded]" value="@Model["AboutYearFounded"]" class="form-control" placeholder="2005" />
+                        <div class="input-group align-items-start">
+                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
+                            <textarea name="settings[AboutTextEn]" class="form-control" rows="2" placeholder="English version...">@V("AboutTextEn")</textarea>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">2. Paragraf</label>
+                        <div class="input-group mb-1 align-items-start">
+                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
+                            <textarea name="settings[AboutText2]" class="form-control" rows="3">@V("AboutText2")</textarea>
+                        </div>
+                        <div class="input-group align-items-start">
+                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
+                            <textarea name="settings[AboutText2En]" class="form-control" rows="3" placeholder="English version...">@V("AboutText2En")</textarea>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-medium">Kuruluş Yılı</label>
+                            <input type="text" name="settings[AboutYearFounded]" value="@V("AboutYearFounded")" class="form-control" placeholder="2005" />
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label fw-medium">Yıl Etiketi</label>
+                            <div class="input-group mb-1">
+                                <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
+                                <input type="text" name="settings[AboutYearLabel]" value="@V("AboutYearLabel")" class="form-control" placeholder="2005'ten Bu Yana" />
                             </div>
-                        }
-                        @if (Model.ContainsKey("AboutYearLabel"))
-                        {
-                            <div class="col-md-9">
-                                <label class="form-label fw-medium">Yıl Etiketi</label>
-                                <input type="text" name="settings[AboutYearLabel]" value="@Model["AboutYearLabel"]" class="form-control" placeholder="2005'ten Bu Yana" />
+                            <div class="input-group">
+                                <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
+                                <input type="text" name="settings[AboutYearLabelEn]" value="@V("AboutYearLabelEn")" class="form-control" placeholder="Since 2005" />
                             </div>
-                        }
+                        </div>
                     </div>
 
                     <p class="form-text mb-2 mt-3">Özellik Kartları (4 adet)</p>
                     @for (int i = 1; i <= 4; i++)
                     {
-                        var tKey = $"AboutCard{i}Title";
-                        var dKey = $"AboutCard{i}Desc";
+                        var tKey  = $"AboutCard{i}Title";
+                        var dKey  = $"AboutCard{i}Desc";
+                        var tKeyE = $"AboutCard{i}TitleEn";
+                        var dKeyE = $"AboutCard{i}DescEn";
                         <div class="border rounded p-3 mb-2">
-                            <div class="row g-2">
+                            <p class="small fw-bold mb-2 text-muted">Kart @i</p>
+                            <div class="row g-2 mb-1">
                                 <div class="col-md-4">
-                                    <label class="form-label fw-medium small">Kart @i — Başlık</label>
-                                    <input type="text" name="settings[@tKey]" value="@(Model.ContainsKey(tKey) ? Model[tKey] : "")" class="form-control form-control-sm" />
+                                    <div class="input-group input-group-sm mb-1">
+                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;color:#6c757d;min-width:36px">TR</span>
+                                        <input type="text" name="settings[@tKey]" value="@V(tKey)" class="form-control" placeholder="Başlık" />
+                                    </div>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:36px">EN</span>
+                                        <input type="text" name="settings[@tKeyE]" value="@V(tKeyE)" class="form-control" placeholder="Title (EN)" />
+                                    </div>
                                 </div>
                                 <div class="col-md-8">
-                                    <label class="form-label fw-medium small">Kart @i — Açıklama</label>
-                                    <input type="text" name="settings[@dKey]" value="@(Model.ContainsKey(dKey) ? Model[dKey] : "")" class="form-control form-control-sm" />
+                                    <div class="input-group input-group-sm mb-1">
+                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;color:#6c757d;min-width:36px">TR</span>
+                                        <input type="text" name="settings[@dKey]" value="@V(dKey)" class="form-control" placeholder="Açıklama" />
+                                    </div>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:36px">EN</span>
+                                        <input type="text" name="settings[@dKeyE]" value="@V(dKeyE)" class="form-control" placeholder="Description (EN)" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
