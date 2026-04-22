@@ -522,7 +522,7 @@
     descEl.textContent   = p.desc || '';
     descEl.style.display = p.desc ? '' : 'none';
 
-    document.getElementById('prj-modal-btn').href = '/Projeler#' + p.slug;
+    document.getElementById('prj-modal-btn').href = '/Projeler?open=' + p.slug;
 
     modalOverlay.classList.add('open');
     modalOverlay.setAttribute('aria-hidden','false');
