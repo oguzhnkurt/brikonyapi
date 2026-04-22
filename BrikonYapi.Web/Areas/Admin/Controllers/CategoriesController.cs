@@ -20,23 +20,29 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(string name, int orderIndex)
+        public async Task<IActionResult> Create(string name, string? nameEn, int orderIndex)
         {
             if (!string.IsNullOrWhiteSpace(name))
             {
-                _db.Categories.Add(new Category { Name = name.Trim(), OrderIndex = orderIndex });
+                _db.Categories.Add(new Category
+                {
+                    Name = name.Trim(),
+                    NameEn = string.IsNullOrWhiteSpace(nameEn) ? null : nameEn.Trim(),
+                    OrderIndex = orderIndex
+                });
                 await _db.SaveChangesAsync();
             }
             return RedirectToAction("Index");
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(int id, string name, int orderIndex)
+        public async Task<IActionResult> Edit(int id, string name, string? nameEn, int orderIndex)
         {
             var cat = await _db.Categories.FindAsync(id);
             if (cat != null && !string.IsNullOrWhiteSpace(name))
             {
                 cat.Name = name.Trim();
+                cat.NameEn = string.IsNullOrWhiteSpace(nameEn) ? null : nameEn.Trim();
                 cat.OrderIndex = orderIndex;
                 await _db.SaveChangesAsync();
             }

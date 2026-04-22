@@ -1,6 +1,7 @@
 @model List<BrikonYapi.Web.Data.Entities.Certificate>
 @{
-    ViewData["Title"] = "Sertifikalar";
+    bool isEn = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en";
+    ViewData["Title"] = isEn ? "Certificates" : "Sertifikalar";
     ViewData["Description"] = "Brikon Yapı kalite ve uluslararası standart sertifikaları.";
     ViewData["BodyClass"] = "cert-page";
 }
@@ -11,26 +12,29 @@ body { background: #030608; }
 
 .cert-header {
     background: #0f1724;
-    padding: calc(68px + 2.8rem) 3rem 2.2rem;
+    padding: calc(68px + 3.5rem) 3rem 3rem;
+    text-align: center;
 }
 .cert-header-top {
-    display: flex; align-items: flex-end;
-    justify-content: space-between; gap: 2rem; flex-wrap: wrap;
-    margin-bottom: 2rem;
+    display: flex; flex-direction: column; align-items: center; gap: .9rem;
+    margin-bottom: 0;
 }
 .cert-eyebrow {
     font-size: .58rem; font-weight: 700; letter-spacing: .3em;
     text-transform: uppercase; color: var(--c-primary);
-    display: block; margin-bottom: .5rem;
+    display: block; margin-bottom: .25rem;
 }
 .cert-title {
     font-family: 'Inter', sans-serif; font-weight: 900;
-    font-size: clamp(1.8rem, 3vw, 2.6rem);
-    color: #fff; letter-spacing: -.025em; line-height: 1; margin: 0 0 .6rem;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    color: #fff; letter-spacing: -.03em; line-height: 1; margin: 0;
+}
+.cert-subtitle {
+    font-size: .88rem; color: rgba(255,255,255,.38); margin-top: .4rem; max-width: 420px;
 }
 .cert-breadcrumb {
-    display: flex; align-items: center; gap: .4rem;
-    font-size: .68rem; color: rgba(255,255,255,.28);
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    font-size: .68rem; color: rgba(255,255,255,.28); margin-top: .4rem;
 }
 .cert-breadcrumb a { color: rgba(255,255,255,.38); text-decoration: none; transition: color .2s; }
 .cert-breadcrumb a:hover { color: var(--c-primary); }
@@ -195,16 +199,15 @@ body { background: #030608; }
 <!-- Header -->
 <div class="cert-header">
     <div class="cert-header-top">
-        <div>
-            <span class="cert-eyebrow">Kurumsal</span>
-            <h1 class="cert-title">Sertifikalar</h1>
-            <div class="cert-breadcrumb">
-                <a href="/">Ana Sayfa</a>
-                <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Kurumsal</span>
-                <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Sertifikalar</span>
-            </div>
+        <span class="cert-eyebrow">@(isEn ? "Corporate" : "Kurumsal")</span>
+        <h1 class="cert-title">@(isEn ? "Certificates" : "Sertifikalar")</h1>
+        <p class="cert-subtitle">@(isEn ? "Quality and international standard certificates." : "Kalite ve uluslararası standart sertifikalarımız.")</p>
+        <div class="cert-breadcrumb">
+            <a href="/">@(isEn ? "Home" : "Ana Sayfa")</a>
+            <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>@(isEn ? "Corporate" : "Kurumsal")</span>
+            <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>@(isEn ? "Certificates" : "Sertifikalar")</span>
         </div>
     </div>
 </div>

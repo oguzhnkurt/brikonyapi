@@ -26,7 +26,7 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Kategori Adı</th>
+                                    <th>Kategori Adı (TR / EN)</th>
                                     <th style="width:80px" class="text-center">Sıra</th>
                                     <th style="width:110px" class="text-center">Durum</th>
                                     <th style="width:160px" class="text-end">İşlemler</th>
@@ -38,11 +38,13 @@
                                     <tr id="row-@cat.Id" class="@(cat.IsActive ? "" : "table-secondary text-muted")">
                                         <td>
                                             <form asp-area="Admin" asp-controller="Categories" asp-action="Edit" method="post"
-                                                  class="d-flex gap-2 align-items-center">
+                                                  class="d-flex gap-2 align-items-center flex-wrap">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="id" value="@cat.Id" />
                                                 <input type="text" name="name" value="@cat.Name"
-                                                       class="form-control form-control-sm" style="max-width:300px" required />
+                                                       class="form-control form-control-sm" style="max-width:220px" placeholder="Türkçe ad" required />
+                                                <input type="text" name="nameEn" value="@cat.NameEn"
+                                                       class="form-control form-control-sm" style="max-width:220px" placeholder="English name" />
                                                 <input type="number" name="orderIndex" value="@cat.OrderIndex"
                                                        class="form-control form-control-sm" style="width:65px" />
                                                 <button type="submit" class="btn btn-sm btn-outline-primary">
@@ -94,8 +96,12 @@
                 <form asp-area="Admin" asp-controller="Categories" asp-action="Create" method="post">
                     @Html.AntiForgeryToken()
                     <div class="mb-3">
-                        <label class="form-label">Kategori Adı <span class="text-danger">*</span></label>
+                        <label class="form-label">Kategori Adı (TR) <span class="text-danger">*</span></label>
                         <input type="text" name="name" class="form-control" placeholder="örn: Sağlık Yapıları" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category Name (EN)</label>
+                        <input type="text" name="nameEn" class="form-control" placeholder="e.g. Healthcare Buildings" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Sıra (küçük = önce)</label>

@@ -73,6 +73,10 @@ namespace BrikonYapi.Web.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("NameEn")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer");
 

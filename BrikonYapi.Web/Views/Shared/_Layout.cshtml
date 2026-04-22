@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -131,7 +131,7 @@
                 <a href="/" class="ft-logo">
                     <img src="/images/logo.png" alt="Brikon Yapı" />
                 </a>
-                <p class="ft-tagline">@(ViewBag.AboutText ?? "Kaliteli ve güvenilir inşaat hizmetleriyle geleceği inşa ediyoruz.")</p>
+                <p class="ft-tagline">@(isEn ? "Building the future with quality and reliable construction services." : (ViewBag.AboutText ?? "Kaliteli ve güvenilir inşaat hizmetleriyle geleceği inşa ediyoruz."))</p>
                 <div class="ft-social">
                     @if (!string.IsNullOrEmpty(ViewBag.Instagram?.ToString()))
                     {

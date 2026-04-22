@@ -6,6 +6,7 @@ namespace BrikonYapi.Web.Data.Entities
     {
         public int Id { get; set; }
         [Required, MaxLength(200)] public string Name { get; set; } = string.Empty;
+        [MaxLength(200)] public string? NameEn { get; set; }
         public int OrderIndex { get; set; } = 0;
         public bool IsActive { get; set; } = true;
         public ICollection<Project> Projects { get; set; } = new List<Project>();

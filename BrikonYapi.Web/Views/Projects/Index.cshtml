@@ -164,7 +164,7 @@ body { background: #030608; }
 /* Badge */
 .prj-badge {
     position: absolute; top: 1rem; left: 1rem; z-index: 6;
-    font-size: .5rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase;
+    font-size: .5rem; font-weight: 700; letter-spacing: .13em;
     padding: .26rem .7rem; border-radius: 2px; color: #fff; white-space: nowrap;
 }
 .prj-badge-ongoing   { background: var(--c-primary); }
@@ -537,7 +537,7 @@ body { background: #030608; }
             <button class="prj-city-pill active" data-cat="">@(isEn ? "All" : "Tümü")</button>
             @foreach (var cat in allCategories)
             {
-                <button class="prj-city-pill" data-cat="@cat.Id">@cat.Name</button>
+                <button class="prj-city-pill" data-cat="@cat.Id">@(isEn && !string.IsNullOrEmpty(cat.NameEn) ? cat.NameEn : cat.Name)</button>
             }
         </div>
     }
@@ -591,7 +591,7 @@ else
             <div class="prj-card-line"></div>
 
             <span class="prj-badge @(isOngoing?"prj-badge-ongoing":"prj-badge-completed")">
-                @(isEn?(isOngoing?"Ongoing":"Completed"):(isOngoing?"Devam Ediyor":"Tamamlandı"))
+                @(isEn?(isOngoing?"ONGOING":"COMPLETED"):(isOngoing?"DEVAM EDİYOR":"TAMAMLANDI"))
             </span>
 
             @if (hasChip) { <span class="prj-chip">@p.CardTag</span> }
