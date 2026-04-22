@@ -4,6 +4,7 @@ using BrikonYapi.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace BrikonYapi.Web.Areas.Admin.Controllers
 {
@@ -42,8 +43,14 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             var fileName = $"katalog-manuel-{DateTime.Now:yyyyMMddHHmmss}.pdf";
             var fullPath = Path.Combine(dir, fileName);
 
-            using (var stream = new FileStream(fullPath, FileMode.Create))
+            var tempPath = fullPath + ".tmp";
+            using (var stream = new FileStream(tempPath, FileMode.Create))
                 await pdf.CopyToAsync(stream);
+
+            // Ghostscript ile sıkıştır (web için optimize)
+            var compressed = await CompressPdfAsync(tempPath, fullPath);
+            if (!compressed) System.IO.File.Move(tempPath, fullPath, overwrite: true);
+            else if (System.IO.File.Exists(tempPath)) System.IO.File.Delete(tempPath);
 
             var catalog = new Catalog
             {
@@ -115,6 +122,39 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             }
             TempData["Success"] = "Katalog silindi.";
             return RedirectToAction(nameof(Index));
+        }
+
+        private static async Task<bool> CompressPdfAsync(string inputPath, string outputPath)
+        {
+            try
+            {
+                var gs = OperatingSystem.IsWindows() ? "gswin64c" : "gs";
+                var psi = new ProcessStartInfo(gs,
+                    $"-sDEVICE=pdfwrite -dCompatibilityLevel=1.5 -dPDFSETTINGS=/ebook " +
+                    $"-dNOPAUSE -dQUIET -dBATCH -dFastWebView=true " +
+                    $"-sOutputFile=\"{outputPath}\" \"{inputPath}\"")
+                {
+                    RedirectStandardError  = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute        = false,
+                    CreateNoWindow         = true
+                };
+                using var proc = Process.Start(psi);
+                if (proc == null) return false;
+                await proc.WaitForExitAsync();
+                // Sıkıştırılmış dosya orijinalden büyükse orijinali kullan
+                if (System.IO.File.Exists(outputPath) &&
+                    new FileInfo(outputPath).Length >= new FileInfo(inputPath).Length)
+                {
+                    System.IO.File.Delete(outputPath);
+                    return false;
+                }
+                return proc.ExitCode == 0 && System.IO.File.Exists(outputPath);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
