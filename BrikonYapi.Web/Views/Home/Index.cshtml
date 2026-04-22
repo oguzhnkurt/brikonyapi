@@ -57,7 +57,7 @@
         var p = heroProjects[i];
         if (!string.IsNullOrEmpty(p.VideoPath))
         {
-          <video class="hero-video @(i==0?"active":"")" autoplay muted loop playsinline preload="auto">
+          <video class="hero-video @(i==0?"active":"")" autoplay muted loop playsinline preload="@(i==0?"auto":"none")">
             <source src="@p.VideoPath" type="video/mp4" />
           </video>
         }
@@ -78,7 +78,7 @@
       <video class="hero-video active" autoplay muted loop playsinline preload="auto">
         <source src="/videos/hero1.mp4" type="video/mp4" />
       </video>
-      <video class="hero-video" autoplay muted loop playsinline preload="auto">
+      <video class="hero-video" autoplay muted loop playsinline preload="none">
         <source src="/videos/hero2.mp4" type="video/mp4" />
       </video>
     }
@@ -155,7 +155,7 @@
         {
           @if (aboutIsVideo)
           {
-            <video class="about-img-main" src="@aboutMedia" autoplay muted loop playsinline style="object-fit:cover;width:100%;height:100%;"></video>
+            <video class="about-img-main" src="@aboutMedia" autoplay muted loop playsinline preload="metadata" style="object-fit:cover;width:100%;height:100%;"></video>
           }
           else
           {
@@ -525,8 +525,7 @@
     var ongoingCount   = Model.OngoingProjects.Count;
 }
 <section class="proc-band">
-    <video class="proc-bg-video" autoplay muted loop playsinline>
-        <source src="/images/proc-bg.mp4" type="video/mp4">
+    <video class="proc-bg-video" muted loop playsinline preload="none" data-src="/images/proc-bg.mp4">
     </video>
     <div class="proc-band-inner container">
 

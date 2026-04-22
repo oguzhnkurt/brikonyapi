@@ -128,6 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       /* Video */
       if (video?.tagName === 'VIDEO') {
+        if (video.readyState === 0) {
+          video.load();
+        }
         video.currentTime = 0;
         video.play().catch(() => {});
       }
@@ -240,5 +243,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById('contact');
     if (el) setTimeout(() => el.scrollIntoView({ behavior:'smooth' }), 300);
   }
+
+  /* ── PROC-BG-VIDEO LAZY LOAD ────────────────────────── */
+  const procVid = document.querySelector('.proc-bg-video[data-src]');
+  if (procVid) {
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        procVid.src = procVid.dataset.src;
+        procVid.load();
+        procVid.play().catch(() => {});
+        obs.disconnect();
+      }
+    }, { threshold: 0.1 });
+    obs.observe(procVid);
+  }
+
+  /* ── PDF LOADING TOAST ──────────────────────────────── */
+  document.querySelectorAll('a[href="/E-Katalog"], a[href*="E-Katalog"]').forEach(a => {
+    a.addEventListener('click', () => {
+      const toast = document.createElement('div');
+      toast.textContent = 'PDF açılıyor…';
+      toast.style.cssText = 'position:fixed;bottom:2rem;right:2rem;background:#0082B4;color:#fff;' +
+        'padding:.65rem 1.2rem;border-radius:6px;font-size:.82rem;font-family:Inter,sans-serif;' +
+        'z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);pointer-events:none;';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 8000);
+    });
+  });
 
 });
