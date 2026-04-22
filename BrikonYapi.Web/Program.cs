@@ -48,6 +48,7 @@ builder.Services.ConfigureApplicationCookie(o =>
 });
 
 builder.Services.AddScoped<ProjectService>();
+builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<SiteSettingService>();
 builder.Services.AddScoped<ReferenceService>();

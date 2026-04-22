@@ -7,9 +7,21 @@ namespace BrikonYapi.Web.Services
     public class ContactService
     {
         private readonly AppDbContext _db;
-        public ContactService(AppDbContext db) => _db = db;
+        private readonly EmailService _email;
 
-        public async Task SendAsync(ContactMessage msg) { _db.ContactMessages.Add(msg); await _db.SaveChangesAsync(); }
+        public ContactService(AppDbContext db, EmailService email)
+        {
+            _db    = db;
+            _email = email;
+        }
+
+        public async Task SendAsync(ContactMessage msg)
+        {
+            _db.ContactMessages.Add(msg);
+            await _db.SaveChangesAsync();
+            // E-posta bildirimi — hata olursa kayıt yine de düşer
+            _ = _email.SendContactNotificationAsync(msg);
+        }
         public async Task<List<ContactMessage>> GetAllAsync() => await _db.ContactMessages.OrderByDescending(m => m.CreatedAt).ToListAsync();
         public async Task<int> GetUnreadCountAsync() => await _db.ContactMessages.CountAsync(m => !m.IsRead);
         public async Task MarkReadAsync(int id) { var m = await _db.ContactMessages.FindAsync(id); if (m != null) { m.IsRead = true; await _db.SaveChangesAsync(); } }
