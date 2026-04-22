@@ -12,12 +12,12 @@ namespace BrikonYapi.Web.Migrations
 
             migrationBuilder.Sql(@"
                 INSERT INTO ""Certificates"" (""Title"", ""Description"", ""ImagePath"", ""OrderIndex"", ""IsActive"", ""CreatedAt"")
-                SELECT t.title, t.desc, NULL, t.ord, TRUE, NOW() FROM (VALUES
+                SELECT t.ctitle, t.cdesc, NULL, t.cord, TRUE, NOW() FROM (VALUES
                     ('ISO 9001:2015 Kalite Yönetim Sistemi', 'Kalite yönetim sistemi uluslararası standardı sertifikası', 1),
                     ('ISO 14001:2015 Çevre Yönetim Sistemi', 'Çevre yönetim sistemi uluslararası standardı sertifikası', 2),
                     ('TSE Hizmet Yeterlilik Belgesi',          'Türk Standartları Enstitüsü hizmet yeterlilik belgesi',   3)
-                ) AS t(title, desc, ord)
-                WHERE NOT EXISTS (SELECT 1 FROM ""Certificates"" WHERE ""Title"" = t.title);
+                ) AS t(ctitle, cdesc, cord)
+                WHERE NOT EXISTS (SELECT 1 FROM ""Certificates"" WHERE ""Title"" = t.ctitle);
             ");
         }
 
