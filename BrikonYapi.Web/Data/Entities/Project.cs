@@ -11,7 +11,9 @@ namespace BrikonYapi.Web.Data.Entities
         [Required, MaxLength(200)] public string Name { get; set; } = string.Empty;
         [Required, MaxLength(200)] public string Slug { get; set; } = string.Empty;
         [MaxLength(500)] public string? ShortDescription { get; set; }
+        [MaxLength(500)] public string? ShortDescriptionEn { get; set; }
         public string? Description { get; set; }
+        public string? DescriptionEn { get; set; }
         [MaxLength(200)] public string? Location { get; set; }
         [MaxLength(100)] public string? District { get; set; }
         [MaxLength(100)] public string? City { get; set; }

@@ -91,8 +91,10 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             }
 
             existing.Name             = project.Name;
-            existing.ShortDescription = project.ShortDescription;
-            existing.Description      = project.Description;
+            existing.ShortDescription   = project.ShortDescription;
+            existing.ShortDescriptionEn = project.ShortDescriptionEn;
+            existing.Description        = project.Description;
+            existing.DescriptionEn      = project.DescriptionEn;
             existing.Location         = project.Location;
             existing.District         = project.District;
             existing.City             = project.City;

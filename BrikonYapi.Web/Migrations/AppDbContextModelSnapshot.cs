@@ -295,6 +295,9 @@ namespace BrikonYapi.Web.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<string>("DescriptionEn")
+                        .HasColumnType("text");
+
                     b.Property<string>("District")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -337,6 +340,10 @@ namespace BrikonYapi.Web.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("ShortDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ShortDescriptionEn")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 

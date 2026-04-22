@@ -575,7 +575,7 @@ else
            data-units="@(p.UnitCount.HasValue ? p.UnitCount.ToString() : "")"
            data-floors="@(p.FloorCount.HasValue ? p.FloorCount.ToString() : "")"
            data-area="@(p.TotalArea.HasValue ? p.TotalArea.Value.ToString("N0") : "")"
-           data-desc="@(p.Description ?? p.ShortDescription ?? "")"
+           data-desc="@(isEn ? (p.DescriptionEn ?? p.ShortDescriptionEn ?? p.Description ?? p.ShortDescription ?? "") : (p.Description ?? p.ShortDescription ?? ""))"
            data-mainimg="@(p.MainImagePath ?? "")"
            data-images="@Html.Raw(System.Web.HttpUtility.HtmlEncode(imagesJson))"
            style="transition-delay:@(((idx-1)%4)*65)ms">

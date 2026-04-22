@@ -177,13 +177,17 @@
 
       <!-- Sağ: Açıklama + İletişim -->
       <div class="pd-specs-desc">
-        @if (!string.IsNullOrEmpty(Model.ShortDescription))
-        {
-          <p class="pd-short-desc">@Model.ShortDescription</p>
+        @{
+            var displayShort = isEn && !string.IsNullOrEmpty(Model.ShortDescriptionEn) ? Model.ShortDescriptionEn : Model.ShortDescription;
+            var displayDesc  = isEn && !string.IsNullOrEmpty(Model.DescriptionEn) ? Model.DescriptionEn : Model.Description;
         }
-        @if (!string.IsNullOrEmpty(Model.Description))
+        @if (!string.IsNullOrEmpty(displayShort))
         {
-          <div class="pd-long-desc">@Html.Raw(Model.Description.Replace("\n", "<br/>"))</div>
+          <p class="pd-short-desc">@displayShort</p>
+        }
+        @if (!string.IsNullOrEmpty(displayDesc))
+        {
+          <div class="pd-long-desc">@Html.Raw(displayDesc.Replace("\n", "<br/>"))</div>
         }
         <a href="tel:@ViewBag.Phone" class="btn-hero-dark" style="margin-top:2rem;">@(isEn ? "Get Information" : "Bilgi Al")</a>
       </div>

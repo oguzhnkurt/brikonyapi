@@ -136,12 +136,50 @@
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Kısa Açıklama</label>
-                            <input asp-for="ShortDescription" class="form-control" />
+                            <label class="form-label">Kısa Açıklama <span class="badge bg-secondary ms-1" style="font-size:.65rem;">TR</span></label>
+                            <input asp-for="ShortDescription" class="form-control" id="shortDescTr" />
+                            <!-- EN panel -->
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary en-toggle-btn" data-target="short-en-panel">
+                                    <iconify-icon icon="iconamoon:translation-duotone" class="me-1"></iconify-icon>
+                                    İngilizce
+                                    <iconify-icon icon="iconamoon:arrow-down-2-duotone" class="ms-1 toggle-arrow"></iconify-icon>
+                                </button>
+                            </div>
+                            <div id="short-en-panel" class="en-panel mt-2" style="display:none;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <label class="form-label mb-0 small">Kısa Açıklama <span class="badge bg-primary ms-1" style="font-size:.65rem;">EN</span></label>
+                                    <button type="button" class="btn btn-sm btn-outline-success translate-btn ms-auto"
+                                            data-source="shortDescTr" data-target="shortDescEn">
+                                        <iconify-icon icon="iconamoon:magic-wand-duotone" class="me-1"></iconify-icon>
+                                        Türkçe'den Çevir
+                                    </button>
+                                </div>
+                                <input asp-for="ShortDescriptionEn" class="form-control" id="shortDescEn" placeholder="English short description" />
+                            </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Detay Açıklama</label>
-                            <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                            <label class="form-label">Detay Açıklama <span class="badge bg-secondary ms-1" style="font-size:.65rem;">TR</span></label>
+                            <textarea asp-for="Description" class="form-control" rows="5" id="descTr"></textarea>
+                            <!-- EN panel -->
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary en-toggle-btn" data-target="desc-en-panel">
+                                    <iconify-icon icon="iconamoon:translation-duotone" class="me-1"></iconify-icon>
+                                    İngilizce
+                                    <iconify-icon icon="iconamoon:arrow-down-2-duotone" class="ms-1 toggle-arrow"></iconify-icon>
+                                </button>
+                            </div>
+                            <div id="desc-en-panel" class="en-panel mt-2" style="display:none;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <label class="form-label mb-0 small">Detay Açıklama <span class="badge bg-primary ms-1" style="font-size:.65rem;">EN</span></label>
+                                    <button type="button" class="btn btn-sm btn-outline-success translate-btn ms-auto"
+                                            data-source="descTr" data-target="descEn">
+                                        <iconify-icon icon="iconamoon:magic-wand-duotone" class="me-1"></iconify-icon>
+                                        Türkçe'den Çevir
+                                    </button>
+                                </div>
+                                <textarea asp-for="DescriptionEn" class="form-control" rows="5" id="descEn" placeholder="English description"></textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -457,6 +495,16 @@
     border-radius: 8px;
 }
 
+/* EN Panels */
+.en-panel {
+    background: #f0f6ff;
+    border: 1px solid #c7dcff;
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+.en-toggle-btn .toggle-arrow { transition: transform .2s; }
+.en-toggle-btn.open .toggle-arrow { transform: rotate(180deg); }
+
 /* Kart Medya Seçici */
 .card-media-option {
     flex: 1;
@@ -677,6 +725,49 @@ function showFileNames(input, inputId) {
         uploadChunk(0);
     });
 })();
+
+// ── EN Panel Toggle ──────────────────────────────────────
+document.querySelectorAll('.en-toggle-btn').forEach(function(btn) {
+    var targetId = btn.getAttribute('data-target');
+    var panel    = document.getElementById(targetId);
+    // Auto-open if there's already a value in the panel
+    var inputs = panel ? panel.querySelectorAll('input,textarea') : [];
+    var hasValue = Array.from(inputs).some(function(el){ return el.value.trim() !== ''; });
+    if (hasValue) { panel.style.display = 'block'; btn.classList.add('open'); }
+
+    btn.addEventListener('click', function() {
+        var isOpen = panel.style.display !== 'none';
+        panel.style.display = isOpen ? 'none' : 'block';
+        btn.classList.toggle('open', !isOpen);
+    });
+});
+
+// ── Auto-Translate via MyMemory ──────────────────────────
+document.querySelectorAll('.translate-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var sourceEl = document.getElementById(btn.getAttribute('data-source'));
+        var targetEl = document.getElementById(btn.getAttribute('data-target'));
+        var text = sourceEl ? sourceEl.value.trim() : '';
+        if (!text) { alert('Önce Türkçe metin girin.'); return; }
+
+        var origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Çevriliyor...';
+
+        fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=tr|en&de=admin@brikonyapi.com')
+            .then(function(r){ return r.json(); })
+            .then(function(data){
+                var translated = data && data.responseData && data.responseData.translatedText;
+                if (translated) {
+                    targetEl.value = translated;
+                } else {
+                    alert('Çeviri alınamadı. Lütfen manuel girin.');
+                }
+            })
+            .catch(function(){ alert('Çeviri servisi şu an erişilemiyor.'); })
+            .finally(function(){ btn.disabled = false; btn.innerHTML = origHtml; });
+    });
+});
 
 // Loading overlay on save
 document.getElementById('project-form').addEventListener('submit', function() {
