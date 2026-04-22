@@ -23,6 +23,19 @@
     var c4d          = Model.Settings.GetValueOrDefault("AboutCard4Desc","Çevre dostu ve enerji verimli yapılar") ?? "";
     var aboutMedia   = Model.Settings.GetValueOrDefault("AboutMediaPath","") ?? "";
     bool aboutIsVideo = !string.IsNullOrEmpty(aboutMedia) && (aboutMedia.EndsWith(".mp4") || aboutMedia.EndsWith(".mov") || aboutMedia.EndsWith(".webm"));
+    // English overrides — admin can set these keys in Settings panel
+    var aboutTitleEn   = Model.Settings.GetValueOrDefault("AboutTitleEn",   "A Reliable Construction Partner") ?? "A Reliable Construction Partner";
+    var aboutEn        = Model.Settings.GetValueOrDefault("AboutTextEn",    "We deliver quality and reliable construction services in every project.") ?? "";
+    var about2En       = Model.Settings.GetValueOrDefault("AboutText2En",   "In every project we prioritize quality materials, on-time delivery and customer satisfaction. We combine modern architectural aesthetics with functionality to enhance quality of life.") ?? "";
+    var aboutYearLblEn = Model.Settings.GetValueOrDefault("AboutYearLabelEn","Since 2005") ?? "Since 2005";
+    var c1tEn = Model.Settings.GetValueOrDefault("AboutCard1TitleEn","Quality Assurance") ?? "Quality Assurance";
+    var c1dEn = Model.Settings.GetValueOrDefault("AboutCard1DescEn", "Production compliant with TSE and ISO standards") ?? "";
+    var c2tEn = Model.Settings.GetValueOrDefault("AboutCard2TitleEn","On-Time Delivery") ?? "On-Time Delivery";
+    var c2dEn = Model.Settings.GetValueOrDefault("AboutCard2DescEn", "Complete delivery on promised dates") ?? "";
+    var c3tEn = Model.Settings.GetValueOrDefault("AboutCard3TitleEn","Expert Team") ?? "Expert Team";
+    var c3dEn = Model.Settings.GetValueOrDefault("AboutCard3DescEn", "Experienced engineers and craftsmen") ?? "";
+    var c4tEn = Model.Settings.GetValueOrDefault("AboutCard4TitleEn","Sustainability") ?? "Sustainability";
+    var c4dEn = Model.Settings.GetValueOrDefault("AboutCard4DescEn", "Eco-friendly and energy-efficient buildings") ?? "";
     ViewBag.Phone    = phone;
     ViewBag.Email    = email;
     ViewBag.Address  = address;
@@ -172,7 +185,7 @@
         }
         <div class="about-accent-box">
           <div class="about-accent-num">@aboutYear</div>
-          <div class="about-accent-lbl">@aboutYearLbl</div>
+          <div class="about-accent-lbl">@(isEn ? aboutYearLblEn : aboutYearLbl)</div>
         </div>
       </div>
 
@@ -180,19 +193,19 @@
       <div class="reveal-right">
         <div class="sh">
           <p class="sh-eyebrow">@(isEn ? "About Us" : "Hakkımızda")</p>
-          <h2 class="sh-title">@aboutTitle</h2>
+          <h2 class="sh-title">@(isEn ? aboutTitleEn : aboutTitle)</h2>
           <div class="sh-line"></div>
         </div>
-        <p style="font-size:.98rem;line-height:1.85;color:#555;margin-bottom:1.25rem">@about</p>
-        <p style="font-size:.98rem;line-height:1.85;color:#555;margin-bottom:2rem">@about2</p>
+        <p style="font-size:.98rem;line-height:1.85;color:#555;margin-bottom:1.25rem">@(isEn ? aboutEn : about)</p>
+        <p style="font-size:.98rem;line-height:1.85;color:#555;margin-bottom:2rem">@(isEn ? about2En : about2)</p>
         <div class="about-values">
           <div class="about-value reveal delay-1">
             <div class="av-icon">
               <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             </div>
             <div>
-              <div class="av-name">@c1t</div>
-              <div class="av-desc">@c1d</div>
+              <div class="av-name">@(isEn ? c1tEn : c1t)</div>
+              <div class="av-desc">@(isEn ? c1dEn : c1d)</div>
             </div>
           </div>
           <div class="about-value reveal delay-2">
@@ -200,8 +213,8 @@
               <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             </div>
             <div>
-              <div class="av-name">@c2t</div>
-              <div class="av-desc">@c2d</div>
+              <div class="av-name">@(isEn ? c2tEn : c2t)</div>
+              <div class="av-desc">@(isEn ? c2dEn : c2d)</div>
             </div>
           </div>
           <div class="about-value reveal delay-3">
@@ -209,8 +222,8 @@
               <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
             </div>
             <div>
-              <div class="av-name">@c3t</div>
-              <div class="av-desc">@c3d</div>
+              <div class="av-name">@(isEn ? c3tEn : c3t)</div>
+              <div class="av-desc">@(isEn ? c3dEn : c3d)</div>
             </div>
           </div>
           <div class="about-value reveal delay-4">
@@ -218,8 +231,8 @@
               <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             <div>
-              <div class="av-name">@c4t</div>
-              <div class="av-desc">@c4d</div>
+              <div class="av-name">@(isEn ? c4tEn : c4t)</div>
+              <div class="av-desc">@(isEn ? c4dEn : c4d)</div>
             </div>
           </div>
         </div>
