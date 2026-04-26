@@ -56,21 +56,29 @@
     cursor:pointer; overflow:visible;
     display:block;
     transition:transform .2s ease;
+    will-change: transform;
 }
-.bk-pin-svg:hover { transform:translateY(-3px); }
+@@media (hover: hover) {
+    .bk-pin-svg:hover { transform:translateY(-3px); }
+}
 
-/* Devam Eden – dalgalanan turuncu halkalar */
+/* Devam Eden – dalgalanan halkalar */
 .bk-ring-1 {
     transform-box:fill-box; transform-origin:center;
     animation:bk-ring-out 2.4s ease-out infinite;
+    will-change: transform, opacity;
 }
 .bk-ring-2 {
     transform-box:fill-box; transform-origin:center;
     animation:bk-ring-out 2.4s ease-out 1.2s infinite;
+    will-change: transform, opacity;
 }
 @@keyframes bk-ring-out {
     0%   { transform:scale(1);   opacity:.45; }
     100% { transform:scale(2.6); opacity:0;   }
+}
+@@media (max-width: 768px) {
+    .bk-ring-1, .bk-ring-2 { animation-duration: 3s; }
 }
 
 /* ── Modal ── */

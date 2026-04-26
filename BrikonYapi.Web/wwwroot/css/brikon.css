@@ -1049,16 +1049,16 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    overflow-x: hidden;
-    padding: 0 .25rem;
+    overflow: visible;
+    padding: 12px .25rem 0;
   }
   .proc-steps::before {
-    top: 15px;
+    top: 27px;
     left: calc(100% / 10);
     right: calc(100% / 10);
   }
   .proc-step.passed::after, .proc-step.active::after {
-    top: 15px;
+    top: 27px;
     height: 1.5px;
   }
 
@@ -1073,7 +1073,7 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
 
   .proc-node { width: 30px; height: 30px; }
   .proc-node svg { width: 12px; height: 12px; }
-  .proc-step.active .proc-node { box-shadow: 0 0 0 4px rgba(0,130,180,.13); }
+  .proc-step.active .proc-node { box-shadow: 0 0 0 4px rgba(0,130,180,.13); transform: none; }
 
   .proc-step-info { display: contents; }
   .proc-step-title { font-size: .42rem; letter-spacing: .08em; text-align: center; }
