@@ -502,12 +502,20 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
 
 /* ── Sol/sağ ok (minimal) ── */
 .hero-arrow {
-  position:absolute; top:50%; transform:translateY(calc(-50% - 36px));
-  z-index:6; background:none; border:none;
-  color:rgba(255,255,255,.35); font-size:2.5rem;
-  cursor:pointer; padding:.5rem .8rem;
-  transition:color .2s; line-height:1;
-  display:none; /* hidden — tab navigation yeterli */
+  position:absolute; top:50%; transform:translateY(-50%);
+  z-index:6; border:none; cursor:pointer;
+  width:40px; height:40px; border-radius:50%;
+  background:rgba(0,0,0,.35); backdrop-filter:blur(6px);
+  color:rgba(255,255,255,.8);
+  display:none;
+  align-items:center; justify-content:center;
+  transition:background .2s, color .2s;
+}
+.hero-arrow:active { background:var(--c-primary); color:#fff; }
+.hero-arrow-prev { left:12px; }
+.hero-arrow-next { right:12px; }
+@media (max-width:768px) {
+  .hero-arrow { display:flex; }
 }
 .hero-watermark { display:none; }
 .hero-dots { display:none; }
@@ -1041,7 +1049,7 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
 
 /* ─ Mobil ─ */
 @media (max-width: 768px) {
-  .proc-band-inner { padding: 1.5rem .5rem 1.5rem; gap: 1rem; }
+  .proc-band-inner { padding: 1.5rem .5rem 1.5rem; gap: .75rem; }
   .proc-header { margin-top: 1.5rem; }
   .proc-title { font-size: clamp(.95rem, 4vw, 1.2rem); }
 
@@ -1052,15 +1060,10 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
     overflow: visible;
     padding: 12px .25rem 0;
   }
-  .proc-steps::before {
-    top: 27px;
-    left: calc(100% / 10);
-    right: calc(100% / 10);
-  }
-  .proc-step.passed::after, .proc-step.active::after {
-    top: 27px;
-    height: 1.5px;
-  }
+  .proc-steps::before { display: none; }
+  .proc-step.passed::after, .proc-step.active::after { display: none; }
+  .proc-detail { order: 1; }
+  .proc-refs   { order: 2; margin-top: 1rem; padding-top: 1rem; }
 
   .proc-step {
     flex: 1;
@@ -1083,6 +1086,7 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
     flex-direction: column; text-align: center;
     border-left: none; border-top: 2px solid var(--c-primary);
     border-radius: 4px; padding: .85rem 1rem; gap: .8rem;
+    min-height: 7rem;
   }
   .proc-detail-bg-num { display: none; }
   .proc-detail-text { font-size: .78rem; }

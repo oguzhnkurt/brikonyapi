@@ -151,6 +151,12 @@ document.addEventListener('DOMContentLoaded', () => {
       t.addEventListener('click', () => { stopTimer(); goTo(i); startTimer(); });
     });
 
+    /* Mobil ok butonları */
+    const prevArrow = document.getElementById('hero-arrow-prev');
+    const nextArrow = document.getElementById('hero-arrow-next');
+    if (prevArrow) prevArrow.addEventListener('click', () => { stopTimer(); goTo(current - 1); startTimer(); });
+    if (nextArrow) nextArrow.addEventListener('click', () => { stopTimer(); goTo(current + 1); startTimer(); });
+
     /* Başlat */
     goTo(0);
     startTimer();

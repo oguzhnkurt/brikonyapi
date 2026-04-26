@@ -129,6 +129,14 @@
     }
   </div>
 
+  <!-- Mobil ok navigasyonu -->
+  <button class="hero-arrow hero-arrow-prev" id="hero-arrow-prev" aria-label="Önceki proje">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <button class="hero-arrow hero-arrow-next" id="hero-arrow-next" aria-label="Sonraki proje">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+
   <!-- Progress bar -->
   <div class="hero-progress"><div class="hero-progress-fill" id="hero-progress-fill"></div></div>
 
@@ -399,6 +407,24 @@
 @@media(max-width:480px){
     .hp-card { width: 78vw; height: 240px; }
 }
+
+.hp-arrows { display: none; }
+@@media(max-width:768px){
+    .hp-arrows {
+        display: flex; justify-content: center; align-items: center;
+        gap: .75rem; margin-top: 1.1rem;
+    }
+    .hp-arrow {
+        width: 38px; height: 38px; border-radius: 50%;
+        background: rgba(255,255,255,.07);
+        border: 1px solid rgba(255,255,255,.14);
+        color: rgba(255,255,255,.65);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; flex-shrink: 0;
+        transition: background .2s, color .2s, border-color .2s;
+    }
+    .hp-arrow:active { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
+}
 </style>
 
   <!-- Header -->
@@ -446,6 +472,16 @@
         }
       }
     </div>
+  </div>
+
+  <!-- Mobil ok navigasyonu -->
+  <div class="hp-arrows">
+    <button class="hp-arrow" id="hp-arrow-prev" aria-label="Önceki">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="hp-arrow" id="hp-arrow-next" aria-label="Sonraki">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
   </div>
 
 </section>
@@ -988,6 +1024,33 @@
     resumeTimer = setTimeout(function(){ paused = false; }, 600);
   }, { passive: true });
 
+  function cardStep() {
+    var c = track.querySelector('.hp-card');
+    return c ? c.offsetWidth + 3 : 243;
+  }
+
+  function slideTo(newOffset) {
+    track.style.transition = 'transform .38s cubic-bezier(.4,0,.2,1)';
+    offset = clamp(newOffset);
+    apply();
+    setTimeout(function(){ track.style.transition = ''; }, 400);
+  }
+
+  var prevBtn = document.getElementById('hp-arrow-prev');
+  var nextBtn = document.getElementById('hp-arrow-next');
+  if (prevBtn) prevBtn.addEventListener('click', function(){
+    paused = true;
+    if (resumeTimer) clearTimeout(resumeTimer);
+    slideTo(offset + cardStep());
+    resumeTimer = setTimeout(function(){ paused = false; }, 1200);
+  });
+  if (nextBtn) nextBtn.addEventListener('click', function(){
+    paused = true;
+    if (resumeTimer) clearTimeout(resumeTimer);
+    slideTo(offset - cardStep());
+    resumeTimer = setTimeout(function(){ paused = false; }, 1200);
+  });
+
   apply();
   requestAnimationFrame(tick);
 })();
@@ -1369,14 +1432,17 @@
       s.classList.toggle('active', i === idx);
       s.classList.toggle('passed', i < idx);
     });
+    detailText.style.transition = 'none';
     detailText.style.opacity = '0';
-    if (detailBgNum) detailBgNum.style.opacity = '0';
+    if (detailBgNum) { detailBgNum.style.transition = 'none'; detailBgNum.style.opacity = '0'; }
     setTimeout(function(){
       detailText.textContent = steps[idx].dataset.detail || '';
       if (detailBgNum) detailBgNum.textContent = steps[idx].dataset.num || '';
+      detailText.getBoundingClientRect(); // force reflow
+      detailText.style.transition = '';
       detailText.style.opacity = '1';
-      if (detailBgNum) detailBgNum.style.opacity = '1';
-    }, 160);
+      if (detailBgNum) { detailBgNum.style.transition = ''; detailBgNum.style.opacity = '1'; }
+    }, 50);
   }
 
   function scheduleNext() {
