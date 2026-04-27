@@ -109,6 +109,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             existing.EndDate          = project.EndDate;
             existing.Latitude         = project.Latitude;
             existing.Longitude        = project.Longitude;
+            existing.CategoryId       = project.CategoryId;
             existing.IsActive         = project.IsActive;
             existing.IsFeatured       = project.IsFeatured;
             existing.IsMarquee        = project.IsMarquee;
