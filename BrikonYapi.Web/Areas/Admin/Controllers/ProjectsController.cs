@@ -79,7 +79,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Project project, IFormFile? mainImage, IFormFile? projectVideo, IFormFile[]? galleryImages, IFormFile[]? planImages)
         {
-            ModelState.Remove("Slug"); ModelState.Remove("Images"); ModelState.Remove("HeroSlides");
+            ModelState.Remove("Slug"); ModelState.Remove("Images"); ModelState.Remove("HeroSlides"); ModelState.Remove("Category");
 
             var existing = await _projects.GetByIdAsync(project.Id);
             if (existing == null) return NotFound();
@@ -87,6 +87,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             if (!ModelState.IsValid)
             {
                 project.Images = existing.Images;
+                await LoadCategoriesAsync(project.CategoryId);
                 return View(project);
             }
 
