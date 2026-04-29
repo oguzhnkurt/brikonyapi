@@ -3,82 +3,224 @@
     ViewData["Title"] = isEn ? "Our Services" : "Hizmetlerimiz";
 }
 
-<!-- Page Hero -->
+<style>
+/* ── HERO ── */
+.svc-hero {
+  position: relative;
+  padding: 9rem 0 4rem;
+  background: #0f1724;
+  overflow: hidden;
+}
+.svc-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 60% 40%, rgba(0,130,180,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.svc-hero .container { position: relative; z-index: 1; }
+.svc-hero-eyebrow {
+  display: inline-block;
+  font-size: .58rem; font-weight: 700; letter-spacing: .3em; text-transform: uppercase;
+  color: var(--c-primary); margin-bottom: .75rem;
+}
+.svc-hero h1 {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 900; color: #fff; letter-spacing: -.025em;
+  margin-bottom: 1.25rem;
+}
+.svc-hero-line {
+  width: 48px; height: 3px;
+  background: linear-gradient(to right, var(--c-primary), var(--c-secondary));
+  border-radius: 2px;
+  margin-bottom: 1.4rem;
+}
+.svc-hero-sub {
+  font-size: .95rem; color: rgba(255,255,255,.45); max-width: 480px; line-height: 1.7;
+}
+
+/* ── GRID ── */
+.svc-section { background: #f5f6f7; padding: 5rem 0; }
+.svc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+/* ── CARD ── */
+.svc-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 2.4rem 2rem 2rem;
+  border: 1px solid #e8eaec;
+  border-top: 3px solid transparent;
+  display: flex; flex-direction: column; gap: 1rem;
+  transition: border-color .3s, box-shadow .3s, transform .3s;
+  position: relative; overflow: hidden;
+}
+.svc-card::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(to right, var(--c-primary), var(--c-secondary));
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .35s cubic-bezier(.4,0,.2,1);
+}
+.svc-card:hover { box-shadow: 0 12px 40px rgba(0,130,180,.12); transform: translateY(-4px); }
+.svc-card:hover::after { transform: scaleX(1); }
+
+.svc-icon-wrap {
+  width: 52px; height: 52px; border-radius: 12px;
+  background: rgba(0,130,180,.08);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background .3s;
+}
+.svc-card:hover .svc-icon-wrap { background: rgba(0,130,180,.15); }
+.svc-icon-wrap svg { color: var(--c-primary); }
+
+.svc-card-title {
+  font-family: 'Inter', sans-serif;
+  font-size: .97rem; font-weight: 700;
+  color: var(--c-dark); letter-spacing: .01em; line-height: 1.3;
+  margin: 0;
+}
+.svc-card-desc {
+  font-size: .86rem; line-height: 1.7;
+  color: #6b7280; margin: 0; flex: 1;
+}
+.svc-card-num {
+  font-size: .52rem; font-weight: 700; letter-spacing: .2em;
+  color: rgba(0,130,180,.3); text-transform: uppercase;
+}
+
+/* ── CTA ── */
+.svc-cta {
+  background: #0f1724; padding: 4rem 0;
+  text-align: center;
+}
+.svc-cta-title {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.2rem, 2.5vw, 1.7rem);
+  font-weight: 800; color: #fff; margin-bottom: 1.5rem;
+}
+.svc-cta-btn {
+  display: inline-flex; align-items: center; gap: .5rem;
+  background: var(--c-primary); color: #fff;
+  padding: .85rem 2.2rem; border-radius: 4px;
+  font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  transition: background .2s;
+}
+.svc-cta-btn:hover { background: var(--c-secondary); color: #fff; }
+
+/* ── RESPONSIVE ── */
+@@media (max-width: 1024px) {
+  .svc-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@@media (max-width: 600px) {
+  .svc-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .svc-section { padding: 3rem 0; }
+  .svc-hero { padding: 7.5rem 0 3rem; }
+}
+</style>
+
+<!-- Hero -->
 <section class="svc-hero">
-    <div class="container">
-        <div class="sh">
-            <span class="sh-eyebrow">@(isEn ? "What We Do" : "Ne Yapıyoruz")</span>
-            <h1 class="sh-title">@(isEn ? "Our Services" : "Hizmetlerimiz")</h1>
-            <div class="sh-line"></div>
-        </div>
-    </div>
+  <div class="container">
+    <p class="svc-hero-eyebrow">@(isEn ? "What We Do" : "Ne Yapıyoruz")</p>
+    <h1>@(isEn ? "Our Services" : "Hizmetlerimiz")</h1>
+    <div class="svc-hero-line"></div>
+    <p class="svc-hero-sub">@(isEn ? "Quality construction solutions with years of expertise and commitment to excellence." : "Yılların birikimi ve kalite anlayışıyla inşaat sektöründe kapsamlı çözümler sunuyoruz.")</p>
+  </div>
 </section>
 
-<!-- Services Grid -->
-<section class="section svc-section">
-    <div class="container">
-        <div class="svc-grid">
+<!-- Grid -->
+<section class="svc-section">
+  <div class="container">
+    <div class="svc-grid">
 
-            <div class="svc-card reveal">
-                <div class="svc-card-body">
-                    <h3 class="svc-card-title">@(isEn ? "Residential Construction & Sales" : "Konut İnşaatı Ve Satışı")</h3>
-                    <p class="svc-card-desc">@(isEn ? "With a mission to offer living alternatives beyond just building homes, we develop quality projects backed by years of experience." : "Konut inşa etmekten öte yaşam alternatifleri sunmayı hedefleyen misyon ve yılların tecrübesiyle kaliteli projeler geliştiriyoruz.")</p>
-                </div>
-                <div class="svc-card-logo">
-                    <img src="/images/logo.png" alt="Brikon Yapı" />
-                </div>
-            </div>
-
-            <div class="svc-card reveal delay-1">
-                <div class="svc-card-body">
-                    <h3 class="svc-card-title">@(isEn ? "Mass Housing Projects" : "Toplu Konut Projeleri")</h3>
-                    <p class="svc-card-desc">@(isEn ? "We have extensive experience in developing low-cost, high-quality mass housing projects for communities." : "Düşük maliyetli ve kaliteli toplu konut projeleri geliştirme konusunda geniş deneyim ve tecrübeye sahibiz.")</p>
-                </div>
-                <div class="svc-card-logo">
-                    <img src="/images/logo.png" alt="Brikon Yapı" />
-                </div>
-            </div>
-
-            <div class="svc-card reveal delay-2">
-                <div class="svc-card-body">
-                    <h3 class="svc-card-title">@(isEn ? "Construction Contracting" : "İnşaat Taahhüt İşleri")</h3>
-                    <p class="svc-card-desc">@(isEn ? "Drawing on our planning and construction expertise, we successfully fulfill all contractual commitments on time." : "Planlama ve inşaat konusundaki deneyimlerimizden güç alarak tüm taahhütleri başarıyla gerçekleştiriyoruz.")</p>
-                </div>
-                <div class="svc-card-logo">
-                    <img src="/images/logo.png" alt="Brikon Yapı" />
-                </div>
-            </div>
-
-            <div class="svc-card reveal delay-1">
-                <div class="svc-card-body">
-                    <h3 class="svc-card-title">@(isEn ? "Landscape & Environmental Design" : "Çevre Peyzaj Düzenlemeleri")</h3>
-                    <p class="svc-card-desc">@(isEn ? "We provide comprehensive landscaping and environmental design services to make the surroundings of our projects livable and aesthetic." : "Projelerimizin çevresini yaşanabilir ve estetik kılmak için kapsamlı peyzaj ve çevre düzenlemesi hizmetleri sunuyoruz.")</p>
-                </div>
-                <div class="svc-card-logo">
-                    <img src="/images/logo.png" alt="Brikon Yapı" />
-                </div>
-            </div>
-
-            <div class="svc-card reveal delay-2">
-                <div class="svc-card-body">
-                    <h3 class="svc-card-title">@(isEn ? "Structural Engineering Services" : "İnşaat Ve Statik Proje Hizmetleri")</h3>
-                    <p class="svc-card-desc">@(isEn ? "Prioritizing structural safety, our expert team delivers solutions in static project design and engineering services." : "Yapı güvenliğini ön planda tutarak statik proje ve mühendislik hizmetleri alanında uzman ekibimizle çözümler üretiyoruz.")</p>
-                </div>
-                <div class="svc-card-logo">
-                    <img src="/images/logo.png" alt="Brikon Yapı" />
-                </div>
-            </div>
-
-            <div class="svc-card reveal delay-3">
-                <div class="svc-card-body">
-                    <h3 class="svc-card-title">@(isEn ? "Urban Transformation Services" : "Kentsel Dönüşüm Hizmetleri")</h3>
-                    <p class="svc-card-desc">@(isEn ? "We manage the entire urban transformation process to convert risky buildings into modern, safe and comfortable residences." : "Riskli yapıları modern ve güvenli konutlara dönüştürmek için kentsel dönüşüm süreçlerini eksiksiz yönetiyoruz.")</p>
-                </div>
-                <div class="svc-card-logo">
-                    <img src="/images/logo.png" alt="Brikon Yapı" />
-                </div>
-            </div>
-
+      <div class="svc-card reveal">
+        <span class="svc-card-num">01</span>
+        <div class="svc-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M3 21h18M9 21V7l3-4 3 4v14M3 21V11l6-6M21 21V11l-6-6"/>
+          </svg>
         </div>
+        <h3 class="svc-card-title">@(isEn ? "Residential Construction & Sales" : "Konut İnşaatı Ve Satışı")</h3>
+        <p class="svc-card-desc">@(isEn ? "With a mission to offer living alternatives beyond just building homes, we develop quality projects backed by years of experience." : "Konut inşa etmekten öte yaşam alternatifleri sunmayı hedefleyen misyon ve yılların tecrübesiyle kaliteli projeler geliştiriyoruz.")</p>
+      </div>
+
+      <div class="svc-card reveal delay-1">
+        <span class="svc-card-num">02</span>
+        <div class="svc-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M1 22h22M5 22V8l7-6 7 6v14M9 22v-6h6v6"/>
+            <path d="M9 10h1m4 0h1M9 14h1m4 0h1"/>
+          </svg>
+        </div>
+        <h3 class="svc-card-title">@(isEn ? "Mass Housing Projects" : "Toplu Konut Projeleri")</h3>
+        <p class="svc-card-desc">@(isEn ? "We have extensive experience in developing low-cost, high-quality mass housing projects for communities." : "Düşük maliyetli ve kaliteli toplu konut projeleri geliştirme konusunda geniş deneyim ve tecrübeye sahibiz.")</p>
+      </div>
+
+      <div class="svc-card reveal delay-2">
+        <span class="svc-card-num">03</span>
+        <div class="svc-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="2"/>
+            <path d="M9 12h6M9 16h4"/>
+          </svg>
+        </div>
+        <h3 class="svc-card-title">@(isEn ? "Construction Contracting" : "İnşaat Taahhüt İşleri")</h3>
+        <p class="svc-card-desc">@(isEn ? "Drawing on our planning and construction expertise, we successfully fulfill all contractual commitments on time." : "Planlama ve inşaat konusundaki deneyimlerimizden güç alarak tüm taahhütleri başarıyla gerçekleştiriyoruz.")</p>
+      </div>
+
+      <div class="svc-card reveal delay-1">
+        <span class="svc-card-num">04</span>
+        <div class="svc-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M12 22V12M12 12C12 7 7 4 3 6M12 12c0-5 5-8 9-6M3 20c3-2 6-2 9 0s6 2 9 0"/>
+          </svg>
+        </div>
+        <h3 class="svc-card-title">@(isEn ? "Landscape & Environmental Design" : "Çevre Peyzaj Düzenlemeleri")</h3>
+        <p class="svc-card-desc">@(isEn ? "We provide comprehensive landscaping and environmental design services to make the surroundings of our projects livable and aesthetic." : "Projelerimizin çevresini yaşanabilir ve estetik kılmak için kapsamlı peyzaj ve çevre düzenlemesi hizmetleri sunuyoruz.")</p>
+      </div>
+
+      <div class="svc-card reveal delay-2">
+        <span class="svc-card-num">05</span>
+        <div class="svc-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M2 20h20M4 20V10l8-7 8 7v10M10 20v-5h4v5"/>
+            <path d="M12 3v4M8 8h8"/>
+          </svg>
+        </div>
+        <h3 class="svc-card-title">@(isEn ? "Structural Engineering Services" : "İnşaat Ve Statik Proje Hizmetleri")</h3>
+        <p class="svc-card-desc">@(isEn ? "Prioritizing structural safety, our expert team delivers solutions in static project design and engineering services." : "Yapı güvenliğini ön planda tutarak statik proje ve mühendislik hizmetleri alanında uzman ekibimizle çözümler üretiyoruz.")</p>
+      </div>
+
+      <div class="svc-card reveal delay-3">
+        <span class="svc-card-num">06</span>
+        <div class="svc-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/>
+            <path d="M12 8v4l3 3"/>
+            <path d="M16.24 7.76A6 6 0 0 1 18 12"/>
+          </svg>
+        </div>
+        <h3 class="svc-card-title">@(isEn ? "Urban Transformation Services" : "Kentsel Dönüşüm Hizmetleri")</h3>
+        <p class="svc-card-desc">@(isEn ? "We manage the entire urban transformation process to convert risky buildings into modern, safe and comfortable residences." : "Riskli yapıları modern ve güvenli konutlara dönüştürmek için kentsel dönüşüm süreçlerini eksiksiz yönetiyoruz.")</p>
+      </div>
+
     </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="svc-cta">
+  <div class="container">
+    <p class="svc-cta-title">@(isEn ? "Ready to start your project?" : "Projenize Başlamaya Hazır Mısınız?")</p>
+    <a href="/Iletisim" class="svc-cta-btn">
+      @(isEn ? "Contact Us" : "Bizimle İletişime Geçin")
+      <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+    </a>
+  </div>
 </section>
