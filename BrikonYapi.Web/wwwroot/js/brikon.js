@@ -257,10 +257,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (entries[0].isIntersecting) {
         procVid.src = procVid.dataset.src;
         procVid.load();
-        procVid.play().catch(() => {});
+        procVid.addEventListener('canplaythrough', () => procVid.play().catch(() => {}), { once: true });
         obs.disconnect();
       }
-    }, { threshold: 0.1 });
+    }, { threshold: 0, rootMargin: '600px' });
     obs.observe(procVid);
   }
 
