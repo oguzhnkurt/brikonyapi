@@ -878,7 +878,15 @@ renderPage(1);
   var openSlug = new URLSearchParams(window.location.search).get('open');
   if (openSlug) {
     var target = document.querySelector('.prj-card[data-slug="' + openSlug + '"]');
-    if (target) { setTimeout(function(){ openModal(target); }, 300); }
+    if (target) {
+      // Filtreleri sıfırla, tüm kartları göster
+      activeStatus = 'all'; activeCat = 'all';
+      if (searchInput) searchInput.value = '';
+      document.querySelectorAll('.prj-stat-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.statusFilter === 'all'); });
+      document.querySelectorAll('.prj-city-pill').forEach(function(p){ p.classList.toggle('active', p.dataset.cat === 'all'); });
+      renderPage(1);
+      setTimeout(function(){ openModal(target); }, 500);
+    }
   }
 })();
 
