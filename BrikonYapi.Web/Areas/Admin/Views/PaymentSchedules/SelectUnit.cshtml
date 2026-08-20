@@ -1,0 +1,49 @@
+@model List<BrikonYapi.Web.Data.Entities.Unit>
+@{
+    ViewData["Title"] = "Ödeme Planları";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Ödeme Planı — Bağımsız Bölüm Seçin</h5>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="d-flex flex-column align-items-center justify-content-center text-muted py-5">
+                <span>Önce <a href="/Admin/Units/Create">bağımsız bölüm</a> eklemelisiniz.</span>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Proje</th>
+                            <th>Bağımsız Bölüm</th>
+                            <th>Malik</th>
+                            <th class="text-end">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model)
+                        {
+                            <tr>
+                                <td>@u.Project?.Name</td>
+                                <td><strong>@u.UnitNo</strong></td>
+                                <td>@(u.Owner?.FullName ?? "Atanmamış")</td>
+                                <td class="text-end">
+                                    <a href="/Admin/PaymentSchedules?unitId=@u.Id" class="btn btn-sm btn-outline-primary">
+                                        Ödeme Planını Görüntüle
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

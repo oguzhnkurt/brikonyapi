@@ -1,0 +1,795 @@
+@using BrikonYapi.Web.Data.Entities
+@model List<ChatMessage>
+@{
+    ViewData["Title"] = "Sohbet Moderasyonu";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var projects = ViewBag.Projects as List<Project> ?? new List<Project>();
+    var selected = ViewBag.SelectedProject as Project;
+    var showDeleted = (bool)(ViewBag.ShowDeleted ?? false);
+
+    // Telefon ekranında kronolojik (eskiden yeniye) sırayla, WhatsApp gibi okunsun.
+    var ordered = Model.AsEnumerable().Reverse().ToList();
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Sohbet Moderasyonu</h5>
+        <div class="text-muted small mt-1">
+            Malikler arası mesajlaşmayı bir telefon ekranındaymış gibi izleyin. Kaldırılan mesajlar silinmez,
+            kayıt olarak saklanır ve geri alınabilir.
+        </div>
+    </div>
+
+    <div class="card-body">
+        @if (!projects.Any())
+        {
+            <div class="text-center text-muted py-4">Bağımsız bölümü olan bir proje bulunamadı.</div>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                <select class="form-select form-select-sm" style="max-width:340px;"
+                        onchange="location.href='/Admin/ChatModeration?projectId=' + this.value + '&showDeleted=@showDeleted.ToString().ToLower()'">
+                    @foreach (var p in projects)
+                    {
+                        <option value="@p.Id" selected="@(selected?.Id == p.Id)">@p.Name</option>
+                    }
+                </select>
+
+                <a class="btn btn-sm @(showDeleted ? "btn-secondary" : "btn-outline-secondary")"
+                   href="/Admin/ChatModeration?projectId=@selected?.Id&showDeleted=@((!showDeleted).ToString().ToLower())">
+                    @(showDeleted ? "Kaldırılanları gizle" : "Kaldırılanları göster")
+                </a>
+
+                <div class="text-muted small ms-auto d-none d-md-block">
+                    <iconify-icon icon="mdi:gesture-swipe-vertical" class="me-1"></iconify-icon>
+                    Ekranda yukarı / aşağı kaydırarak mesajları okuyun
+                </div>
+            </div>
+
+            <div class="d-none">@Html.AntiForgeryToken()</div>
+
+            <div class="wa-stage">
+                <div class="wa-phone" data-project-id="@selected!.Id">
+                    <div class="wa-notch"></div>
+
+                    <div class="wa-statusbar">
+                        <span>9:41</span>
+                        <span class="wa-statusbar-icons">
+                            <iconify-icon icon="mdi:signal-cellular-3"></iconify-icon>
+                            <iconify-icon icon="mdi:wifi"></iconify-icon>
+                            <iconify-icon icon="mdi:battery"></iconify-icon>
+                        </span>
+                    </div>
+
+                    <div class="wa-header">
+                        <iconify-icon icon="mdi:arrow-left" class="wa-header-back"></iconify-icon>
+                        <div class="wa-header-avatar">
+                            <iconify-icon icon="iconamoon:building-1-duotone"></iconify-icon>
+                        </div>
+                        <div class="wa-header-info">
+                            <div class="wa-header-title">@selected?.Name</div>
+                            <div class="wa-header-sub">grup sohbeti · malikler</div>
+                        </div>
+                        <div class="wa-header-icons">
+                            <iconify-icon icon="mdi:video-outline"></iconify-icon>
+                            <iconify-icon icon="mdi:phone-outline"></iconify-icon>
+                            <iconify-icon icon="mdi:dots-vertical"></iconify-icon>
+                        </div>
+                    </div>
+
+                    <div class="wa-body" id="waBody" data-last-day="@(ordered.Any() ? ordered.Last().CreatedAt.Date.ToString("yyyy-MM-dd") : "")">
+                        @if (!ordered.Any())
+                        {
+                            <div class="wa-empty">Bu projede henüz mesaj yok.</div>
+                        }
+                        else
+                        {
+                            DateTime? lastDate = null;
+                            foreach (var m in ordered)
+                            {
+                                var msgDate = m.CreatedAt.Date;
+                                if (lastDate != msgDate)
+                                {
+                                    lastDate = msgDate;
+                                    var today = DateTime.Now.Date;
+                                    string dayLabel = msgDate == today ? "Bugün"
+                                        : msgDate == today.AddDays(-1) ? "Dün"
+                                        : msgDate.ToString("dd MMMM yyyy", tr);
+                                    <div class="wa-daysep"><span>@dayLabel</span></div>
+                                }
+
+                                var isMgmt = m.IsFromManagement;
+                                var color = ColorFor(m.SenderName);
+                                var initial = m.SenderName.Length > 0 ? m.SenderName[0].ToString().ToUpper() : "?";
+
+                                <div class="wa-row @(isMgmt ? "mine" : "") @(m.IsDeleted ? "is-deleted" : "")">
+                                    @if (!isMgmt)
+                                    {
+                                        <div class="wa-avatar" style="background:@color;">@initial</div>
+                                    }
+                                    <div class="wa-col">
+                                        <div class="wa-bubble @(m.IsPoll ? "wa-poll-bubble" : "")">
+                                            @if (!isMgmt)
+                                            {
+                                                <div class="wa-sender" style="color:@color;">@m.SenderName</div>
+                                            }
+                                            @if (m.IsPoll && m.ChatPoll != null)
+                                            {
+                                                var totalVotes = m.ChatPoll.Votes.Count;
+                                                <div class="wa-poll" data-poll-id="@m.ChatPoll.Id">
+                                                    <div class="wa-poll-q">
+                                                        <iconify-icon icon="mdi:poll"></iconify-icon> @m.ChatPoll.Question
+                                                    </div>
+                                                    <div class="wa-poll-opts">
+                                                        @foreach (var opt in m.ChatPoll.Options.OrderBy(o => o.OrderIndex))
+                                                        {
+                                                            var count = m.ChatPoll.Votes.Count(v => v.ChatPollOptionId == opt.Id);
+                                                            var pct = totalVotes > 0 ? (int)Math.Round(count * 100.0 / totalVotes) : 0;
+                                                            <div class="wa-poll-opt" data-option-id="@opt.Id">
+                                                                <div class="wa-poll-opt-bar" style="width:@(pct)%"></div>
+                                                                <span class="wa-poll-opt-label">@opt.Text</span>
+                                                                <span class="wa-poll-opt-pct">%@pct · @count</span>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    <div class="wa-poll-total">
+                                                        <iconify-icon icon="mdi:account-multiple-outline"></iconify-icon>
+                                                        <span class="wa-poll-total-text">@totalVotes oy</span>
+                                                    </div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="wa-text">@m.Body</div>
+                                            }
+                                            <div class="wa-meta">
+                                                @if (isMgmt)
+                                                {
+                                                    <span class="wa-badge">Yönetim</span>
+                                                }
+                                                <span class="wa-time">@m.CreatedAt.ToString("HH:mm", tr)</span>
+                                                @if (isMgmt)
+                                                {
+                                                    <iconify-icon icon="mdi:check-all" class="wa-tick"></iconify-icon>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div class="wa-actions">
+                                            @if (m.IsDeleted)
+                                            {
+                                                <span class="wa-removed-note">Kaldırıldı — @m.DeletedAt?.ToString("dd.MM.yyyy HH:mm", tr)</span>
+                                                <form asp-area="Admin" asp-controller="ChatModeration" asp-action="Restore" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@m.Id" />
+                                                    <button type="submit" class="wa-action-link wa-action-restore">
+                                                        <iconify-icon icon="mdi:restore"></iconify-icon> Geri al
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <form asp-area="Admin" asp-controller="ChatModeration" asp-action="Delete" method="post" class="d-inline"
+                                                      onsubmit="return confirm('Bu mesaj sohbetten kaldırılsın mı?')">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@m.Id" />
+                                                    <button type="submit" class="wa-action-link wa-action-delete">
+                                                        <iconify-icon icon="mdi:trash-can-outline"></iconify-icon> Kaldır
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <div id="waError" class="wa-error" hidden></div>
+
+                    <div class="wa-composer">
+                        <button type="button" id="waPollBtn" class="wa-composer-attach" aria-label="Anket oluştur"
+                                data-bs-toggle="modal" data-bs-target="#waPollModal">
+                            <iconify-icon icon="mdi:poll"></iconify-icon>
+                        </button>
+                        <div class="wa-composer-input">
+                            <iconify-icon icon="mdi:emoticon-outline"></iconify-icon>
+                            <input type="text" id="waInput" maxlength="2000" placeholder="Yönetim olarak mesaj yazın…" aria-label="Mesaj" disabled autocomplete="off" />
+                        </div>
+                        <button type="button" id="waSendBtn" class="wa-composer-mic" aria-label="Gönder" disabled>
+                            <iconify-icon icon="mdi:send"></iconify-icon>
+                        </button>
+                    </div>
+                    <div id="waStatus" class="wa-status">Bağlanıyor…</div>
+
+                    <div class="wa-home-indicator"></div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="waPollModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content wa-poll-modal">
+                        <div class="modal-header wa-poll-modal-header">
+                            <h5 class="modal-title">Sohbet Anketi Oluştur</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="waPollError" class="alert alert-danger py-2 small mb-2" hidden></div>
+
+                            <label class="form-label small fw-semibold" for="waPollQuestion">Anket Sorusu</label>
+                            <input type="text" id="waPollQuestion" class="form-control mb-3" maxlength="300" placeholder="Örn: Toplantı hangi gün yapılsın?" autocomplete="off" />
+
+                            <label class="form-label small fw-semibold">Seçenekler</label>
+                            <div id="waPollOptions" class="d-flex flex-column gap-2 mb-2">
+                                <input type="text" class="form-control wa-poll-opt-input" maxlength="200" placeholder="Seçenek 1" autocomplete="off" />
+                                <input type="text" class="form-control wa-poll-opt-input" maxlength="200" placeholder="Seçenek 2" autocomplete="off" />
+                            </div>
+                            <button type="button" id="waPollAddOpt" class="btn btn-link btn-sm px-0 text-decoration-none">
+                                <iconify-icon icon="mdi:plus" class="me-1"></iconify-icon>Seçenek Ekle
+                            </button>
+                        </div>
+                        <div class="modal-footer wa-poll-modal-footer">
+                            <button type="button" id="waPollPublish" class="btn btn-success w-100">Anketi Yayınla</button>
+                            <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">İptal</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    static readonly string[] NameColors =
+    {
+        "#e17076", "#7bc862", "#e0a11a", "#54b4d3", "#a695e7",
+        "#e07bb0", "#65aadd", "#c98f4a", "#ff8a65", "#4db6ac"
+    };
+
+    static string ColorFor(string name)
+    {
+        var sum = 0;
+        foreach (var c in name) sum += c;
+        return NameColors[Math.Abs(sum) % NameColors.Length];
+    }
+}
+
+@section Styles {
+<style>
+    .wa-stage { display:flex; justify-content:center; padding:1rem 0 1.5rem; }
+
+    .wa-phone {
+        width:360px; max-width:100%; height:720px; background:#e5ddd5;
+        border-radius:44px; border:10px solid #111; box-shadow:0 18px 40px rgba(0,0,0,.28);
+        position:relative; overflow:hidden; display:flex; flex-direction:column;
+    }
+
+    .wa-notch {
+        position:absolute; top:0; left:50%; transform:translateX(-50%);
+        width:150px; height:24px; background:#111; border-radius:0 0 16px 16px; z-index:5;
+    }
+
+    .wa-statusbar {
+        background:#075E54; color:#fff; font-size:.72rem; font-weight:600;
+        display:flex; justify-content:space-between; align-items:center;
+        padding:.5rem 1.2rem .2rem;
+    }
+    .wa-statusbar-icons { display:flex; gap:.35rem; font-size:.85rem; }
+
+    .wa-header {
+        background:#075E54; color:#fff; display:flex; align-items:center; gap:.6rem;
+        padding:.4rem .7rem .6rem;
+    }
+    .wa-header-back { font-size:1.3rem; }
+    .wa-header-avatar {
+        width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.18);
+        display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0;
+    }
+    .wa-header-info { flex:1; min-width:0; }
+    .wa-header-title { font-weight:700; font-size:.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .wa-header-sub { font-size:.7rem; color:#d7efe9; }
+    .wa-header-icons { display:flex; gap:.7rem; font-size:1.05rem; flex-shrink:0; }
+
+    .wa-body {
+        flex:1; overflow-y:auto; padding:.7rem .6rem;
+        background-color:#e5ddd5;
+        background-image:
+            radial-gradient(circle at 20% 10%, rgba(255,255,255,.35) 0, transparent 40%),
+            radial-gradient(circle at 80% 30%, rgba(255,255,255,.25) 0, transparent 40%);
+        display:flex; flex-direction:column; gap:.35rem;
+    }
+    .wa-empty { margin:auto; color:#7d8a86; font-size:.85rem; text-align:center; }
+
+    .wa-daysep { display:flex; justify-content:center; margin:.4rem 0; }
+    .wa-daysep span {
+        background:#e1f0eb; color:#5c6b66; font-size:.7rem; font-weight:600;
+        padding:.25rem .7rem; border-radius:8px; box-shadow:0 1px 1px rgba(0,0,0,.08);
+    }
+
+    .wa-row { display:flex; align-items:flex-end; gap:.4rem; max-width:88%; }
+    .wa-row.mine { align-self:flex-end; flex-direction:row-reverse; max-width:90%; }
+
+    .wa-avatar {
+        width:26px; height:26px; border-radius:50%; flex-shrink:0; color:#fff;
+        font-size:.7rem; font-weight:700; display:flex; align-items:center; justify-content:center;
+        margin-bottom:2px;
+    }
+
+    .wa-col { display:flex; flex-direction:column; min-width:0; }
+    .wa-row.mine .wa-col { align-items:flex-end; }
+
+    .wa-bubble {
+        background:#fff; border-radius:8px 8px 8px 2px; padding:.4rem .55rem .3rem;
+        box-shadow:0 1px 1px rgba(0,0,0,.12); max-width:100%;
+    }
+    .wa-row.mine .wa-bubble { background:#DCF8C6; border-radius:8px 8px 2px 8px; }
+    .wa-row.is-deleted .wa-bubble { opacity:.55; }
+
+    .wa-sender { font-size:.72rem; font-weight:700; margin-bottom:.1rem; }
+    .wa-text { font-size:.86rem; line-height:1.35; color:#222; white-space:pre-wrap; word-break:break-word; }
+    .wa-meta { display:flex; align-items:center; justify-content:flex-end; gap:.25rem; margin-top:.1rem; }
+    .wa-time { font-size:.65rem; color:#8b978f; }
+    .wa-tick { font-size:.85rem; color:#53bdeb; }
+    .wa-badge {
+        font-size:.6rem; font-weight:700; color:#a07800; background:#fff2cc;
+        border-radius:6px; padding:.05rem .35rem; margin-right:.15rem;
+    }
+
+    .wa-poll { min-width:180px; }
+    .wa-poll-q { font-size:.86rem; font-weight:700; color:#222; margin-bottom:.5rem; display:flex; align-items:flex-start; gap:.3rem; }
+    .wa-poll-q iconify-icon { font-size:1rem; margin-top:.1rem; flex-shrink:0; color:#075E54; }
+    .wa-poll-opts { display:flex; flex-direction:column; gap:.4rem; }
+    .wa-poll-opt {
+        position:relative; overflow:hidden; border-radius:8px; background:#eef1f0;
+        padding:.4rem .55rem; font-size:.78rem; min-height:30px;
+        display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+    }
+    .wa-poll-opt-bar {
+        position:absolute; left:0; top:0; bottom:0; background:#cfe9df; z-index:0;
+        transition:width .3s ease;
+    }
+    .wa-poll-opt-label, .wa-poll-opt-pct { position:relative; z-index:1; }
+    .wa-poll-opt-label { color:#222; word-break:break-word; }
+    .wa-poll-opt-pct { color:#5c6b66; font-weight:600; flex-shrink:0; }
+    .wa-poll-total {
+        display:flex; align-items:center; gap:.25rem; margin-top:.4rem;
+        font-size:.68rem; color:#8b978f;
+    }
+
+    .wa-poll-modal .modal-content { border-radius:16px; overflow:hidden; }
+    .wa-poll-modal-header { border-bottom:none; padding-bottom:0; }
+    .wa-poll-modal-footer { border-top:none; flex-direction:column; gap:.5rem; padding-top:.25rem; }
+    .wa-poll-opt-row { display:flex; align-items:center; gap:.4rem; }
+    .wa-poll-opt-remove { background:none; border:none; color:#c0392b; font-size:1.1rem; flex-shrink:0; padding:.2rem; }
+
+    .wa-actions { display:flex; gap:.6rem; margin:.15rem .2rem 0; }
+    .wa-action-link {
+        background:none; border:none; padding:0; font-size:.68rem; font-weight:600;
+        display:inline-flex; align-items:center; gap:.2rem; cursor:pointer;
+    }
+    .wa-action-delete { color:#c0392b; }
+    .wa-action-restore { color:#1e9e5a; }
+    .wa-removed-note { font-size:.66rem; color:#9aa3ac; }
+
+    .wa-composer {
+        background:#f0f0f0; padding:.5rem .6rem calc(.5rem + env(safe-area-inset-bottom,0px));
+        display:flex; align-items:center; gap:.5rem;
+    }
+    .wa-composer-attach {
+        width:34px; height:34px; border-radius:50%; background:transparent; color:#54656f; border:none;
+        display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.2rem;
+    }
+    .wa-composer-attach:hover { background:rgba(0,0,0,.06); }
+    .wa-composer-input {
+        flex:1; background:#fff; border-radius:20px; padding:.5rem .8rem;
+        display:flex; align-items:center; gap:.4rem; color:#9aa3ac; font-size:.78rem;
+    }
+    .wa-composer-input input {
+        flex:1; border:none; background:transparent; outline:none; font-size:.82rem; color:#222;
+        min-width:0;
+    }
+    .wa-composer-input input::placeholder { color:#9aa3ac; }
+    .wa-composer-mic {
+        width:38px; height:38px; border-radius:50%; background:#075E54; color:#fff; border:none;
+        display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.05rem;
+    }
+    .wa-composer-mic:disabled { background:#b9c4c0; }
+
+    .wa-status { font-size:.65rem; color:#8b978f; text-align:center; padding:0 0 .15rem; }
+    .wa-status.is-live { color:#1e9e5a; }
+    .wa-error {
+        position:absolute; left:14px; right:14px; bottom:96px; z-index:6;
+        background:#fdeaea; color:#c0392b; font-size:.72rem; border-radius:8px;
+        padding:.45rem .65rem; box-shadow:0 2px 10px rgba(0,0,0,.18);
+    }
+
+    .wa-home-indicator {
+        width:120px; height:4px; background:#111; border-radius:3px; margin:.35rem auto .45rem; opacity:.6;
+    }
+
+    /* Admin bunu zaten gerçek bir telefondan açtıysa, telefon-içinde-telefon
+       çerçevesi (çentik, durum çubuğu, siyah kasa) gereksiz yer kaplar ve
+       başlık kısalması bozulur. Küçük ekranlarda süs çerçeveyi kaldırıp
+       sohbeti doğrudan ekrana yayıyoruz. */
+    @@media (max-width: 480px) {
+        .wa-stage { padding:0; }
+        .wa-phone {
+            width:100%; height:min(72vh, 620px); min-height:360px;
+            border:none; border-radius:14px; box-shadow:0 2px 12px rgba(0,0,0,.1);
+        }
+        .wa-notch, .wa-statusbar, .wa-home-indicator { display:none; }
+        .wa-header { border-radius:14px 14px 0 0; padding:.6rem .7rem; }
+        .wa-header-icons iconify-icon:not(:last-child) { display:none; }
+    }
+</style>
+}
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+<script>
+(function () {
+    var phone = document.querySelector('.wa-phone');
+    if (!phone) return;
+
+    var projectId = parseInt(phone.dataset.projectId, 10);
+    var body    = document.getElementById('waBody');
+    var input   = document.getElementById('waInput');
+    var sendBtn = document.getElementById('waSendBtn');
+    var status  = document.getElementById('waStatus');
+    var errBox  = document.getElementById('waError');
+    var token   = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+    var waLastDay = body.dataset.lastDay || '';
+
+    var nameColors = ["#e17076", "#7bc862", "#e0a11a", "#54b4d3", "#a695e7",
+        "#e07bb0", "#65aadd", "#c98f4a", "#ff8a65", "#4db6ac"];
+
+    function colorFor(name) {
+        var sum = 0;
+        for (var i = 0; i < name.length; i++) sum += name.charCodeAt(i);
+        return nameColors[Math.abs(sum) % nameColors.length];
+    }
+
+    function scrollToEnd() { body.scrollTop = body.scrollHeight; }
+    scrollToEnd();
+
+    function friendlyError(err) {
+        var raw = (err && err.message) ? err.message : '';
+        var i = raw.indexOf('HubException: ');
+        if (i >= 0) return raw.substring(i + 'HubException: '.length).trim();
+        if (raw.indexOf('An unexpected error') === 0) return 'İşlem tamamlanamadı. Lütfen tekrar deneyin.';
+        return raw || 'İşlem tamamlanamadı. Lütfen tekrar deneyin.';
+    }
+
+    function showError(msg) {
+        errBox.textContent = msg;
+        errBox.hidden = false;
+        setTimeout(function () { errBox.hidden = true; }, 5000);
+    }
+
+    function timeOf(iso) {
+        try { return new Date(iso).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
+        catch (e) { return ''; }
+    }
+
+    function ensureTodaySeparator() {
+        var now = new Date();
+        var key = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        if (waLastDay === key) return;
+        waLastDay = key;
+        var sep = document.createElement('div');
+        sep.className = 'wa-daysep';
+        var span = document.createElement('span');
+        span.textContent = 'Bugün';
+        sep.appendChild(span);
+        body.appendChild(sep);
+    }
+
+    function appendMessage(m) {
+        var empty = body.querySelector('.wa-empty');
+        if (empty) empty.remove();
+
+        ensureTodaySeparator();
+
+        var isMgmt = !!m.isFromManagement;
+        var color = colorFor(m.senderName || '');
+        var initial = m.senderName ? m.senderName.charAt(0).toUpperCase() : '?';
+
+        var row = document.createElement('div');
+        row.className = 'wa-row' + (isMgmt ? ' mine' : '');
+
+        if (!isMgmt) {
+            var avatar = document.createElement('div');
+            avatar.className = 'wa-avatar';
+            avatar.style.background = color;
+            avatar.textContent = initial;
+            row.appendChild(avatar);
+        }
+
+        var col = document.createElement('div');
+        col.className = 'wa-col';
+
+        var bubble = document.createElement('div');
+        bubble.className = 'wa-bubble' + (m.isPoll ? ' wa-poll-bubble' : '');
+
+        if (!isMgmt) {
+            var sender = document.createElement('div');
+            sender.className = 'wa-sender';
+            sender.style.color = color;
+            sender.textContent = m.senderName;      // textContent — XSS önlemi
+            bubble.appendChild(sender);
+        }
+
+        if (m.isPoll && m.poll) {
+            bubble.appendChild(buildPollElement(m.poll, m.poll.id));
+        } else {
+            var text = document.createElement('div');
+            text.className = 'wa-text';
+            text.textContent = m.body;                  // textContent — XSS önlemi
+            bubble.appendChild(text);
+        }
+
+        var meta = document.createElement('div');
+        meta.className = 'wa-meta';
+        if (isMgmt) {
+            var badge = document.createElement('span');
+            badge.className = 'wa-badge';
+            badge.textContent = 'Yönetim';
+            meta.appendChild(badge);
+        }
+        var time = document.createElement('span');
+        time.className = 'wa-time';
+        time.textContent = timeOf(m.createdAt);
+        meta.appendChild(time);
+        if (isMgmt) {
+            var tick = document.createElement('iconify-icon');
+            tick.setAttribute('icon', 'mdi:check-all');
+            tick.className = 'wa-tick';
+            meta.appendChild(tick);
+        }
+        bubble.appendChild(meta);
+        col.appendChild(bubble);
+
+        var actions = document.createElement('div');
+        actions.className = 'wa-actions';
+        var form = document.createElement('form');
+        form.method = 'post';
+        form.action = '/Admin/ChatModeration/Delete';
+        form.className = 'd-inline';
+        form.onsubmit = function () { return confirm('Bu mesaj sohbetten kaldırılsın mı?'); };
+
+        var tokenInput = document.createElement('input');
+        tokenInput.type = 'hidden';
+        tokenInput.name = '__RequestVerificationToken';
+        tokenInput.value = token;
+        form.appendChild(tokenInput);
+
+        var idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'id';
+        idInput.value = m.id;
+        form.appendChild(idInput);
+
+        var delBtn = document.createElement('button');
+        delBtn.type = 'submit';
+        delBtn.className = 'wa-action-link wa-action-delete';
+        delBtn.innerHTML = '<iconify-icon icon="mdi:trash-can-outline"></iconify-icon> Kaldır';
+        form.appendChild(delBtn);
+
+        actions.appendChild(form);
+        col.appendChild(actions);
+
+        row.appendChild(col);
+        body.appendChild(row);
+        scrollToEnd();
+    }
+
+    // ── Sohbet anketi oluşturma modalı ──────────────────────────
+    var MAX_POLL_OPTIONS = 8;
+    var pollModalEl   = document.getElementById('waPollModal');
+    var pollQuestion  = document.getElementById('waPollQuestion');
+    var pollOptions   = document.getElementById('waPollOptions');
+    var pollAddOptBtn = document.getElementById('waPollAddOpt');
+    var pollPublishBtn= document.getElementById('waPollPublish');
+    var pollErrBox    = document.getElementById('waPollError');
+
+    function pollShowError(msg) {
+        pollErrBox.textContent = msg;
+        pollErrBox.hidden = false;
+    }
+
+    function pollResetForm() {
+        pollErrBox.hidden = true;
+        pollQuestion.value = '';
+        pollOptions.innerHTML =
+            '<input type="text" class="form-control wa-poll-opt-input" maxlength="200" placeholder="Seçenek 1" autocomplete="off" />' +
+            '<input type="text" class="form-control wa-poll-opt-input" maxlength="200" placeholder="Seçenek 2" autocomplete="off" />';
+        pollUpdateAddBtn();
+    }
+
+    function pollUpdateAddBtn() {
+        var count = pollOptions.querySelectorAll('.wa-poll-opt-input').length;
+        pollAddOptBtn.hidden = count >= MAX_POLL_OPTIONS;
+    }
+
+    pollAddOptBtn.addEventListener('click', function () {
+        var count = pollOptions.querySelectorAll('.wa-poll-opt-input').length;
+        if (count >= MAX_POLL_OPTIONS) return;
+
+        var row = document.createElement('div');
+        row.className = 'wa-poll-opt-row';
+
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control wa-poll-opt-input';
+        input.maxLength = 200;
+        input.placeholder = 'Seçenek ' + (count + 1);
+        input.autocomplete = 'off';
+        row.appendChild(input);
+
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'wa-poll-opt-remove';
+        removeBtn.innerHTML = '<iconify-icon icon="mdi:close"></iconify-icon>';
+        removeBtn.addEventListener('click', function () {
+            row.remove();
+            pollUpdateAddBtn();
+        });
+        row.appendChild(removeBtn);
+
+        pollOptions.appendChild(row);
+        pollUpdateAddBtn();
+        input.focus();
+    });
+
+    if (pollModalEl && window.bootstrap) {
+        pollModalEl.addEventListener('hidden.bs.modal', pollResetForm);
+    }
+
+    pollPublishBtn.addEventListener('click', function () {
+        var question = pollQuestion.value.trim();
+        var optionInputs = Array.prototype.slice.call(pollOptions.querySelectorAll('.wa-poll-opt-input'));
+        var options = optionInputs.map(function (i) { return i.value.trim(); }).filter(function (v) { return v.length > 0; });
+
+        pollErrBox.hidden = true;
+        if (!question) { pollShowError('Anket sorusu boş olamaz.'); return; }
+        if (options.length < 2) { pollShowError('En az 2 seçenek girmelisiniz.'); return; }
+
+        pollPublishBtn.disabled = true;
+        connection.invoke('CreatePoll', projectId, question, options)
+            .then(function () {
+                if (window.bootstrap) {
+                    var inst = window.bootstrap.Modal.getInstance(pollModalEl);
+                    if (inst) inst.hide();
+                }
+                pollResetForm();
+            })
+            .catch(function (err) { pollShowError(friendlyError(err)); })
+            .finally(function () { pollPublishBtn.disabled = false; });
+    });
+
+    function buildPollElement(poll, pollId) {
+        var wrap = document.createElement('div');
+        wrap.className = 'wa-poll';
+        wrap.dataset.pollId = pollId;
+
+        var q = document.createElement('div');
+        q.className = 'wa-poll-q';
+        q.innerHTML = '<iconify-icon icon="mdi:poll"></iconify-icon><span></span>';
+        q.querySelector('span').textContent = poll.question;   // textContent — XSS önlemi
+        wrap.appendChild(q);
+
+        var optsWrap = document.createElement('div');
+        optsWrap.className = 'wa-poll-opts';
+        (poll.options || []).forEach(function (o) {
+            var opt = document.createElement('div');
+            opt.className = 'wa-poll-opt';
+            opt.dataset.optionId = o.id;
+
+            var bar = document.createElement('div');
+            bar.className = 'wa-poll-opt-bar';
+            bar.style.width = (o.pct || 0) + '%';
+            opt.appendChild(bar);
+
+            var label = document.createElement('span');
+            label.className = 'wa-poll-opt-label';
+            label.textContent = o.text;
+            opt.appendChild(label);
+
+            var pct = document.createElement('span');
+            pct.className = 'wa-poll-opt-pct';
+            pct.textContent = '%' + (o.pct || 0) + ' · ' + (o.count || 0);
+            opt.appendChild(pct);
+
+            optsWrap.appendChild(opt);
+        });
+        wrap.appendChild(optsWrap);
+
+        var total = document.createElement('div');
+        total.className = 'wa-poll-total';
+        total.innerHTML = '<iconify-icon icon="mdi:account-multiple-outline"></iconify-icon><span class="wa-poll-total-text"></span>';
+        total.querySelector('.wa-poll-total-text').textContent = (poll.totalVotes || 0) + ' oy';
+        wrap.appendChild(total);
+
+        return wrap;
+    }
+
+    function applyPollUpdate(u) {
+        var els = body.querySelectorAll('.wa-poll[data-poll-id="' + u.pollId + '"]');
+        els.forEach(function (wrap) {
+            (u.options || []).forEach(function (o) {
+                var opt = wrap.querySelector('.wa-poll-opt[data-option-id="' + o.id + '"]');
+                if (!opt) return;
+                opt.querySelector('.wa-poll-opt-bar').style.width = (o.pct || 0) + '%';
+                opt.querySelector('.wa-poll-opt-pct').textContent = '%' + (o.pct || 0) + ' · ' + (o.count || 0);
+            });
+            var totalText = wrap.querySelector('.wa-poll-total-text');
+            if (totalText) totalText.textContent = (u.totalVotes || 0) + ' oy';
+        });
+    }
+
+    var connection = new signalR.HubConnectionBuilder()
+        .withUrl('/hubs/chat')
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on('ReceiveMessage', appendMessage);
+    connection.on('ReceivePollUpdate', applyPollUpdate);
+
+    connection.onreconnecting(function () {
+        status.textContent = 'Bağlantı yeniden kuruluyor…';
+        status.classList.remove('is-live');
+        sendBtn.disabled = true;
+        input.disabled = true;
+    });
+
+    connection.onreconnected(function () {
+        connection.invoke('JoinProject', projectId).catch(function () {});
+        status.textContent = 'Canlı';
+        status.classList.add('is-live');
+        sendBtn.disabled = false;
+        input.disabled = false;
+    });
+
+    connection.onclose(function () {
+        status.textContent = 'Bağlantı koptu. Sayfayı yenileyin.';
+        status.classList.remove('is-live');
+        sendBtn.disabled = true;
+        input.disabled = true;
+    });
+
+    connection.start()
+        .then(function () { return connection.invoke('JoinProject', projectId); })
+        .then(function () {
+            status.textContent = 'Canlı';
+            status.classList.add('is-live');
+            sendBtn.disabled = false;
+            input.disabled = false;
+        })
+        .catch(function (err) {
+            status.textContent = 'Sohbete bağlanılamadı.';
+            showError(friendlyError(err));
+            sendBtn.disabled = true;
+            input.disabled = true;
+        });
+
+    function sendMessage() {
+        var text = input.value.trim();
+        if (!text) return;
+
+        sendBtn.disabled = true;
+        connection.invoke('SendMessage', projectId, text)
+            .then(function () { input.value = ''; })
+            .catch(function (err) { showError(friendlyError(err)); })
+            .finally(function () { sendBtn.disabled = false; input.focus(); });
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+    });
+})();
+</script>
+}

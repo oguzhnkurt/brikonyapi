@@ -1,0 +1,39 @@
+@model BrikonYapi.Web.ViewComponents.SeoMetaModel
+
+<title>@Model.Title</title>
+<meta name="description" content="@Model.Description" />
+@if (!string.IsNullOrEmpty(Model.Keywords))
+{
+    <meta name="keywords" content="@Model.Keywords" />
+}
+<meta name="robots" content="@(Model.NoIndex ? "noindex, nofollow" : "index, follow")" />
+<link rel="canonical" href="@Model.CanonicalUrl" />
+@if (!string.IsNullOrEmpty(Model.GoogleVerification))
+{
+    <meta name="google-site-verification" content="@Model.GoogleVerification" />
+}
+
+<!-- Open Graph (WhatsApp, LinkedIn, Facebook link önizlemesi) -->
+<meta property="og:type"        content="@Model.OgType" />
+<meta property="og:site_name"   content="@Model.SiteName" />
+<meta property="og:locale"      content="@Model.Locale" />
+<meta property="og:title"       content="@Model.Title" />
+<meta property="og:description" content="@Model.Description" />
+<meta property="og:image"       content="@Model.ImageUrl" />
+<meta property="og:image:alt"   content="@Model.SiteName" />
+<meta property="og:url"         content="@Model.CanonicalUrl" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card"        content="summary_large_image" />
+<meta name="twitter:title"       content="@Model.Title" />
+<meta name="twitter:description" content="@Model.Description" />
+<meta name="twitter:image"       content="@Model.ImageUrl" />
+@if (!string.IsNullOrEmpty(Model.TwitterSite))
+{
+    <meta name="twitter:site" content="@Model.TwitterSite" />
+}
+
+@if (!string.IsNullOrEmpty(Model.JsonLd))
+{
+    <script type="application/ld+json">@Html.Raw(Model.JsonLd)</script>
+}

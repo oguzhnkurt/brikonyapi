@@ -19,7 +19,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
-            if (_signIn.IsSignedIn(User)) return RedirectToAction("Index", "Dashboard");
+            if (_signIn.IsSignedIn(User) && User.IsInRole("Admin")) return RedirectToAction("Index", "Dashboard");
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
@@ -29,28 +29,37 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         {
             var result = await _signIn.PasswordSignInAsync(email, password, isPersistent: true, lockoutOnFailure: false);
             if (result.Succeeded)
-                return LocalRedirect(returnUrl ?? "/Admin/Dashboard");
+            {
+                var user = await _users.FindByEmailAsync(email);
+                if (user != null && await _users.IsInRoleAsync(user, "Admin"))
+                    return LocalRedirect(returnUrl ?? "/Admin/Dashboard");
+
+                await _signIn.SignOutAsync();
+                ViewBag.ReturnUrl = returnUrl;
+                ViewBag.Error = "Bu hesabın yönetici paneline erişim yetkisi yok.";
+                return View();
+            }
 
             ViewBag.ReturnUrl = returnUrl;
             ViewBag.Error = "E-posta veya şifre hatalı.";
             return View();
         }
 
-        [HttpPost, ValidateAntiForgeryToken, Authorize]
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin")]
         public async Task<IActionResult> Logout()
         {
             await _signIn.SignOutAsync();
             return RedirectToAction("Login");
         }
 
-        [HttpGet, Authorize]
+        [HttpGet, Authorize(Roles = "Admin")]
         public IActionResult ChangePassword()
         {
             ViewData["Title"] = "Şifre Değiştir";
             return View();
         }
 
-        [HttpPost, ValidateAntiForgeryToken, Authorize]
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
         {
             ViewData["Title"] = "Şifre Değiştir";

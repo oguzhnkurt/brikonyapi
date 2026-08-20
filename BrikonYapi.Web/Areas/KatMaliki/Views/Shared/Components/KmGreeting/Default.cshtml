@@ -1,0 +1,9 @@
+@model BrikonYapi.Web.ViewComponents.KmGreetingModel
+
+<div class="km-greeting">
+    <div class="km-greeting-text">
+        <span class="km-greeting-hi">Hoş geldiniz,</span>
+        <span class="km-greeting-name">@Model.FullName</span>
+    </div>
+    <button type="button" id="kmMenuBtn" class="km-greeting-avatar" aria-label="Menü" aria-expanded="false">@Model.Initial</button>
+</div>

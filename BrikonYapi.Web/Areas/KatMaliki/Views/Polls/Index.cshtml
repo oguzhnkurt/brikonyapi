@@ -1,0 +1,242 @@
+@model List<Poll>
+@{
+    ViewData["Title"] = "Oylama";
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var ownerId = (int)(ViewBag.OwnerId ?? 0);
+    var now = DateTime.Now;
+}
+
+@Html.AntiForgeryToken()
+
+<div class="km-poll-hero mb-3">
+    <div class="km-poll-hero-title">Oylama</div>
+    <div class="km-poll-hero-sub">Malik oylamaları ve malzeme seçim süreçleri</div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card">
+        <div class="card-body text-center text-muted py-5">
+            Şu anda açık bir oylama bulunmuyor.
+        </div>
+    </div>
+}
+
+<div class="km-poll-list mb-4">
+@foreach (var poll in Model)
+{
+    var totalVotes = poll.Votes.Count;
+    var myVote     = poll.Votes.FirstOrDefault(v => v.OwnerId == ownerId);
+    var hasVoted   = myVote != null;
+    var isOpen     = poll.Status == PollStatus.Active
+                     && (poll.StartsAt == null || poll.StartsAt <= now)
+                     && (poll.EndsAt == null || poll.EndsAt >= now);
+
+    <div class="km-poll-card" data-poll-id="@poll.Id" data-open="@(isOpen ? "1" : "0")">
+        <div class="km-poll-head">
+            @if (!string.IsNullOrEmpty(poll.Category))
+            {
+                <span class="km-poll-cat">@poll.Category</span>
+            }
+            <span class="km-poll-status @(isOpen ? "is-open" : "is-closed")">@(isOpen ? "Aktif" : "Kapandı")</span>
+        </div>
+
+        <div class="km-poll-title">@poll.Title</div>
+        @if (!string.IsNullOrWhiteSpace(poll.Description))
+        {
+            <div class="km-poll-desc">@poll.Description</div>
+        }
+
+        <div class="km-poll-meta">
+            <span><iconify-icon icon="iconamoon:profile-circle-duotone"></iconify-icon> @(poll.ProjectId == null ? "Tüm Malikler" : "Proje Malikleri")</span>
+            <span class="km-poll-total-votes"><iconify-icon icon="iconamoon:check-square-duotone"></iconify-icon> <span class="km-poll-total-num">@totalVotes</span> oy</span>
+            @if (poll.EndsAt.HasValue && isOpen)
+            {
+                <span><iconify-icon icon="iconamoon:clock-duotone"></iconify-icon> Son: @poll.EndsAt.Value.ToString("dd MMM yyyy", tr)</span>
+            }
+        </div>
+
+        @if (isOpen)
+        {
+            <div class="km-poll-hint">Oy vermek için bir seçeneğe dokunun — değiştirmek istersen başka birine dokunman yeterli.</div>
+        }
+
+        <div class="km-poll-options @(isOpen ? "is-interactive" : "")">
+            @foreach (var o in poll.Options.OrderBy(o => o.OrderIndex))
+            {
+                var count = poll.Votes.Count(v => v.PollOptionId == o.Id);
+                var pct = totalVotes > 0 ? (int)Math.Round(count * 100.0 / totalVotes) : 0;
+                var isMine = myVote?.PollOptionId == o.Id;
+
+                <div class="km-poll-opt @(isMine ? "is-mine" : "")" data-option-id="@o.Id"
+                     role="@(isOpen ? "button" : null)" tabindex="@(isOpen ? "0" : null)">
+                    @if (!string.IsNullOrEmpty(o.ImagePath))
+                    {
+                        <span class="km-poll-opt-img" style="background-image:url('@o.ImagePath')">
+                            <span class="km-poll-opt-check"><iconify-icon icon="iconamoon:check-bold"></iconify-icon></span>
+                        </span>
+                    }
+                    <span class="km-poll-opt-body">
+                        <span class="km-poll-opt-top">
+                            <span class="km-poll-opt-text">
+                                @o.Text
+                                <span class="km-poll-mine">· sizin oyunuz</span>
+                            </span>
+                            <span class="km-poll-opt-pct">%@pct</span>
+                        </span>
+                        <span class="km-poll-opt-bar"><span style="width:@(pct)%"></span></span>
+                    </span>
+                </div>
+            }
+        </div>
+
+        <div class="km-poll-foot @(hasVoted ? "is-voted" : "")">
+            @if (isOpen)
+            {
+                <iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon>
+                <span class="km-poll-foot-text">@(hasVoted ? "Oyunuz kaydedildi." : "Henüz oy kullanmadınız.")</span>
+            }
+            else
+            {
+                <iconify-icon icon="iconamoon:lock-duotone"></iconify-icon>
+                <span class="km-poll-foot-text">@(hasVoted ? "Oy verdiniz · oylama kapandı" : "Oylama kapandı")</span>
+            }
+        </div>
+    </div>
+}
+</div>
+
+@section Styles {
+<style>
+    .km-poll-hero-title { font-size:1.5rem; font-weight:700; }
+    .km-poll-hero-sub { color:#6c7580; font-size:.95rem; margin-top:.2rem; }
+
+    .km-poll-list { display:flex; flex-direction:column; gap:.9rem; }
+    .km-poll-card { background:#fff; border-radius:16px; padding:1.1rem 1.2rem 1.2rem; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+
+    .km-poll-head { display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; margin-bottom:.5rem; }
+    .km-poll-cat { background:#eef0f2; color:#6c7580; font-size:.7rem; font-weight:700; padding:.25rem .6rem; border-radius:20px; }
+    .km-poll-status { font-size:.7rem; font-weight:700; padding:.25rem .6rem; border-radius:20px; }
+    .km-poll-status.is-open   { background:#e6f7ed; color:#1e9e5a; }
+    .km-poll-status.is-closed { background:#eef0f2; color:#8a939c; }
+
+    .km-poll-title { font-size:1.15rem; font-weight:800; line-height:1.3; }
+    .km-poll-desc { font-size:.92rem; color:#6c7580; line-height:1.5; margin-top:.3rem; }
+    .km-poll-meta { display:flex; gap:1rem; flex-wrap:wrap; font-size:.8rem; color:#9aa3ac; margin:.6rem 0 .5rem; }
+    .km-poll-meta span { display:inline-flex; align-items:center; gap:.25rem; }
+    .km-poll-hint { font-size:.82rem; color:#9aa3ac; margin-bottom:.7rem; }
+
+    /* Seçenekler: hem sonuç hem oy verme aynı görünümde — açık oylamalarda tıklanabilir */
+    .km-poll-options { display:flex; flex-direction:column; gap:.7rem; }
+    .km-poll-opt { display:flex; gap:.7rem; align-items:center; border-radius:12px; padding:.3rem; transition:background .15s; }
+    .km-poll-options.is-interactive .km-poll-opt { cursor:pointer; }
+    .km-poll-options.is-interactive .km-poll-opt:active { background:#f5f6f7; }
+    .km-poll-opt-img {
+        width:52px; height:52px; flex-shrink:0; border-radius:10px; background:#eef0f2 center/cover no-repeat;
+        position:relative; box-shadow:inset 0 0 0 2px transparent; transition:box-shadow .15s;
+    }
+    .km-poll-opt.is-mine .km-poll-opt-img { box-shadow:inset 0 0 0 3px var(--c-primary); }
+    .km-poll-opt-check {
+        position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:50%;
+        background:var(--c-primary); color:#fff; display:flex; align-items:center; justify-content:center;
+        font-size:.7rem; box-shadow:0 2px 6px rgba(0,0,0,.25); opacity:0; transform:scale(.6); transition:all .18s;
+    }
+    .km-poll-opt.is-mine .km-poll-opt-check { opacity:1; transform:scale(1); }
+    .km-poll-opt-body { flex:1; min-width:0; }
+    .km-poll-opt-top { display:flex; justify-content:space-between; align-items:baseline; gap:.6rem; margin-bottom:.3rem; }
+    .km-poll-opt-text { font-size:.94rem; color:#4a5158; }
+    .km-poll-opt.is-mine .km-poll-opt-text { color:var(--c-primary); font-weight:700; }
+    .km-poll-mine { font-size:.8rem; font-weight:600; display:none; }
+    .km-poll-opt.is-mine .km-poll-mine { display:inline; }
+    .km-poll-opt-pct { font-size:.85rem; font-weight:700; color:#8a939c; white-space:nowrap; }
+    .km-poll-opt.is-mine .km-poll-opt-pct { color:var(--c-primary); }
+    .km-poll-opt-bar { display:block; height:7px; background:#eef0f2; border-radius:7px; overflow:hidden; }
+    .km-poll-opt-bar span { display:block; height:100%; background:#c9d2d9; border-radius:7px; transition:width .5s ease; }
+    .km-poll-opt.is-mine .km-poll-opt-bar span { background:linear-gradient(90deg,var(--c-primary),var(--c-secondary)); }
+
+    .km-poll-foot { display:flex; align-items:center; gap:.35rem; margin-top:1rem; padding-top:.8rem;
+                    border-top:1px solid #f1f3f5; font-size:.9rem; font-weight:600; color:#8a939c; transition:color .15s; }
+    .km-poll-foot.is-voted { color:#1e9e5a; }
+    .km-poll-foot iconify-icon { font-size:1.15rem; }
+    .km-poll-foot.km-poll-flash { color:#1e9e5a; }
+
+    @@media (max-width: 576px) {
+        .km-poll-hero-title { font-size:1.3rem; }
+        .km-poll-title { font-size:1.05rem; }
+    }
+</style>
+}
+
+@section Scripts {
+<script>
+(function () {
+    var aft = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+    document.querySelectorAll('.km-poll-card[data-open="1"] .km-poll-options.is-interactive .km-poll-opt').forEach(function (optEl) {
+        optEl.addEventListener('click', function () { castVote(optEl); });
+        optEl.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); castVote(optEl); }
+        });
+    });
+
+    function castVote(optEl) {
+        var card = optEl.closest('.km-poll-card');
+        if (!card || card.dataset.busy === '1') return;
+
+        var pollId = card.dataset.pollId;
+        var optionId = optEl.dataset.optionId;
+
+        card.dataset.busy = '1';
+        card.style.opacity = '.85';
+
+        var body = new URLSearchParams({ pollId: pollId, optionId: optionId, __RequestVerificationToken: aft });
+
+        fetch('/KatMaliki/Polls/Vote', { method: 'POST', body: body, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                card.style.opacity = '';
+                card.dataset.busy = '';
+                if (!data.success) { showFoot(card, data.message || 'Oy kaydedilemedi.', false); return; }
+                applyVoteResult(card, data);
+            })
+            .catch(function () {
+                card.style.opacity = '';
+                card.dataset.busy = '';
+                showFoot(card, 'Bağlantı hatası, lütfen tekrar deneyin.', false);
+            });
+    }
+
+    function applyVoteResult(card, data) {
+        card.querySelectorAll('.km-poll-opt').forEach(function (optEl) {
+            var optId = parseInt(optEl.dataset.optionId, 10);
+            var isMine = optId === data.myOptionId;
+            optEl.classList.toggle('is-mine', isMine);
+
+            var info = data.options.find(function (o) { return o.optionId === optId; });
+            var count = info ? info.count : 0;
+            var pct = info ? info.pct : 0;
+
+            var pctEl = optEl.querySelector('.km-poll-opt-pct');
+            if (pctEl) pctEl.textContent = '%' + pct;
+            var barEl = optEl.querySelector('.km-poll-opt-bar > span');
+            if (barEl) barEl.style.width = pct + '%';
+        });
+
+        var totalEl = card.querySelector('.km-poll-total-num');
+        if (totalEl) totalEl.textContent = data.totalVotes;
+
+        showFoot(card, 'Oyunuz kaydedildi.', true);
+    }
+
+    function showFoot(card, text, ok) {
+        var foot = card.querySelector('.km-poll-foot');
+        if (!foot) return;
+        var textEl = foot.querySelector('.km-poll-foot-text');
+        if (textEl) textEl.textContent = text;
+        foot.classList.toggle('is-voted', ok);
+        foot.classList.add('km-poll-flash');
+        setTimeout(function () { foot.classList.remove('km-poll-flash'); }, 1800);
+    }
+})();
+</script>
+}

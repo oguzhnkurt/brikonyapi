@@ -1,6 +1,10 @@
 using BrikonYapi.Web.Data;
 using BrikonYapi.Web.Data.Entities;
+using BrikonYapi.Web.Hubs;
 using BrikonYapi.Web.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +33,35 @@ builder.Services.AddDbContext<AppDbContext>(o =>
         o.UseNpgsql(connStr);
 });
 
+// ── Oturum anahtarlarının kalıcılığı (DataProtection) ────────
+// Varsayılan davranışta şifreleme anahtarları konteynerin içinde tutulur; her deploy'da
+// konteyner yenilendiği için anahtarlar kaybolur ve TÜM kullanıcılar aniden çıkış yapmış olur.
+// Anahtarları kalıcı bir klasöre yazarak yeniden başlatmalarda oturumların korunmasını sağlıyoruz.
+// Klasör yolu Coolify'da DataProtection__KeysPath ortam değişkeniyle değiştirilebilir.
+// GÜVENLİK: wwwroot altında DEĞİL — anahtar dosyaları hiçbir zaman web'den erişilebilir olmamalı.
+var keysPath = builder.Configuration["DataProtection:KeysPath"]
+               ?? Path.Combine(builder.Environment.ContentRootPath, "dp-keys");
+try
+{
+    Directory.CreateDirectory(keysPath);
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
+        .SetApplicationName("BrikonYapi");
+}
+catch
+{
+    // Klasör oluşturulamazsa (izin sorunu vb.) uygulama yine de ayağa kalksın;
+    // yalnızca oturumlar yeniden başlatmada sıfırlanır.
+    builder.Services.AddDataProtection().SetApplicationName("BrikonYapi");
+}
+
+// Kat Maliki Portalı: malikler arası canlı sohbet
+// Ayrıntılı hata mesajları YALNIZCA geliştirme ortamında açılır (canlıda iç detay sızmasın).
+builder.Services.AddSignalR(o =>
+{
+    o.EnableDetailedErrors = builder.Environment.IsDevelopment();
+});
+
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(o =>
 {
     o.SignIn.RequireConfirmedAccount = false;
@@ -40,11 +73,57 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(o =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
+// ── Google ile Giriş (Kat Maliki Portalı için) ───────────────
+// Client ID/Secret appsettings.json > Authentication:Google altından veya
+// (production'da tercihen) ortam değişkeninden okunur. Boşsa Google girişi
+// sessizce devre dışı kalır, uygulama yine de çalışır.
+var googleClientId     = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddGoogle(GoogleDefaults.AuthenticationScheme, o =>
+        {
+            o.ClientId     = googleClientId;
+            o.ClientSecret = googleClientSecret;
+            o.SignInScheme = IdentityConstants.ExternalScheme;
+            o.CallbackPath = "/signin-google";
+        });
+}
+
 builder.Services.ConfigureApplicationCookie(o =>
 {
     o.LoginPath  = "/Admin/Account/Login";
     o.LogoutPath = "/Admin/Account/Logout";
     o.AccessDeniedPath = "/Admin/Account/Login";
+
+    // Oturum süresi: 90 dakika. SlidingExpiration ile kullanıcı sitede aktifken
+    // süre kendini yeniler; yalnızca 90 dakika hiç işlem yapılmazsa çıkış yapılır.
+    // Hem Admin hem Kat Maliki aynı cookie'yi kullandığı için ikisi de bu süreye tabidir.
+    o.ExpireTimeSpan = TimeSpan.FromMinutes(90);
+    o.SlidingExpiration = true;
+
+    // Cookie sunucu yeniden başlasa bile geçerli kalsın (aşağıdaki DataProtection ayarıyla birlikte).
+    o.Cookie.IsEssential = true;
+    o.Cookie.HttpOnly = true;
+    o.Cookie.SameSite = SameSiteMode.Lax;
+    o.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+
+    // Admin ve Kat Maliki (Owner) alanları aynı Identity cookie'sini paylaşır;
+    // yetkisiz erişimde istek yoluna göre doğru giriş sayfasına yönlendir.
+    o.Events.OnRedirectToLogin = ctx =>
+    {
+        var target = ctx.Request.Path.StartsWithSegments("/KatMaliki") ? "/KatMaliki/Account/Login" : "/Admin/Account/Login";
+        var returnUrl = Uri.EscapeDataString(ctx.Request.Path + ctx.Request.QueryString);
+        ctx.Response.Redirect($"{target}?returnUrl={returnUrl}");
+        return Task.CompletedTask;
+    };
+    o.Events.OnRedirectToAccessDenied = ctx =>
+    {
+        var target = ctx.Request.Path.StartsWithSegments("/KatMaliki") ? "/KatMaliki/Account/Login" : "/Admin/Account/Login";
+        ctx.Response.Redirect(target);
+        return Task.CompletedTask;
+    };
 });
 
 builder.Services.AddScoped<ProjectService>();
@@ -53,6 +132,14 @@ builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<SiteSettingService>();
 builder.Services.AddScoped<ReferenceService>();
 builder.Services.AddScoped<CatalogGeneratorService>();
+
+// ── Ödeme bildirimleri: SMS/e-posta gönderimi + günün USD/TRY kuru ──
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<ExchangeRateService>();
+builder.Services.AddScoped<SmsService>();
+builder.Services.AddScoped<PaymentNotificationService>();
+builder.Services.AddHostedService<PaymentReminderBackgroundService>();
 
 builder.Services.AddLocalization();
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o =>
@@ -111,6 +198,9 @@ app.MapControllerRoute("project-detail", "Projeler/{slug}",                     
 app.MapControllerRoute("projects",       "Projeler",                                     new { controller = "Projects", action = "Index" });
 app.MapControllerRoute("default",        "{controller=Home}/{action=Index}/{id?}");
 
+// Kat Maliki sohbeti (yetki kontrolü hub içinde yapılır)
+app.MapHub<ChatHub>("/hubs/chat");
+
 // ── Seed helpers ────────────────────────────────────────────
 var _webRoot = app.Environment.WebRootPath;
 
@@ -160,6 +250,16 @@ using (var scope = app.Services.CreateScope())
     const string adminEmail = "admin@brikonyapi.com";
     if (await um.FindByEmailAsync(adminEmail) == null)
         await um.CreateAsync(new IdentityUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true }, "Brikon2024!");
+
+    // ── Roller: Admin / KatMaliki ────────────────────────────
+    var rm = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    foreach (var roleName in new[] { "Admin", "KatMaliki" })
+        if (!await rm.RoleExistsAsync(roleName))
+            await rm.CreateAsync(new IdentityRole(roleName));
+
+    var adminUser = await um.FindByEmailAsync(adminEmail);
+    if (adminUser != null && !await um.IsInRoleAsync(adminUser, "Admin"))
+        await um.AddToRoleAsync(adminUser, "Admin");
 
     // ── Eski test seed'i temizle ─────────────────────────────
     if (db.Projects.Any(p => p.Slug == "kartaltepe-rezidans" || p.Slug == "bursa-nilufer-konutlari" || p.Slug == "edirne-sosyal-konutlar"))

@@ -1,0 +1,118 @@
+@model BrikonYapi.Web.Data.Entities.PaymentSchedule
+@using BrikonYapi.Web.Data.Entities
+@{
+    var unit = (Unit)ViewBag.Unit;
+    var stages = (List<ProjectStage>)ViewBag.Stages;
+    ViewData["Title"] = "Ödeme Kalemi Düzenle";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Ödeme Kalemi Düzenle — @unit.Project?.Name / @unit.UnitNo</h5>
+            </div>
+            <div class="card-body">
+                <form asp-area="Admin" asp-controller="PaymentSchedules" asp-action="Edit" asp-route-id="@Model.Id" method="post" id="pmEditForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tutar <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">₺</span>
+                                <input type="text" id="pmAmount" inputmode="numeric" class="form-control"
+                                       value="@Model.Amount.ToString("N0", new System.Globalization.CultureInfo("tr-TR"))" required autocomplete="off" />
+                                <input type="hidden" asp-for="Amount" id="pmAmountHidden" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Vade Tarihi <span class="text-danger">*</span></label>
+                            <input asp-for="DueDate" type="date" class="form-control" value="@Model.DueDate.ToString("yyyy-MM-dd")" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Açıklama</label>
+                        <input asp-for="Description" class="form-control" placeholder="Örn: 3. Hakediş Taksiti" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">İnşaat Aşaması</label>
+                        <select asp-for="ProjectStageId" id="pmStageSelect" class="form-select">
+                            <option value="">Aşamaya bağlı değil (elle gir)</option>
+                            @foreach (var st in stages)
+                            {
+                                <option value="@st.Id" data-percentage="@st.ThresholdPercentage">@st.Name (%@st.ThresholdPercentage)</option>
+                            }
+                        </select>
+                        <div class="form-text small">Seçilirse hakediş yüzdesi otomatik doldurulur; aşama "Tamamlandı" olunca malike gösterilir.</div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Hakediş %</label>
+                            <input asp-for="HakedisPercentage" id="pmHakedisInput" type="number" min="0" max="100" class="form-control" placeholder="20" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Taksit No</label>
+                            <input asp-for="InstallmentNo" type="number" min="0" class="form-control" placeholder="3" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Durum</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="0">Bekliyor</option>
+                                <option value="1">Ödendi</option>
+                                <option value="2">Gecikti</option>
+                                <option value="3">İptal</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                            Kaydet
+                        </button>
+                        <a href="/Admin/PaymentSchedules?unitId=@unit.Id" class="btn btn-outline-secondary">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    var display = document.getElementById('pmAmount');
+    var hidden  = document.getElementById('pmAmountHidden');
+    var form    = document.getElementById('pmEditForm');
+    var stageSelect = document.getElementById('pmStageSelect');
+    var hakedisInput = document.getElementById('pmHakedisInput');
+
+    display.addEventListener('input', function () {
+        var digits = display.value.replace(/\D/g, '');
+        display.value = digits ? Number(digits).toLocaleString('tr-TR') : '';
+    });
+
+    form.addEventListener('submit', function () {
+        hidden.value = display.value.replace(/\D/g, '');
+    });
+
+    function syncHakedisFromStage() {
+        var opt = stageSelect.options[stageSelect.selectedIndex];
+        var pct = opt.getAttribute('data-percentage');
+        if (pct) {
+            hakedisInput.value = pct;
+            hakedisInput.readOnly = true;
+        } else {
+            hakedisInput.readOnly = false;
+        }
+    }
+    stageSelect.addEventListener('change', syncHakedisFromStage);
+    syncHakedisFromStage();
+})();
+</script>
+}

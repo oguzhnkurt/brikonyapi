@@ -15,6 +15,49 @@ namespace BrikonYapi.Web.Services
             _logger = logger;
         }
 
+        public bool IsConfigured => !string.IsNullOrWhiteSpace(_config["Smtp:Host"]);
+
+        /// <summary>Genel amaçlı HTML e-posta gönderimi. Smtp:Host boşsa sessizce atlanır (false döner) —
+        /// çağıran taraf bu durumda hata fırlatmamalı, sadece göndermemiş sayılmalıdır.</summary>
+        public async Task<(bool Success, string? Error)> SendAsync(string toAddress, string toName, string subject, string htmlBody)
+        {
+            var host = _config["Smtp:Host"];
+            if (string.IsNullOrWhiteSpace(host))
+                return (false, "E-posta sağlayıcısı yapılandırılmamış.");
+
+            var port      = _config.GetValue<int>("Smtp:Port", 587);
+            var username  = _config["Smtp:Username"] ?? "";
+            var password  = _config["Smtp:Password"] ?? "";
+            var fromAddr  = _config["Smtp:From"] ?? username;
+            var enableSsl = _config.GetValue<bool>("Smtp:EnableSsl", true);
+
+            try
+            {
+                using var client = new SmtpClient(host, port)
+                {
+                    Credentials = new NetworkCredential(username, password),
+                    EnableSsl   = enableSsl
+                };
+
+                var mail = new MailMessage
+                {
+                    From       = new MailAddress(fromAddr),
+                    Subject    = subject,
+                    Body       = htmlBody,
+                    IsBodyHtml = true
+                };
+                mail.To.Add(string.IsNullOrWhiteSpace(toName) ? new MailAddress(toAddress) : new MailAddress(toAddress, toName));
+
+                await client.SendMailAsync(mail);
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "E-posta gönderilemedi: {To}", toAddress);
+                return (false, "E-posta gönderilemedi.");
+            }
+        }
+
         public async Task SendContactNotificationAsync(ContactMessage msg)
         {
             var host = _config["Smtp:Host"];

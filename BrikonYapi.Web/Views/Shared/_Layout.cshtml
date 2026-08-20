@@ -3,34 +3,17 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Brikon Yapı</title>
-    @{
-        var metaDesc   = (ViewData["Description"] ?? "Brikon Yapı - Kaliteli ve güvenilir inşaat hizmetleriyle geleceği inşa ediyoruz.").ToString();
-        var metaImage  = (ViewData["OgImage"]     ?? "/images/og-default.jpg").ToString();
-        var metaUrl    = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
-        var metaTitle  = $"{ViewData["Title"]} - Brikon Yapı";
-    }
-    <meta name="description" content="@metaDesc" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="@metaUrl" />
+    @* SEO etiketleri (başlık, açıklama, canonical, Open Graph, Twitter, JSON-LD).
+       Varsayılanlar Admin > Site Ayarları > SEO bölümünden yönetilir;
+       sayfalar ViewData["Description"] / ViewData["OgImage"] ile ezebilir. *@
+    @await Component.InvokeAsync("SeoMeta")
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png" />
     <link rel="manifest" href="~/site.webmanifest" />
-    <!-- Open Graph -->
-    <meta property="og:type"        content="website" />
-    <meta property="og:site_name"   content="Brikon Yapı" />
-    <meta property="og:title"       content="@metaTitle" />
-    <meta property="og:description" content="@metaDesc" />
-    <meta property="og:image"       content="@metaImage" />
-    <meta property="og:url"         content="@metaUrl" />
-    <!-- Twitter Card -->
-    <meta name="twitter:card"        content="summary_large_image" />
-    <meta name="twitter:title"       content="@metaTitle" />
-    <meta name="twitter:description" content="@metaDesc" />
-    <meta name="twitter:image"       content="@metaImage" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" />
@@ -100,6 +83,10 @@
                 </button>
             </form>
         </div>
+
+        <a href="/KatMaliki/Account/Login" class="btn-header-contact">
+            @(isEn ? "Unit Owner Login" : "Kat Maliki Girişi")
+        </a>
     </nav>
 
     @{var igLink = ViewBag.Instagram?.ToString();}
@@ -125,6 +112,7 @@
     </div>
     <a href="/E-Katalog">@(isEn ? "E-Catalog" : "E-Katalog")</a>
     <a href="/Iletisim">@(isEn ? "Contact" : "İletişim")</a>
+    <a href="/KatMaliki/Account/Login" class="mobile-nav-cta">@(isEn ? "Unit Owner Login" : "Kat Maliki Girişi")</a>
 </nav>
 
 @RenderBody()

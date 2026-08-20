@@ -7,6 +7,9 @@
         : $"{Model.Name} - {Model.Location} | Brikon Yapı";
     if (!string.IsNullOrEmpty(Model.MainImagePath))
         ViewData["OgImage"] = Model.MainImagePath.StartsWith("/") ? Model.MainImagePath : "/" + Model.MainImagePath;
+
+    // Paylaşımlarda makale/proje olarak görünsün
+    ViewData["OgType"] = "article";
 }
 
 @section Styles {

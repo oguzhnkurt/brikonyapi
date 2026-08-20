@@ -1,0 +1,441 @@
+@using BrikonYapi.Web.Areas.KatMaliki.Models
+@model ProgressPageViewModel
+@{
+    ViewData["Title"] = "Ana Sayfa";
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+}
+
+@if (!Model.Projects.Any())
+{
+    <div class="card">
+        <div class="card-body text-center text-muted py-5">
+            Hesabınıza henüz bir bağımsız bölüm atanmamış. Lütfen yönetici ile iletişime geçin.
+        </div>
+    </div>
+}
+
+@for (var projectIndex = 0; projectIndex < Model.Projects.Count; projectIndex++)
+{
+    var p = Model.Projects[projectIndex];
+    var isFirstProject = projectIndex == 0;
+    var firstUnit = p.Units.FirstOrDefault();
+    var unitLabel = firstUnit == null ? null : string.Join(" · ", new[] { firstUnit.BlockNo, "No " + firstUnit.UnitNo }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    var unitDetail = firstUnit == null ? null : string.Join(" · ", new[]
+    {
+        firstUnit.FloorNo.HasValue ? $"{firstUnit.FloorNo}. Kat" : null,
+        firstUnit.RoomLayout,
+        firstUnit.AreaM2.HasValue ? $"{firstUnit.AreaM2} m²" : null
+    }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+    <!-- Genel ilerleme kartı -->
+    <div class="km-card km-prog-summary mb-4 @(isFirstProject ? "km-prog-summary-first" : "")">
+        <div class="km-prog-unit">
+            <iconify-icon icon="iconamoon:building-1-duotone"></iconify-icon>
+            <span class="km-prog-unit-text">
+                <strong>@p.Project.Name</strong>
+                @if (!string.IsNullOrWhiteSpace(unitLabel))
+                {
+                    <span class="km-prog-unit-sub">@unitLabel</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(unitDetail))
+                {
+                    <span class="km-prog-unit-sub">@unitDetail</span>
+                }
+            </span>
+        </div>
+        <div class="d-flex justify-content-between align-items-start gap-3 mt-2">
+            <div>
+                <div class="km-prog-label">Genel ilerleme</div>
+                <div class="km-prog-value">%@p.OverallProgress</div>
+            </div>
+            @if (p.EstimatedDelivery.HasValue)
+            {
+                <div class="text-end">
+                    <div class="km-prog-label">Tahmini teslim</div>
+                    <div class="km-prog-delivery">@p.EstimatedDelivery.Value.ToString("dd MMMM yyyy", tr)</div>
+                </div>
+            }
+        </div>
+        <div class="km-prog-bar mt-3">
+            <div class="km-prog-bar-fill" style="width:@(p.OverallProgress)%"></div>
+        </div>
+        @if (p.CurrentStage != null)
+        {
+            <div class="km-prog-current mt-3">
+                <iconify-icon icon="iconamoon:certificate-badge-duotone"></iconify-icon>
+                Mevcut aşama: <strong>@p.CurrentStage.Name</strong>
+            </div>
+        }
+    </div>
+
+    <!-- 360° sanal tur -->
+    @if (!string.IsNullOrEmpty(p.SafeVirtualTourUrl))
+    {
+        <h6 class="km-section-title">Projeyi Gezin</h6>
+        <button type="button" class="km-tour-card mb-4"
+                data-tour-url="@p.SafeVirtualTourUrl"
+                data-tour-title="@p.Project.Name">
+            <div class="km-tour-bg" style="@(!string.IsNullOrEmpty(p.Project.MainImagePath) ? $"background-image:url('{p.Project.MainImagePath}')" : "")"></div>
+            <span class="km-tour-badge">
+                <iconify-icon icon="iconamoon:3d-duotone"></iconify-icon> 360° Sanal Tur
+            </span>
+            <span class="km-tour-cta">
+                <iconify-icon icon="iconamoon:player-play-duotone"></iconify-icon> Sanal turu başlat
+            </span>
+        </button>
+    }
+
+    <!-- İnşaat aşamaları -->
+    @if (p.Stages.Any())
+    {
+        <h6 class="km-section-title">İnşaat Aşamaları</h6>
+        <div class="km-card km-stages mb-4">
+            @foreach (var s in p.Stages)
+            {
+                var isDone = s.Status == BrikonYapi.Web.Data.Entities.ProjectStageStatus.Completed;
+                var isNow = s.Status == BrikonYapi.Web.Data.Entities.ProjectStageStatus.InProgress;
+                <div class="km-stage @(isNow ? "is-now" : "") @(isDone ? "is-done" : "")">
+                    <span class="km-stage-dot">
+                        @if (isDone || isNow)
+                        {
+                            <iconify-icon icon="iconamoon:check-bold"></iconify-icon>
+                        }
+                        else
+                        {
+                            @s.OrderIndex
+                        }
+                    </span>
+                    <span class="km-stage-name">
+                        @s.Name
+                        @if (isNow)
+                        {
+                            <span class="km-stage-now">(devam ediyor)</span>
+                        }
+                    </span>
+                    <span class="km-stage-pct">%@s.ThresholdPercentage+</span>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Saha fotoğrafları -->
+    @if (p.Photos.Any())
+    {
+        <div class="d-flex justify-content-between align-items-baseline">
+            <h6 class="km-section-title">Saha Fotoğrafları</h6>
+            <span class="km-photo-count">@p.Photos.Count güncelleme</span>
+        </div>
+        <div class="km-photo-scroll mb-4">
+            @foreach (var ph in p.Photos)
+            {
+                <button type="button" class="km-photo-card"
+                        data-photo-src="@ph.ImagePath"
+                        data-photo-caption="@ph.Caption">
+                    <span class="km-photo-img" style="background-image:url('@ph.ImagePath')"></span>
+                    @if (ph.Is360)
+                    {
+                        <span class="km-photo-360">360°</span>
+                    }
+                    <span class="km-photo-meta">
+                        @if (!string.IsNullOrEmpty(ph.Caption))
+                        {
+                            <span class="km-photo-caption">@ph.Caption</span>
+                        }
+                        <span class="km-photo-date">@ph.TakenAt.ToString("dd MMM yyyy", tr)</span>
+                    </span>
+                </button>
+            }
+        </div>
+    }
+
+    @if (!p.Stages.Any() && !p.Photos.Any() && string.IsNullOrEmpty(p.SafeVirtualTourUrl))
+    {
+        <div class="card mb-4">
+            <div class="card-body text-center text-muted py-4">
+                Bu proje için henüz ilerleme detayı paylaşılmamış.
+            </div>
+        </div>
+    }
+}
+
+@if (Model.HasAnySchedule)
+{
+    <!-- Ödeme özeti -->
+    @if (Model.RemainingTotal <= 0 && Model.PaidTotal > 0)
+    {
+        <div class="km-home-banner mb-3">
+            <iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon>
+            <span>Tüm ödemeleriniz tamamlandı.</span>
+        </div>
+    }
+
+    <div class="km-home-pay-cards mb-3">
+        <div class="km-home-pay-card">
+            <span class="km-home-pay-icon is-paid"><iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon></span>
+            <span class="km-home-pay-label">Ödenen</span>
+            <span class="km-home-pay-value is-paid">₺@Model.PaidTotal.ToString("N0", tr)</span>
+        </div>
+        <div class="km-home-pay-card">
+            <span class="km-home-pay-icon is-remaining"><iconify-icon icon="iconamoon:credit-card-duotone"></iconify-icon></span>
+            <span class="km-home-pay-label">Kalan</span>
+            <span class="km-home-pay-value">₺@Model.RemainingTotal.ToString("N0", tr)</span>
+        </div>
+    </div>
+
+    <a href="/KatMaliki/Dashboard" class="km-home-link mb-4">
+        Tüm ödemeleri gör <iconify-icon icon="iconamoon:arrow-right-2"></iconify-icon>
+    </a>
+}
+
+@if (Model.RecentNews.Any())
+{
+    <div class="d-flex justify-content-between align-items-baseline mb-2">
+        <h6 class="km-section-title mb-0">
+            <iconify-icon icon="iconamoon:news-duotone" class="me-1"></iconify-icon> Haberler
+        </h6>
+        <a href="/KatMaliki/News" class="km-home-link-sm">Tümü <iconify-icon icon="iconamoon:arrow-right-2"></iconify-icon></a>
+    </div>
+    <div class="km-home-news mb-4">
+        @foreach (var n in Model.RecentNews)
+        {
+            <a class="km-home-news-item" href="/KatMaliki/News/Detail/@n.Id">
+                @if (!string.IsNullOrEmpty(n.CoverImagePath))
+                {
+                    <span class="km-home-news-thumb" style="background-image:url('@n.CoverImagePath')"></span>
+                }
+                <span class="km-home-news-text">
+                    <span class="km-home-news-date">@n.CreatedAt.ToString("dd MMM yyyy", tr)</span>
+                    <span class="km-home-news-title">@n.Title</span>
+                </span>
+            </a>
+        }
+    </div>
+}
+
+<!-- Tam ekran görsel/tur penceresi -->
+<div id="km-viewer" class="km-viewer" hidden>
+    <div class="km-viewer-bar">
+        <span id="km-viewer-title" class="km-viewer-title"></span>
+        <div class="km-viewer-actions">
+            <a id="km-viewer-open" class="km-viewer-btn" href="#" target="_blank" rel="noopener noreferrer" hidden>
+                <iconify-icon icon="iconamoon:link-external"></iconify-icon>
+            </a>
+            <button type="button" id="km-viewer-close" class="km-viewer-btn" aria-label="Kapat">
+                <iconify-icon icon="iconamoon:close"></iconify-icon>
+            </button>
+        </div>
+    </div>
+    <div class="km-viewer-body">
+        <iframe id="km-viewer-frame" hidden referrerpolicy="no-referrer"
+                sandbox="allow-scripts allow-same-origin allow-popups"
+                allowfullscreen></iframe>
+        <img id="km-viewer-img" hidden alt="" />
+    </div>
+</div>
+
+@section Styles {
+<style>
+    .km-card { background:#fff; border-radius:16px; padding:1.25rem 1.35rem; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+
+    /* İlk proje kartı, üstteki başlık (KmGreeting) ile görsel olarak birleşsin diye hafifçe yukarı çekilir */
+    .km-prog-summary-first { margin-top:-1.6rem; position:relative; z-index:2; }
+
+    .km-prog-unit { display:flex; align-items:center; gap:.6rem; padding-bottom:.9rem; margin-bottom:.9rem; border-bottom:1px solid #f1f3f5; }
+    .km-prog-unit iconify-icon { font-size:1.3rem; color:var(--c-primary); flex-shrink:0; }
+    .km-prog-unit-text { display:flex; flex-direction:column; gap:.05rem; font-size:.98rem; min-width:0; }
+    .km-prog-unit-sub { font-size:.82rem; color:#9aa3ac; font-weight:500; }
+
+    .km-prog-label { font-size:.82rem; color:#8a939c; font-weight:600; }
+    .km-prog-value { font-size:2.2rem; font-weight:800; color:var(--c-primary); line-height:1.1; }
+    .km-prog-delivery { font-size:1rem; font-weight:700; }
+    .km-prog-bar { height:10px; background:#eef0f2; border-radius:10px; overflow:hidden; }
+    .km-prog-bar-fill { height:100%; background:linear-gradient(90deg,var(--c-primary),var(--c-secondary)); border-radius:10px; transition:width .6s ease; }
+    .km-prog-current { font-size:.92rem; color:#4a5158; display:flex; align-items:center; gap:.4rem; }
+    .km-prog-current iconify-icon { color:var(--c-primary); font-size:1.15rem; }
+
+    .km-section-title { font-size:1.05rem; font-weight:700; margin-bottom:.8rem; }
+
+    /* 360 tur kartı */
+    .km-tour-card {
+        display:block; position:relative; width:100%; border:none; padding:0; overflow:hidden;
+        border-radius:16px; height:190px; background:#0d1520; box-shadow:0 4px 14px rgba(0,0,0,.12);
+    }
+    .km-tour-bg { position:absolute; inset:0; background:#0d1520 center/cover no-repeat; opacity:.85; }
+    .km-tour-card::after { content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.6), rgba(0,0,0,.05)); }
+    .km-tour-badge {
+        position:absolute; top:.7rem; right:.7rem; z-index:2; display:inline-flex; align-items:center; gap:.3rem;
+        background:var(--c-primary); color:#fff; font-size:.78rem; font-weight:700; padding:.4rem .75rem; border-radius:20px;
+    }
+    .km-tour-cta {
+        position:absolute; left:.9rem; bottom:.9rem; z-index:2; display:inline-flex; align-items:center; gap:.35rem;
+        color:#fff; font-weight:700; font-size:.95rem;
+    }
+
+    /* Aşamalar */
+    .km-stages { padding:.4rem 1.1rem; }
+    .km-stage { display:flex; align-items:center; gap:.75rem; padding:.85rem 0; border-bottom:1px solid #f1f3f5; }
+    .km-stage:last-child { border-bottom:none; }
+    .km-stage-dot {
+        width:30px; height:30px; flex-shrink:0; border-radius:50%; background:#eef0f2; color:#9aa3ac;
+        display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700;
+    }
+    .km-stage.is-done .km-stage-dot, .km-stage.is-now .km-stage-dot { background:var(--c-primary); color:#fff; }
+    .km-stage-name { flex:1; font-size:.98rem; color:#9aa3ac; }
+    .km-stage.is-done .km-stage-name { color:#2B2A29; }
+    .km-stage.is-now .km-stage-name { color:var(--c-primary); font-weight:700; }
+    .km-stage-now { font-size:.82rem; font-weight:600; margin-left:.3rem; }
+    .km-stage-pct { font-size:.8rem; color:#9aa3ac; white-space:nowrap; }
+
+    /* Saha fotoğrafları */
+    .km-photo-count { font-size:.82rem; color:#9aa3ac; }
+    .km-photo-scroll {
+        display:flex; gap:.8rem; overflow-x:auto; padding-bottom:.3rem;
+        scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+    }
+    .km-photo-scroll::-webkit-scrollbar { height:5px; }
+    .km-photo-scroll::-webkit-scrollbar-thumb { background:#d8dde1; border-radius:10px; }
+    .km-photo-card {
+        position:relative; flex:0 0 240px; scroll-snap-align:start; border:none; padding:0;
+        border-radius:14px; overflow:hidden; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); text-align:left;
+    }
+    .km-photo-img { display:block; height:160px; background:#0d1520 center/cover no-repeat; }
+    .km-photo-360 {
+        position:absolute; top:.55rem; left:.55rem; background:rgba(0,0,0,.6); color:#fff;
+        font-size:.7rem; font-weight:700; padding:.25rem .55rem; border-radius:20px;
+    }
+    .km-photo-meta { display:block; padding:.6rem .8rem .75rem; }
+    .km-photo-caption { display:block; font-size:.88rem; font-weight:600; line-height:1.3; }
+    .km-photo-date { display:block; font-size:.76rem; color:#9aa3ac; margin-top:.15rem; }
+
+    /* Ödeme özeti (Ana Sayfa) */
+    .km-home-banner {
+        display:flex; align-items:center; gap:.6rem; background:#e6f7ed; color:#1e9e5a;
+        border-radius:14px; padding:.9rem 1.05rem; font-size:.95rem; font-weight:700;
+    }
+    .km-home-banner iconify-icon { font-size:1.3rem; flex-shrink:0; }
+
+    .km-home-pay-cards { display:flex; gap:.7rem; }
+    .km-home-pay-card {
+        flex:1; background:#fff; border-radius:14px; padding:.95rem 1rem; box-shadow:0 2px 8px rgba(0,0,0,.05);
+        display:flex; flex-direction:column; gap:.15rem;
+    }
+    .km-home-pay-icon {
+        width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+        font-size:1.15rem; margin-bottom:.3rem;
+    }
+    .km-home-pay-icon.is-paid      { background:#e6f7ed; color:#1e9e5a; }
+    .km-home-pay-icon.is-remaining { background:#e6f4fb; color:var(--c-primary); }
+    .km-home-pay-label { font-size:.8rem; color:#9aa3ac; font-weight:600; }
+    .km-home-pay-value { font-size:1.3rem; font-weight:800; color:var(--c-primary); }
+    .km-home-pay-value.is-paid { color:#1e9e5a; }
+
+    .km-home-link {
+        display:flex; align-items:center; justify-content:center; gap:.3rem;
+        color:var(--c-primary); font-weight:700; font-size:.95rem; text-decoration:none; padding:.4rem;
+    }
+    .km-home-link iconify-icon { font-size:1.1rem; }
+    .km-home-link-sm { color:var(--c-primary); font-weight:700; font-size:.85rem; text-decoration:none; display:inline-flex; align-items:center; gap:.2rem; }
+    .km-home-link-sm iconify-icon { font-size:1rem; }
+
+    .km-home-news { display:flex; flex-direction:column; gap:.7rem; }
+    .km-home-news-item {
+        display:flex; align-items:center; gap:.85rem; background:#fff; border-radius:14px;
+        padding:.7rem .85rem; text-decoration:none; color:inherit; box-shadow:0 2px 8px rgba(0,0,0,.05);
+    }
+    .km-home-news-item:active { background:#f7f9fa; }
+    .km-home-news-thumb {
+        width:56px; height:56px; flex-shrink:0; border-radius:11px; background:#eef0f2 center/cover no-repeat;
+    }
+    .km-home-news-text { flex:1; min-width:0; display:flex; flex-direction:column; gap:.1rem; }
+    .km-home-news-date { font-size:.76rem; color:#9aa3ac; }
+    .km-home-news-title { font-size:.95rem; font-weight:700; line-height:1.3; }
+
+    /* Tam ekran görüntüleyici */
+    .km-viewer { position:fixed; inset:0; z-index:2000; background:#05080d; display:flex; flex-direction:column; }
+    .km-viewer[hidden] { display:none; }
+    .km-viewer-bar {
+        display:flex; align-items:center; justify-content:space-between; gap:.75rem;
+        padding:calc(.7rem + env(safe-area-inset-top,0px)) .9rem .7rem; background:#0b1017; color:#fff;
+    }
+    .km-viewer-title { font-size:.95rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .km-viewer-actions { display:flex; gap:.4rem; flex-shrink:0; }
+    .km-viewer-btn {
+        background:rgba(255,255,255,.12); border:none; color:#fff; border-radius:8px;
+        width:42px; height:42px; display:flex; align-items:center; justify-content:center; font-size:1.2rem;
+    }
+    .km-viewer-body { flex:1; position:relative; display:flex; align-items:center; justify-content:center; }
+    .km-viewer-body iframe { width:100%; height:100%; border:none; }
+    .km-viewer-body img { max-width:100%; max-height:100%; object-fit:contain; }
+
+    @@media (max-width: 576px) {
+        .km-prog-value { font-size:1.9rem; }
+        .km-photo-card { flex-basis:210px; }
+        .km-prog-summary-first { margin-top:-1.2rem; }
+    }
+
+    /* Bilgisayardan girenlerde sütun daralıp ortalandığı için (bkz. _KatMalikiLayout),
+       sabit yükseklikli görsel kutuları da orana göre biraz artırılır — yatay uzun ya
+       da kare görseller aşırı ince bir şeride sıkışıp tuhaf kırpılmasın diye. */
+    @@media (min-width: 768px) {
+        .km-tour-card { height:260px; }
+        .km-photo-img { height:190px; }
+        .km-photo-card { flex-basis:260px; }
+        .km-home-news-thumb { width:68px; height:68px; }
+    }
+</style>
+}
+
+@section Scripts {
+<script>
+(function () {
+    var viewer  = document.getElementById('km-viewer');
+    var frame   = document.getElementById('km-viewer-frame');
+    var img     = document.getElementById('km-viewer-img');
+    var title   = document.getElementById('km-viewer-title');
+    var openBtn = document.getElementById('km-viewer-open');
+    var closeBtn= document.getElementById('km-viewer-close');
+
+    function open(opts) {
+        title.textContent = opts.title || '';
+        if (opts.url) {
+            frame.src = opts.url;
+            frame.hidden = false;
+            img.hidden = true;
+            openBtn.href = opts.url;
+            openBtn.hidden = false;
+        } else {
+            img.src = opts.src;
+            img.hidden = false;
+            frame.hidden = true;
+            openBtn.hidden = true;
+        }
+        viewer.hidden = false;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function close() {
+        viewer.hidden = true;
+        frame.src = 'about:blank';
+        img.removeAttribute('src');
+        document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.km-tour-card').forEach(function (el) {
+        el.addEventListener('click', function () {
+            open({ url: el.dataset.tourUrl, title: el.dataset.tourTitle });
+        });
+    });
+
+    document.querySelectorAll('.km-photo-card').forEach(function (el) {
+        el.addEventListener('click', function () {
+            open({ src: el.dataset.photoSrc, title: el.dataset.photoCaption || 'Saha fotoğrafı' });
+        });
+    });
+
+    closeBtn.addEventListener('click', close);
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !viewer.hidden) close();
+    });
+})();
+</script>
+}

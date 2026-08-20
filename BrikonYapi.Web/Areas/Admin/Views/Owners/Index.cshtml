@@ -1,0 +1,174 @@
+@using BrikonYapi.Web.Data.Entities
+@model List<Owner>
+@{
+    ViewData["Title"] = "Kat Malikleri";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    var allProjects = (List<Project>)(ViewBag.AllProjects ?? new List<Project>());
+    var committeeAccess = (List<OwnerProjectAccess>)(ViewBag.CommitteeAccess ?? new List<OwnerProjectAccess>());
+}
+
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="card-title mb-0">Kat Malikleri (@Model.Count)</h5>
+        <a href="/Admin/Owners/Create" class="btn btn-primary btn-sm">
+            <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>
+            Yeni Kat Maliki
+        </a>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="d-flex flex-column align-items-center justify-content-center text-muted py-5">
+                <iconify-icon icon="iconamoon:profile-duotone" style="font-size:48px;"></iconify-icon>
+                <span class="mt-2">Henüz kat maliki eklenmemiş.</span>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ad Soyad</th>
+                            <th>E-posta</th>
+                            <th>Telefon</th>
+                            <th>Bağımsız Bölümler</th>
+                            <th>Durum</th>
+                            <th class="text-end">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var o in Model)
+                        {
+                            var myCommittee = committeeAccess.Where(a => a.OwnerId == o.Id).ToList();
+                            <tr>
+                                <td>
+                                    <strong>@o.FullName</strong>
+                                    @if (myCommittee.Any())
+                                    {
+                                        <iconify-icon icon="mdi:star" class="text-warning ms-1"
+                                                      title="Temsil Heyeti: @string.Join(", ", myCommittee.Select(a => a.Project?.Name))"></iconify-icon>
+                                    }
+                                </td>
+                                <td class="text-muted">@o.Email</td>
+                                <td class="text-muted">@o.Phone</td>
+                                <td>
+                                    @if (o.Units.Any())
+                                    {
+                                        foreach (var u in o.Units)
+                                        {
+                                            <span class="badge bg-info-subtle text-info me-1">@u.Project?.Name — @u.UnitNo</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Atanmamış</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (o.IsActive)
+                                    {
+                                        <span class="badge bg-success-subtle text-success">Aktif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary">Pasif</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <a href="/Admin/Owners/Edit/@o.Id" class="btn btn-sm btn-outline-secondary">
+                                            <iconify-icon icon="iconamoon:edit-duotone"></iconify-icon>
+                                            Düzenle
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-warning"
+                                                data-bs-toggle="modal" data-bs-target="#committeeModal-@o.Id">
+                                            <iconify-icon icon="mdi:star-outline"></iconify-icon>
+                                            Temsil Heyeti
+                                        </button>
+                                        <form asp-area="Admin" asp-controller="Owners" asp-action="ResetPassword" method="post" class="d-inline"
+                                              onsubmit="return confirm('Bu malik için yeni bir şifre oluşturulacak. Devam edilsin mi?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@o.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                <iconify-icon icon="iconamoon:restart-duotone"></iconify-icon>
+                                                Şifre Sıfırla
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @foreach (var o in Model)
+            {
+                var myCommittee = committeeAccess.Where(a => a.OwnerId == o.Id).ToList();
+                var assignedIds = myCommittee.Select(a => a.ProjectId).ToHashSet();
+                var availableProjects = allProjects.Where(p => !assignedIds.Contains(p.Id)).ToList();
+
+                <div class="modal fade" id="committeeModal-@o.Id" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <iconify-icon icon="mdi:star" class="text-warning me-1"></iconify-icon>
+                                    Temsil Heyeti — @o.FullName
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                            </div>
+                            <div class="modal-body">
+                                @if (myCommittee.Any())
+                                {
+                                    <label class="form-label small fw-semibold">Üye Olduğu Projeler</label>
+                                    <ul class="list-group mb-3">
+                                        @foreach (var a in myCommittee)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                @a.Project?.Name
+                                                <form asp-area="Admin" asp-controller="Owners" asp-action="RemoveCommittee" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="ownerId" value="@o.Id" />
+                                                    <input type="hidden" name="projectId" value="@a.ProjectId" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Üyelikten çıkar">
+                                                        <iconify-icon icon="mdi:close"></iconify-icon>
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+
+                                @if (availableProjects.Any())
+                                {
+                                    <form asp-area="Admin" asp-controller="Owners" asp-action="AssignCommittee" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ownerId" value="@o.Id" />
+                                        <label class="form-label small fw-semibold">Hangi proje için Temsil Heyeti olarak atansın?</label>
+                                        <div class="d-flex gap-2">
+                                            <select name="projectId" class="form-select" required>
+                                                <option value="" selected disabled>Proje seçin…</option>
+                                                @foreach (var p in availableProjects)
+                                                {
+                                                    <option value="@p.Id">@p.Name</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="btn btn-primary text-nowrap">Ata</button>
+                                        </div>
+                                    </form>
+                                }
+                                else if (!myCommittee.Any())
+                                {
+                                    <div class="text-muted small">Aktif proje bulunmuyor.</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

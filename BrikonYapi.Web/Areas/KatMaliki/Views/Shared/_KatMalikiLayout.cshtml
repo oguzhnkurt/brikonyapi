@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <title>@ViewData["Title"] — Brikon Yapı Kat Maliki Paneli</title>
+
+    <!-- Mobil uygulama hissi: ana ekrana eklenebilir (PWA) -->
+    <link rel="manifest" href="~/katmaliki-manifest.json" />
+    <meta name="theme-color" content="#0082B4" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Kat Maliki" />
+    <link rel="apple-touch-icon" href="~/apple-touch-icon.png" />
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --c-primary:#0082B4; --c-secondary:#00A0E3; --c-dark:#2B2A29; }
+
+        /* Mobile-first, buyuk metin ve buyuk dokunma alanlari - yasli/az teknik kullanicilar icin */
+        html { -webkit-text-size-adjust: 100%; overscroll-behavior-y: contain; }
+        body {
+            font-family:'Inter','Segoe UI',Arial,sans-serif;
+            background:#f5f6f7; color:#2B2A29;
+            font-size: 17px;
+            line-height: 1.55;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
+        }
+        h1,h2,h3,h4,h5,h6 { line-height:1.3; }
+        h4 { font-size: 1.4rem; }
+
+        a, button { -webkit-tap-highlight-color: transparent; }
+
+        /* Ana ekrana eklendiğinde (standalone/PWA) durum çubuğu alanı için üst boşluk */
+        .km-navbar {
+            background:linear-gradient(135deg,var(--c-primary),var(--c-secondary));
+            padding: .9rem 0 1.5rem; padding-top: calc(.9rem + env(safe-area-inset-top, 0px));
+            border-radius: 0 0 28px 28px;
+            box-shadow: 0 10px 26px rgba(0,130,180,.22);
+            margin-bottom: 1.4rem;
+        }
+        /* Kişisel karşılama (KmGreeting bileşeni) — header'ın tamamı bu kart */
+        .km-greeting { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-top:.2rem; width:100%; }
+        .km-greeting-text { display:flex; flex-direction:column; gap:.1rem; min-width:0; }
+        .km-greeting-hi { color:rgba(255,255,255,.82); font-size:.85rem; font-weight:500; }
+        .km-greeting-name {
+            color:#fff; font-size:1.45rem; font-weight:800; line-height:1.2;
+            overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        }
+        /* Avatar aynı zamanda menü düğmesi: Haberler/SSS/Çıkış Yap'a buradan ulaşılır */
+        .km-greeting-avatar {
+            width:46px; height:46px; flex-shrink:0; border-radius:50%; margin-left:auto;
+            background:rgba(255,255,255,.2); border:2px solid rgba(255,255,255,.4);
+            display:flex; align-items:center; justify-content:center;
+            color:#fff; font-weight:800; font-size:1.15rem; padding:0; cursor:pointer;
+        }
+        .km-greeting-avatar:active { background:rgba(255,255,255,.32); }
+
+        .progress { background:#e8eaec; height: 16px !important; border-radius: 8px; }
+        .progress-bar { background:var(--c-primary); }
+
+        .card { border:none; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+        .card-body { padding: 1.25rem; }
+
+        /* Butonlar: buyuk, parmakla kolay dokunulur (min 48px), net yazi */
+        .btn { font-size: 1rem; padding: .8rem 1.25rem; border-radius: 8px; min-height: 48px; }
+        .btn-sm { font-size: .95rem; padding: .7rem 1.1rem; min-height: 46px; }
+        .btn-primary { background:var(--c-primary); border-color:var(--c-primary); font-weight:600; }
+        .btn-primary:hover { background:#006a91; border-color:#006a91; }
+        .btn-outline-primary { border-width: 2px; font-weight:600; }
+        .btn-success { font-weight:600; }
+
+        .badge { font-size: .85rem; padding: .5em .85em; border-radius: 6px; }
+
+        .form-control, .form-select { font-size: 1rem; padding: .7rem .9rem; min-height: 48px; border-radius: 8px; }
+        .form-label { font-size: .95rem; font-weight: 600; }
+
+        .alert { font-size: 1rem; border-radius: 10px; }
+
+        @@media (max-width: 575.98px) {
+            body { font-size: 16.5px; }
+            .container { padding-left: 1rem; padding-right: 1rem; }
+            .card-body { padding: 1.1rem; }
+        }
+
+        /* ── Mobil uygulama hissi: yüzen (floating) alt gezinme çubuğu ──────── */
+        .km-content { padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)); }
+
+        .km-bottomnav {
+            position: fixed; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); z-index: 1030;
+            background: #fff; border-radius: 22px;
+            box-shadow: 0 10px 28px rgba(20,30,40,.14), 0 2px 8px rgba(20,30,40,.06);
+        }
+        .km-bottomnav-inner {
+            max-width: 720px; margin: 0 auto; display: flex; padding: 6px;
+        }
+        .km-bottomnav a {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: .3rem; padding: .3rem .1rem; text-decoration: none; color: #9aa2ac;
+            font-size: .66rem; font-weight: 600; min-height: 60px; position: relative;
+            border-radius: 16px; transition: color .15s;
+        }
+        .km-bottomnav a span {
+            max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        /* Aktif sekme: ikon renkli yuvarlak-kare rozetin içinde, beyaz simge + kalın mavi etiket */
+        .km-bottomnav a iconify-icon {
+            font-size: 1.3rem; width: 40px; height: 40px; border-radius: 13px;
+            display: flex; align-items: center; justify-content: center;
+            color: #9aa2ac; transition: all .18s;
+        }
+        .km-bottomnav a.active { color: var(--c-primary); font-weight: 700; }
+        .km-bottomnav a.active iconify-icon {
+            background: linear-gradient(135deg, var(--c-primary), var(--c-secondary));
+            color: #fff;
+            box-shadow: 0 6px 14px rgba(0,130,180,.35);
+        }
+        .km-bottomnav a:active iconify-icon { background: #f0f2f4; }
+        .km-bottomnav a.active:active iconify-icon { background: linear-gradient(135deg, var(--c-primary), var(--c-secondary)); }
+
+        /* Alt açılır menü (bottom sheet) */
+        .km-sheet-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1040;
+            opacity: 0; transition: opacity .2s;
+        }
+        .km-sheet-backdrop.show { opacity: 1; }
+        .km-sheet-backdrop[hidden] { display: none; }
+
+        .km-sheet {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 1050;
+            background: #fff; border-radius: 20px 20px 0 0;
+            padding: .5rem .8rem calc(1rem + env(safe-area-inset-bottom, 0px));
+            box-shadow: 0 -8px 30px rgba(0,0,0,.18);
+            transform: translateY(100%); transition: transform .25s ease;
+        }
+        .km-sheet.show { transform: translateY(0); }
+        .km-sheet[hidden] { display: none; }
+
+        .km-sheet-handle {
+            width: 44px; height: 4px; border-radius: 4px; background: #dfe3e7;
+            margin: .4rem auto .8rem;
+        }
+        .km-sheet-item {
+            width: 100%; display: flex; align-items: center; gap: .8rem;
+            padding: .95rem .9rem; border: none; background: none; border-radius: 12px;
+            text-decoration: none; color: #2B2A29; font-size: 1rem; font-weight: 600;
+            min-height: 56px; text-align: left;
+        }
+        .km-sheet-item iconify-icon { font-size: 1.4rem; color: var(--c-primary); flex-shrink: 0; }
+        .km-sheet-item span { flex: 1; }
+        .km-sheet-item .km-sheet-chev { font-size: 1.1rem; color: #c3cad1; }
+        .km-sheet-item:active { background: #f5f6f7; }
+        .km-sheet-item.active { color: var(--c-primary); background: #f2fafd; }
+        .km-sheet-item.is-danger { color: #c0392b; }
+        .km-sheet-item.is-danger iconify-icon { color: #c0392b; }
+        .km-sheet-logout { border-top: 1px solid #f1f3f5; margin-top: .4rem; padding-top: .4rem; }
+
+        /* Dar telefonlarda 5 sekme sığsın diye yazı ve rozet boyutu biraz küçülür */
+        @@media (max-width: 360px) {
+            .km-bottomnav a { font-size: .6rem; }
+            .km-bottomnav a iconify-icon { font-size: 1.15rem; width: 34px; height: 34px; border-radius: 11px; }
+        }
+
+        /* ── Bilgisayardan girenler için: uygulama, Base44 referansındaki gibi ortalanmış
+           dar bir "app" sütunu olarak kalır — tam ekran genişliğine yayılmaz. Böylece
+           kart oranları ve sabit yükseklikli görseller (tur kartı, saha fotoğrafları,
+           haber kapakları) mobildekiyle aynı, dengeli oranını korur; yatay/kare görseller
+           tuhaf biçimde kırpılmaz. */
+        @@media (min-width: 768px) {
+            body { background:#e9edf1; }
+            .container { max-width: 640px; }
+            .km-navbar { border-radius:0 0 22px 22px; }
+            .km-content { padding-top:.25rem; }
+            .card, .km-card { box-shadow:0 4px 16px rgba(20,30,40,.07); }
+            .km-bottomnav { max-width:640px; left:0; right:0; margin:0 auto; }
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <nav class="km-navbar navbar navbar-dark">
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="container">
+                @await Component.InvokeAsync("KmGreeting")
+            </div>
+        }
+    </nav>
+
+    <div class="container km-content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @RenderBody()
+    </div>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <nav class="km-bottomnav">
+            <div class="km-bottomnav-inner">
+                <a href="/KatMaliki/Progress" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Progress" ? "active" : "")">
+                    <iconify-icon icon="iconamoon:home-duotone"></iconify-icon>
+                    <span>Ana Sayfa</span>
+                </a>
+                <a href="/KatMaliki/Dashboard" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <iconify-icon icon="iconamoon:credit-card-duotone"></iconify-icon>
+                    <span>Ödemelerim</span>
+                </a>
+                <a href="/KatMaliki/Polls" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Polls" ? "active" : "")">
+                    <iconify-icon icon="iconamoon:check-square-duotone"></iconify-icon>
+                    <span>Oylama</span>
+                </a>
+                <a href="/KatMaliki/Chat" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Chat" ? "active" : "")">
+                    <iconify-icon icon="iconamoon:comment-dots-duotone"></iconify-icon>
+                    <span>Sohbet</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Mobil menü: alt çubuğa sığmayan bölümler -->
+        <div id="kmSheetBackdrop" class="km-sheet-backdrop" hidden></div>
+        <div id="kmSheet" class="km-sheet" role="dialog" aria-modal="true" aria-label="Menü" hidden>
+            <div class="km-sheet-handle"></div>
+            <a class="km-sheet-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "News" ? "active" : "")" href="/KatMaliki/News">
+                <iconify-icon icon="iconamoon:news-duotone"></iconify-icon>
+                <span>Haberler &amp; Projeler</span>
+                <iconify-icon class="km-sheet-chev" icon="iconamoon:arrow-right-2"></iconify-icon>
+            </a>
+            <a class="km-sheet-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Faq" ? "active" : "")" href="/KatMaliki/Faq">
+                <iconify-icon icon="iconamoon:question-mark-circle-duotone"></iconify-icon>
+                <span>Sıkça Sorulan Sorular</span>
+                <iconify-icon class="km-sheet-chev" icon="iconamoon:arrow-right-2"></iconify-icon>
+            </a>
+            <form asp-area="KatMaliki" asp-controller="Account" asp-action="Logout" method="post" class="km-sheet-logout">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="km-sheet-item is-danger">
+                    <iconify-icon icon="iconamoon:exit-duotone"></iconify-icon>
+                    <span>Çıkış Yap</span>
+                </button>
+            </form>
+        </div>
+    }
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+
+    <script>
+    (function () {
+        var btn      = document.getElementById('kmMenuBtn');
+        var sheet    = document.getElementById('kmSheet');
+        var backdrop = document.getElementById('kmSheetBackdrop');
+        if (!btn || !sheet || !backdrop) return;
+
+        function open() {
+            sheet.hidden = false;
+            backdrop.hidden = false;
+            // Kısa gecikme ile sınıf eklenir ki CSS geçişi çalışsın.
+            // (requestAnimationFrame arka plandaki sekmelerde duraklatıldığı için setTimeout kullanılıyor.)
+            setTimeout(function () {
+                sheet.classList.add('show');
+                backdrop.classList.add('show');
+            }, 10);
+            btn.setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function close() {
+            sheet.classList.remove('show');
+            backdrop.classList.remove('show');
+            btn.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+            setTimeout(function () {
+                sheet.hidden = true;
+                backdrop.hidden = true;
+            }, 250);
+        }
+
+        btn.addEventListener('click', function () {
+            sheet.hidden ? open() : close();
+        });
+        backdrop.addEventListener('click', close);
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !sheet.hidden) close();
+        });
+    })();
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

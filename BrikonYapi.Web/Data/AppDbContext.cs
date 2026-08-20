@@ -19,6 +19,28 @@ namespace BrikonYapi.Web.Data
         public DbSet<Certificate> Certificates { get; set; }
         public DbSet<Catalog> Catalogs { get; set; }
 
+        // ── Kat Malikleri Ödeme Portalı ──────────────────────────
+        public DbSet<Owner> Owners { get; set; }
+        public DbSet<Unit> Units { get; set; }
+        public DbSet<PaymentSchedule> PaymentSchedules { get; set; }
+        public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+        public DbSet<NotificationLog> NotificationLogs { get; set; }
+        public DbSet<Announcement> Announcements { get; set; }
+        public DbSet<FaqItem> Faqs { get; set; }
+
+        // ── Kat Maliki Portalı: ilerleme, oylama, sohbet ─────────
+        public DbSet<ProjectStage> ProjectStages { get; set; }
+        public DbSet<SitePhoto> SitePhotos { get; set; }
+        public DbSet<Poll> Polls { get; set; }
+        public DbSet<PollOption> PollOptions { get; set; }
+        public DbSet<PollVote> PollVotes { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<ChatPoll> ChatPolls { get; set; }
+        public DbSet<ChatPollOption> ChatPollOptions { get; set; }
+        public DbSet<ChatPollVote> ChatPollVotes { get; set; }
+        public DbSet<OwnerNotificationPreference> OwnerNotificationPreferences { get; set; }
+        public DbSet<OwnerProjectAccess> OwnerProjectAccesses { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -41,6 +63,109 @@ namespace BrikonYapi.Web.Data
                 new Category { Id = 7, Name = "Büyükelçilikler",            OrderIndex = 6 },
                 new Category { Id = 8, Name = "İdari Binalar",              OrderIndex = 7 }
             );
+
+            // ── Kat Malikleri Ödeme Portalı ──────────────────────────
+            builder.Entity<Owner>(e =>
+            {
+                e.HasIndex(o => o.UserId).IsUnique();
+            });
+
+            builder.Entity<Unit>(e =>
+            {
+                e.HasIndex(u => new { u.ProjectId, u.UnitNo }).IsUnique();
+                e.HasOne(u => u.Project).WithMany().HasForeignKey(u => u.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(u => u.Owner).WithMany(o => o.Units).HasForeignKey(u => u.OwnerId).OnDelete(DeleteBehavior.SetNull);
+            });
+
+            builder.Entity<PaymentSchedule>(e =>
+            {
+                e.HasOne(p => p.Unit).WithMany(u => u.PaymentSchedules).HasForeignKey(p => p.UnitId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(p => p.ProjectStage).WithMany().HasForeignKey(p => p.ProjectStageId).OnDelete(DeleteBehavior.SetNull);
+            });
+
+            builder.Entity<PaymentTransaction>(e =>
+            {
+                e.HasOne(t => t.PaymentSchedule).WithMany(p => p.Transactions).HasForeignKey(t => t.PaymentScheduleId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<NotificationLog>(e =>
+            {
+                e.HasOne(n => n.Owner).WithMany().HasForeignKey(n => n.OwnerId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(n => n.RelatedPaymentSchedule).WithMany().HasForeignKey(n => n.RelatedPaymentScheduleId).OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // ── İlerleme: aşamalar ve saha fotoğrafları ──────────────
+            builder.Entity<ProjectStage>(e =>
+            {
+                e.HasOne(s => s.Project).WithMany(p => p.Stages).HasForeignKey(s => s.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(s => new { s.ProjectId, s.OrderIndex });
+            });
+
+            builder.Entity<SitePhoto>(e =>
+            {
+                e.HasOne(s => s.Project).WithMany(p => p.SitePhotos).HasForeignKey(s => s.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(s => new { s.ProjectId, s.TakenAt });
+            });
+
+            // ── Oylama ───────────────────────────────────────────────
+            builder.Entity<Poll>(e =>
+            {
+                e.HasOne(p => p.Project).WithMany().HasForeignKey(p => p.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                e.HasMany(p => p.Options).WithOne(o => o.Poll).HasForeignKey(o => o.PollId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<PollVote>(e =>
+            {
+                e.HasOne(v => v.Poll).WithMany(p => p.Votes).HasForeignKey(v => v.PollId).OnDelete(DeleteBehavior.Cascade);
+                // Secenek silinirse oy kaydi da silinmeli; ancak Poll uzerinden zaten cascade geldigi icin
+                // cift cascade yolu olusmasin diye burada Restrict kullaniyoruz.
+                e.HasOne(v => v.PollOption).WithMany(o => o.Votes).HasForeignKey(v => v.PollOptionId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(v => v.Owner).WithMany().HasForeignKey(v => v.OwnerId).OnDelete(DeleteBehavior.Cascade);
+
+                // Bir malik bir oylamada yalnizca bir kez oy kullanabilir (veritabani seviyesinde garanti).
+                e.HasIndex(v => new { v.PollId, v.OwnerId }).IsUnique();
+            });
+
+            // ── Sohbet ───────────────────────────────────────────────
+            builder.Entity<ChatMessage>(e =>
+            {
+                e.HasOne(m => m.Project).WithMany().HasForeignKey(m => m.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(m => m.Owner).WithMany().HasForeignKey(m => m.OwnerId).OnDelete(DeleteBehavior.SetNull);
+                e.HasOne(m => m.ChatPoll).WithMany().HasForeignKey(m => m.ChatPollId).OnDelete(DeleteBehavior.SetNull);
+                e.HasIndex(m => new { m.ProjectId, m.CreatedAt });
+            });
+
+            // ── Sohbet anketi (WhatsApp tarzı, sohbet akışı içinde) ──
+            builder.Entity<ChatPoll>(e =>
+            {
+                e.HasOne(p => p.Project).WithMany().HasForeignKey(p => p.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                e.HasMany(p => p.Options).WithOne(o => o.ChatPoll).HasForeignKey(o => o.ChatPollId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<ChatPollVote>(e =>
+            {
+                e.HasOne(v => v.ChatPoll).WithMany(p => p.Votes).HasForeignKey(v => v.ChatPollId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(v => v.ChatPollOption).WithMany(o => o.Votes).HasForeignKey(v => v.ChatPollOptionId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(v => v.Owner).WithMany().HasForeignKey(v => v.OwnerId).OnDelete(DeleteBehavior.Cascade);
+
+                // Bir malik bir sohbet anketinde yalnizca bir kez oy kullanabilir (oyunu degistirebilir).
+                e.HasIndex(v => new { v.ChatPollId, v.OwnerId }).IsUnique();
+            });
+
+            // ── Bildirim tercihleri (Owner ile 1:1) ──────────────────
+            builder.Entity<OwnerNotificationPreference>(e =>
+            {
+                e.HasOne(p => p.Owner).WithMany().HasForeignKey(p => p.OwnerId).OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(p => p.OwnerId).IsUnique();
+            });
+
+            // ── Malik başına proje/sohbet erişimi (admin tarafından tek tek atanır) ──
+            builder.Entity<OwnerProjectAccess>(e =>
+            {
+                e.HasOne(a => a.Owner).WithMany().HasForeignKey(a => a.OwnerId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(a => a.Project).WithMany().HasForeignKey(a => a.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(a => new { a.OwnerId, a.ProjectId }).IsUnique();
+            });
 
             builder.Entity<SiteSetting>(e => e.HasIndex(s => s.Key).IsUnique());
 

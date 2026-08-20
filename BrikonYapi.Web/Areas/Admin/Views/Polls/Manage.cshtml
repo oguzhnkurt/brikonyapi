@@ -1,0 +1,144 @@
+@using BrikonYapi.Web.Data.Entities
+@model Poll
+@{
+    ViewData["Title"] = "Oylama Yönetimi";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var total = Model.Votes.Count;
+}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+    <a href="/Admin/Polls" class="btn btn-sm btn-outline-secondary">
+        <iconify-icon icon="iconamoon:arrow-left-2"></iconify-icon> Geri
+    </a>
+    <h5 class="mb-0">@Model.Title</h5>
+    @switch (Model.Status)
+    {
+        case PollStatus.Active:
+            <span class="badge bg-success-subtle text-success">Aktif</span>
+            break;
+        case PollStatus.Closed:
+            <span class="badge bg-secondary-subtle text-secondary">Kapandı</span>
+            break;
+        default:
+            <span class="badge bg-warning-subtle text-warning">Taslak</span>
+            break;
+    }
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><h6 class="card-title mb-0">Özet</h6></div>
+            <div class="card-body">
+                <dl class="row mb-3 small">
+                    <dt class="col-5 text-muted fw-normal">Kapsam</dt>
+                    <dd class="col-7">@(Model.Project?.Name ?? "Tüm projeler")</dd>
+
+                    <dt class="col-5 text-muted fw-normal">Kategori</dt>
+                    <dd class="col-7">@(Model.Category ?? "—")</dd>
+
+                    <dt class="col-5 text-muted fw-normal">Başlangıç</dt>
+                    <dd class="col-7">@(Model.StartsAt?.ToString("dd.MM.yyyy HH:mm", tr) ?? "—")</dd>
+
+                    <dt class="col-5 text-muted fw-normal">Bitiş</dt>
+                    <dd class="col-7">@(Model.EndsAt?.ToString("dd.MM.yyyy HH:mm", tr) ?? "—")</dd>
+
+                    <dt class="col-5 text-muted fw-normal">Toplam oy</dt>
+                    <dd class="col-7 fw-bold">@total</dd>
+                </dl>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <div class="border-top pt-2 small text-muted">@Model.Description</div>
+                }
+
+                <div class="d-flex gap-2 mt-3">
+                    @if (Model.Status != PollStatus.Active)
+                    {
+                        <form asp-area="Admin" asp-controller="Polls" asp-action="SetStatus" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="status" value="0" />
+                            <button type="submit" class="btn btn-sm btn-success">Oylamayı Aç</button>
+                        </form>
+                    }
+                    @if (Model.Status != PollStatus.Closed)
+                    {
+                        <form asp-area="Admin" asp-controller="Polls" asp-action="SetStatus" method="post"
+                              onsubmit="return confirm('Oylama kapatılsın mı? Malikler artık oy veremez.')">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="status" value="1" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Oylamayı Kapat</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header"><h6 class="card-title mb-0">Seçenekler ve Sonuçlar</h6></div>
+            <div class="card-body">
+                @foreach (var o in Model.Options.OrderBy(o => o.OrderIndex))
+                {
+                    var count = Model.Votes.Count(v => v.PollOptionId == o.Id);
+                    var pct = total > 0 ? (int)Math.Round(count * 100.0 / total) : 0;
+
+                    <div class="d-flex align-items-center gap-3 py-3 border-bottom">
+                        <div style="width:56px; height:56px; flex-shrink:0; border-radius:10px;
+                                    background:#eef0f2 @(string.IsNullOrEmpty(o.ImagePath) ? "" : $"url('{o.ImagePath}')") center/cover no-repeat;
+                                    display:flex; align-items:center; justify-content:center; color:#c3cad1;">
+                            @if (string.IsNullOrEmpty(o.ImagePath))
+                            {
+                                <iconify-icon icon="iconamoon:image-duotone" style="font-size:22px;"></iconify-icon>
+                            }
+                        </div>
+
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="d-flex justify-content-between align-items-baseline gap-2">
+                                <span class="fw-semibold">@o.Text</span>
+                                <span class="small text-muted">@count oy · %@pct</span>
+                            </div>
+                            <div class="progress mt-1" style="height:6px;">
+                                <div class="progress-bar" style="width:@(pct)%"></div>
+                            </div>
+
+                            <div class="d-flex gap-2 mt-2">
+                                <form asp-area="Admin" asp-controller="Polls" asp-action="SetOptionImage" method="post"
+                                      enctype="multipart/form-data" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="optionId" value="@o.Id" />
+                                    <input type="file" name="image" id="optImg@(o.Id)" class="d-none"
+                                           accept=".jpg,.jpeg,.png,.webp" onchange="this.form.submit()" />
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            onclick="document.getElementById('optImg@(o.Id)').click()">
+                                        <iconify-icon icon="iconamoon:upload-duotone" class="me-1"></iconify-icon>
+                                        Görsel yükle
+                                    </button>
+                                </form>
+
+                                <form asp-area="Admin" asp-controller="Polls" asp-action="DeleteOption" method="post"
+                                      onsubmit="return confirm('Bu seçenek silinsin mi?')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="optionId" value="@o.Id" />
+                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0 px-2">Sil</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="card-footer">
+                <form asp-area="Admin" asp-controller="Polls" asp-action="AddOption" method="post" class="d-flex gap-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input name="text" class="form-control form-control-sm" placeholder="Yeni seçenek metni" required />
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Ekle</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,444 @@
+@model List<ChatMessage>
+@{
+    ViewData["Title"] = "Sohbet";
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var projects = ViewBag.Projects as List<Project> ?? new List<Project>();
+    var selected = ViewBag.SelectedProject as Project;
+    var currentUserId = ViewBag.CurrentUserId as string ?? "";
+    var ownerId = ViewBag.OwnerId as int?;
+}
+
+@if (selected == null)
+{
+    <div class="km-chat-hero mb-3">
+        <div class="km-chat-hero-title">Sohbet</div>
+    </div>
+    <div class="card">
+        <div class="card-body text-center text-muted py-5">
+            Hesabınıza henüz bir bağımsız bölüm atanmamış, sohbete katılamazsınız.
+        </div>
+    </div>
+}
+else
+{
+    <div class="km-chat-hero mb-2">
+        <div class="km-chat-hero-title">@selected.Name</div>
+        <div class="km-chat-hero-sub">Malikler arası mesajlaşma</div>
+    </div>
+
+    @if (projects.Count > 1)
+    {
+        <div class="km-chat-projects mb-2">
+            @foreach (var p in projects)
+            {
+                <a class="km-chip @(p.Id == selected.Id ? "active" : "")"
+                   href="/KatMaliki/Chat?projectId=@p.Id">@p.Name</a>
+            }
+        </div>
+    }
+
+    <div class="km-chat-wrap">
+        <div id="chatMessages" class="km-chat-messages" data-current-user="@currentUserId">
+            @if (!Model.Any())
+            {
+                <div class="km-chat-empty">Henüz mesaj yok. İlk mesajı siz yazın.</div>
+            }
+            @foreach (var m in Model)
+            {
+                var isMine = m.SenderUserId == currentUserId;
+                <div class="km-msg @(isMine ? "is-mine" : "") @(m.IsFromManagement ? "is-mgmt" : "")">
+                    @if (!isMine)
+                    {
+                        <div class="km-msg-sender">@m.SenderName</div>
+                    }
+                    @if (m.IsPoll && m.ChatPoll != null)
+                    {
+                        var totalVotes = m.ChatPoll.Votes.Count;
+                        var myOptionId = ownerId.HasValue
+                            ? m.ChatPoll.Votes.FirstOrDefault(v => v.OwnerId == ownerId.Value)?.ChatPollOptionId
+                            : null;
+                        <div class="km-msg-bubble km-poll-bubble" data-poll-id="@m.ChatPoll.Id">
+                            <div class="km-poll-q">
+                                <iconify-icon icon="mdi:poll"></iconify-icon> @m.ChatPoll.Question
+                            </div>
+                            <div class="km-poll-opts">
+                                @foreach (var opt in m.ChatPoll.Options.OrderBy(o => o.OrderIndex))
+                                {
+                                    var count = m.ChatPoll.Votes.Count(v => v.ChatPollOptionId == opt.Id);
+                                    var pct = totalVotes > 0 ? (int)Math.Round(count * 100.0 / totalVotes) : 0;
+                                    var isMineOpt = myOptionId.HasValue && myOptionId.Value == opt.Id;
+                                    <div class="km-poll-opt @(isMineOpt ? "is-mine" : "")" data-option-id="@opt.Id" role="button" tabindex="0">
+                                        <div class="km-poll-opt-bar"><span style="width:@(pct)%"></span></div>
+                                        <span class="km-poll-opt-label">@opt.Text</span>
+                                        <iconify-icon icon="mdi:check-circle" class="km-poll-opt-check"></iconify-icon>
+                                        <span class="km-poll-opt-pct">%@pct</span>
+                                    </div>
+                                }
+                            </div>
+                            <div class="km-poll-foot @(myOptionId.HasValue ? "is-voted" : "")">
+                                <span class="km-poll-foot-text">@(myOptionId.HasValue ? "Oyunuz kaydedildi." : "Oy vermek için bir seçeneğe dokunun.")</span>
+                                <span class="km-poll-total-num">@totalVotes</span> oy
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="km-msg-bubble">@m.Body</div>
+                    }
+                    <div class="km-msg-time">@m.CreatedAt.ToString("HH:mm", tr)</div>
+                </div>
+            }
+        </div>
+
+        <div class="km-chat-composer">
+            <div id="chatError" class="km-chat-error" hidden></div>
+            <form id="chatForm" autocomplete="off">
+                <input type="text" id="chatInput" maxlength="2000" placeholder="Mesajınızı yazın..." aria-label="Mesaj" />
+                <button type="submit" id="chatSend" aria-label="Gönder">
+                    <iconify-icon icon="iconamoon:send-duotone"></iconify-icon>
+                </button>
+            </form>
+            <div id="chatStatus" class="km-chat-status">Bağlanıyor…</div>
+        </div>
+    </div>
+}
+
+@section Styles {
+<style>
+    .km-chat-hero-title { font-size:1.35rem; font-weight:700; line-height:1.25; }
+    .km-chat-hero-sub { color:#6c7580; font-size:.9rem; margin-top:.15rem; }
+
+    .km-chat-projects { display:flex; gap:.5rem; overflow-x:auto; padding-bottom:.2rem; }
+    .km-chip {
+        border:1px solid #dfe3e7; background:#fff; color:#4a5158; border-radius:20px; text-decoration:none;
+        padding:.45rem .95rem; font-size:.85rem; font-weight:600; white-space:nowrap; min-height:40px;
+        display:inline-flex; align-items:center;
+    }
+    .km-chip.active { background:var(--c-primary); border-color:var(--c-primary); color:#fff; }
+
+    .km-chat-wrap {
+        background:#fff; border-radius:16px; box-shadow:0 2px 10px rgba(0,0,0,.06);
+        display:flex; flex-direction:column; overflow:hidden;
+        height:calc(100vh - 260px); min-height:340px;
+    }
+
+    .km-chat-messages { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:.55rem; }
+    .km-chat-empty { margin:auto; color:#9aa3ac; font-size:.92rem; text-align:center; }
+
+    .km-msg { display:flex; flex-direction:column; align-items:flex-start; max-width:82%; }
+    .km-msg.is-mine { align-self:flex-end; align-items:flex-end; }
+    .km-msg-sender { font-size:.74rem; color:#8a939c; font-weight:600; margin:0 .35rem .15rem; }
+    .km-msg-bubble {
+        background:#f1f3f5; color:#2B2A29; border-radius:16px 16px 16px 4px;
+        padding:.6rem .9rem; font-size:.95rem; line-height:1.45; word-break:break-word; white-space:pre-wrap;
+    }
+    .km-msg.is-mine .km-msg-bubble {
+        background:linear-gradient(135deg,var(--c-primary),var(--c-secondary)); color:#fff;
+        border-radius:16px 16px 4px 16px;
+    }
+    .km-msg.is-mgmt .km-msg-bubble { background:#fff6e3; border:1px solid #f0dcb0; }
+    .km-msg.is-mgmt.is-mine .km-msg-bubble { background:linear-gradient(135deg,#b8860b,#d4a017); color:#fff; border:none; }
+    .km-msg-time { font-size:.68rem; color:#b0b8bf; margin:.15rem .4rem 0; }
+
+    /* ── Sohbet anketi balonu ── */
+    .km-msg-bubble.km-poll-bubble {
+        background:#fff !important; color:#2B2A29; border:1px solid #f0dcb0;
+        border-radius:16px 16px 16px 4px; min-width:220px; max-width:100%; padding:.75rem .85rem;
+    }
+    .km-poll-q { font-size:.92rem; font-weight:700; margin-bottom:.6rem; display:flex; align-items:flex-start; gap:.35rem; }
+    .km-poll-q iconify-icon { color:#b8860b; margin-top:.15rem; flex-shrink:0; }
+    .km-poll-opts { display:flex; flex-direction:column; gap:.45rem; }
+    .km-poll-opt {
+        position:relative; border:1px solid #eef0f2; border-radius:10px; padding:.5rem .65rem;
+        cursor:pointer; display:flex; align-items:center; gap:.4rem; overflow:hidden;
+        font-size:.86rem; transition:border-color .2s ease;
+    }
+    .km-poll-opt:hover { border-color:#dfe3e7; }
+    .km-poll-opt.is-mine { border-color:var(--c-primary); }
+    .km-poll-opt-bar {
+        position:absolute; inset:0; background:#f4f5f6; z-index:0; border-radius:9px; overflow:hidden;
+    }
+    .km-poll-opt-bar span {
+        display:block; height:100%; background:#e5e8eb; transition:width .5s ease;
+    }
+    .km-poll-opt.is-mine .km-poll-opt-bar span {
+        background:linear-gradient(90deg,var(--c-primary),var(--c-secondary)); opacity:.28;
+    }
+    .km-poll-opt-label { position:relative; z-index:1; flex:1; word-break:break-word; }
+    .km-poll-opt-check { position:relative; z-index:1; color:var(--c-primary); font-size:1rem; opacity:0; transform:scale(.6); transition:all .2s ease; }
+    .km-poll-opt.is-mine .km-poll-opt-check { opacity:1; transform:scale(1); }
+    .km-poll-opt-pct { position:relative; z-index:1; font-weight:700; color:#6c7580; flex-shrink:0; }
+    .km-poll-opt.is-mine .km-poll-opt-pct { color:var(--c-primary); }
+    .km-poll-foot {
+        font-size:.72rem; color:#9aa3ac; margin-top:.55rem; display:flex; align-items:center;
+        justify-content:space-between; gap:.5rem; transition:color .2s ease;
+    }
+    .km-poll-foot.is-voted { color:#1e9e5a; }
+    .km-poll-foot.km-poll-flash { color:#1e9e5a; }
+    .km-poll-total-num { font-weight:700; }
+
+    .km-chat-composer { border-top:1px solid #eef0f2; padding:.6rem .7rem calc(.6rem + env(safe-area-inset-bottom,0px)); }
+    .km-chat-composer form { display:flex; gap:.5rem; align-items:center; }
+    #chatInput {
+        flex:1; border:1px solid #dfe3e7; border-radius:22px; padding:.7rem 1rem;
+        font-size:1rem; min-height:46px; outline:none;
+    }
+    #chatInput:focus { border-color:var(--c-primary); }
+    #chatSend {
+        width:46px; height:46px; flex-shrink:0; border:none; border-radius:50%;
+        background:var(--c-primary); color:#fff; font-size:1.25rem;
+        display:flex; align-items:center; justify-content:center;
+    }
+    #chatSend:disabled { background:#c3cad1; }
+
+    .km-chat-status { font-size:.72rem; color:#9aa3ac; padding:.3rem .3rem 0; }
+    .km-chat-status.is-live { color:#1e9e5a; }
+    .km-chat-error {
+        background:#fdeaea; color:#c0392b; font-size:.85rem; border-radius:8px;
+        padding:.5rem .75rem; margin-bottom:.5rem;
+    }
+
+    @@media (max-width: 576px) {
+        .km-chat-wrap { height:calc(100vh - 250px); }
+        .km-chat-hero-title { font-size:1.15rem; }
+    }
+</style>
+}
+
+@section Scripts {
+@if (selected != null)
+{
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+    (function () {
+        var projectId   = @selected.Id;
+        var currentUser = document.getElementById('chatMessages').dataset.currentUser;
+        var list    = document.getElementById('chatMessages');
+        var form    = document.getElementById('chatForm');
+        var input   = document.getElementById('chatInput');
+        var sendBtn = document.getElementById('chatSend');
+        var status  = document.getElementById('chatStatus');
+        var errBox  = document.getElementById('chatError');
+
+        function scrollToEnd() { list.scrollTop = list.scrollHeight; }
+        scrollToEnd();
+
+        // Sunucu hatasından kullanıcıya gösterilecek sade mesajı çıkarır.
+        function friendlyError(err) {
+            var raw = (err && err.message) ? err.message : '';
+            var i = raw.indexOf('HubException: ');
+            if (i >= 0) return raw.substring(i + 'HubException: '.length).trim();
+            if (raw.indexOf('An unexpected error') === 0) return 'İşlem tamamlanamadı. Lütfen tekrar deneyin.';
+            return raw || 'İşlem tamamlanamadı. Lütfen tekrar deneyin.';
+        }
+
+        function showError(msg) {
+            errBox.textContent = msg;      // textContent: HTML olarak yorumlanmaz (XSS önlemi)
+            errBox.hidden = false;
+            setTimeout(function () { errBox.hidden = true; }, 5000);
+        }
+
+        function timeOf(iso) {
+            try {
+                return new Date(iso).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            } catch (e) { return ''; }
+        }
+
+        function buildPollBubble(poll) {
+            var bubble = document.createElement('div');
+            bubble.className = 'km-msg-bubble km-poll-bubble';
+            bubble.dataset.pollId = poll.id;
+
+            var q = document.createElement('div');
+            q.className = 'km-poll-q';
+            q.innerHTML = '<iconify-icon icon="mdi:poll"></iconify-icon><span></span>';
+            q.querySelector('span').textContent = poll.question;   // textContent — XSS önlemi
+            bubble.appendChild(q);
+
+            var opts = document.createElement('div');
+            opts.className = 'km-poll-opts';
+            (poll.options || []).forEach(function (o) {
+                var opt = document.createElement('div');
+                opt.className = 'km-poll-opt';
+                opt.dataset.optionId = o.id;
+                opt.setAttribute('role', 'button');
+                opt.setAttribute('tabindex', '0');
+
+                var barWrap = document.createElement('div');
+                barWrap.className = 'km-poll-opt-bar';
+                var bar = document.createElement('span');
+                bar.style.width = (o.pct || 0) + '%';
+                barWrap.appendChild(bar);
+                opt.appendChild(barWrap);
+
+                var label = document.createElement('span');
+                label.className = 'km-poll-opt-label';
+                label.textContent = o.text;
+                opt.appendChild(label);
+
+                var check = document.createElement('iconify-icon');
+                check.setAttribute('icon', 'mdi:check-circle');
+                check.className = 'km-poll-opt-check';
+                opt.appendChild(check);
+
+                var pct = document.createElement('span');
+                pct.className = 'km-poll-opt-pct';
+                pct.textContent = '%' + (o.pct || 0);
+                opt.appendChild(pct);
+
+                opts.appendChild(opt);
+            });
+            bubble.appendChild(opts);
+
+            var foot = document.createElement('div');
+            foot.className = 'km-poll-foot';
+            foot.innerHTML = '<span class="km-poll-foot-text">Oy vermek için bir seçeneğe dokunun.</span>' +
+                '<span><span class="km-poll-total-num"></span> oy</span>';
+            foot.querySelector('.km-poll-total-num').textContent = poll.totalVotes || 0;
+            bubble.appendChild(foot);
+
+            return bubble;
+        }
+
+        function applyPollUpdate(u) {
+            var bubbles = list.querySelectorAll('.km-poll-bubble[data-poll-id="' + u.pollId + '"]');
+            bubbles.forEach(function (bubble) {
+                (u.options || []).forEach(function (o) {
+                    var opt = bubble.querySelector('.km-poll-opt[data-option-id="' + o.id + '"]');
+                    if (!opt) return;
+                    var bar = opt.querySelector('.km-poll-opt-bar span');
+                    if (bar) bar.style.width = (o.pct || 0) + '%';
+                    var pct = opt.querySelector('.km-poll-opt-pct');
+                    if (pct) pct.textContent = '%' + (o.pct || 0);
+                });
+                var totalEl = bubble.querySelector('.km-poll-total-num');
+                if (totalEl) totalEl.textContent = u.totalVotes || 0;
+            });
+        }
+
+        function votePoll(optEl) {
+            var bubble = optEl.closest('.km-poll-bubble');
+            if (!bubble || bubble.dataset.busy === '1') return;
+
+            var pollId = parseInt(bubble.dataset.pollId, 10);
+            var optionId = parseInt(optEl.dataset.optionId, 10);
+            bubble.dataset.busy = '1';
+
+            connection.invoke('VotePoll', pollId, optionId)
+                .then(function () {
+                    bubble.querySelectorAll('.km-poll-opt').forEach(function (o) {
+                        o.classList.toggle('is-mine', o === optEl);
+                    });
+                    var foot = bubble.querySelector('.km-poll-foot');
+                    if (foot) {
+                        foot.classList.add('is-voted', 'km-poll-flash');
+                        var text = foot.querySelector('.km-poll-foot-text');
+                        if (text) text.textContent = 'Oyunuz kaydedildi.';
+                        setTimeout(function () { foot.classList.remove('km-poll-flash'); }, 1800);
+                    }
+                })
+                .catch(function (err) { showError(friendlyError(err)); })
+                .finally(function () { bubble.dataset.busy = ''; });
+        }
+
+        list.addEventListener('click', function (e) {
+            var optEl = e.target.closest('.km-poll-opt');
+            if (optEl) votePoll(optEl);
+        });
+        list.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            var optEl = e.target.closest('.km-poll-opt');
+            if (!optEl) return;
+            e.preventDefault();
+            votePoll(optEl);
+        });
+
+        function appendMessage(m) {
+            var empty = list.querySelector('.km-chat-empty');
+            if (empty) empty.remove();
+
+            var isMine = m.senderUserId === currentUser;
+
+            var wrap = document.createElement('div');
+            wrap.className = 'km-msg' + (isMine ? ' is-mine' : '') + (m.isFromManagement ? ' is-mgmt' : '');
+
+            if (!isMine) {
+                var sender = document.createElement('div');
+                sender.className = 'km-msg-sender';
+                sender.textContent = m.senderName;   // textContent
+                wrap.appendChild(sender);
+            }
+
+            if (m.isPoll && m.poll) {
+                wrap.appendChild(buildPollBubble(m.poll));
+            } else {
+                var bubble = document.createElement('div');
+                bubble.className = 'km-msg-bubble';
+                bubble.textContent = m.body;             // textContent — HTML enjekte edilemez
+                wrap.appendChild(bubble);
+            }
+
+            var time = document.createElement('div');
+            time.className = 'km-msg-time';
+            time.textContent = timeOf(m.createdAt);
+            wrap.appendChild(time);
+
+            list.appendChild(wrap);
+            scrollToEnd();
+        }
+
+        var connection = new signalR.HubConnectionBuilder()
+            .withUrl('/hubs/chat')
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on('ReceiveMessage', appendMessage);
+        connection.on('ReceivePollUpdate', applyPollUpdate);
+
+        connection.onreconnecting(function () {
+            status.textContent = 'Bağlantı yeniden kuruluyor…';
+            status.classList.remove('is-live');
+            sendBtn.disabled = true;
+        });
+
+        connection.onreconnected(function () {
+            connection.invoke('JoinProject', projectId).catch(function () {});
+            status.textContent = 'Canlı';
+            status.classList.add('is-live');
+            sendBtn.disabled = false;
+        });
+
+        connection.onclose(function () {
+            status.textContent = 'Bağlantı koptu. Sayfayı yenileyin.';
+            status.classList.remove('is-live');
+            sendBtn.disabled = true;
+        });
+
+        connection.start()
+            .then(function () { return connection.invoke('JoinProject', projectId); })
+            .then(function () {
+                status.textContent = 'Canlı';
+                status.classList.add('is-live');
+                sendBtn.disabled = false;
+            })
+            .catch(function (err) {
+                status.textContent = 'Sohbete bağlanılamadı.';
+                showError(friendlyError(err));
+                sendBtn.disabled = true;
+            });
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var text = input.value.trim();
+            if (!text) return;
+
+            sendBtn.disabled = true;
+            connection.invoke('SendMessage', projectId, text)
+                .then(function () { input.value = ''; })
+                .catch(function (err) { showError(friendlyError(err)); })
+                .finally(function () { sendBtn.disabled = false; input.focus(); });
+        });
+    })();
+    </script>
+}
+}

@@ -1,0 +1,176 @@
+@{
+    ViewData["Title"] = "Kat Maliki Girişi";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <title>Kat Maliki Girişi — Brikon Yapı</title>
+
+    <link rel="manifest" href="~/katmaliki-manifest.json" />
+    <meta name="theme-color" content="#0082B4" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Kat Maliki" />
+    <link rel="apple-touch-icon" href="~/apple-touch-icon.png" />
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --blue-dark:   #0082B4;
+            --blue-light:  #00A0E3;
+            --glass-bg:    rgba(8, 16, 28, 0.58);
+            --glass-border:rgba(0, 160, 227, 0.22);
+            --input-bg:    rgba(255, 255, 255, 0.06);
+            --input-border:rgba(255, 255, 255, 0.14);
+            --input-focus: rgba(0, 160, 227, 0.55);
+        }
+        body {
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(ellipse at top, #0d2438 0%, #050c14 60%);
+            /* Mobil ekranlarda kart tum alani rahatca kaplasin, yaslilar icin buyuk metin/dokunma alani */
+            font-size: 17px;
+            -webkit-tap-highlight-color: transparent;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .login-wrapper { width: 100%; max-width: 440px; padding: 1.25rem; }
+        .login-card {
+            background: var(--glass-bg); backdrop-filter: blur(28px) saturate(1.5);
+            -webkit-backdrop-filter: blur(28px) saturate(1.5);
+            border: 1px solid var(--glass-border); border-radius: 12px;
+            padding: 2.25rem 1.75rem 2rem; position: relative;
+        }
+        .login-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 12px 12px 0 0;
+            background: linear-gradient(90deg, transparent 0%, var(--blue-dark) 20%, var(--blue-light) 50%, var(--blue-dark) 80%, transparent 100%);
+        }
+        .login-brand { text-align: center; margin-bottom: 1.5rem; }
+        .login-brand img { height: 60px; filter: brightness(0) invert(1); opacity: 0.95; display: block; margin: 0 auto; }
+        .login-heading {
+            font-size: 1.2rem; font-weight: 700; text-align: center; color: #fff; margin-bottom: .4rem;
+        }
+        .login-subheading {
+            font-size: .9rem; text-align: center; color: rgba(255,255,255,0.55); margin-bottom: 1.75rem;
+        }
+        .field { margin-bottom: 1.25rem; }
+        .field label { display: block; font-size: .9rem; font-weight: 600; letter-spacing:.02em; color: rgba(255,255,255,0.75); margin-bottom: .5rem; }
+        .field input {
+            width: 100%; padding: .95rem 1rem; background: var(--input-bg); border: 1.5px solid var(--input-border);
+            border-radius: 8px; color: #fff; font-size: 1.05rem; outline: none; transition: border-color .2s, background .2s;
+            min-height: 52px;
+        }
+        .field input::placeholder { color: rgba(255,255,255,0.3); }
+        .field input:focus { border-color: var(--input-focus); background: rgba(0,160,227,0.06); }
+        .password-field { position: relative; }
+        .password-toggle {
+            position: absolute; right: .6rem; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,.08); border: 1px solid var(--input-border); border-radius: 6px;
+            color: rgba(255,255,255,.8); font-size: .82rem; font-weight: 600; padding: .45rem .7rem;
+            cursor: pointer; min-height: 38px;
+        }
+        .password-toggle:hover { background: rgba(255,255,255,.16); }
+        .password-field input { padding-right: 5.2rem; }
+        .error-msg {
+            background: rgba(220,38,38,0.14); border: 1px solid rgba(220,38,38,0.4); border-radius: 8px;
+            color: #fecaca; padding: .85rem 1rem; font-size: .92rem; margin-bottom: 1.25rem; line-height: 1.4;
+        }
+        .btn-login {
+            width: 100%; padding: 1rem 1rem; margin-top: .3rem; background: linear-gradient(135deg, var(--blue-dark), var(--blue-light));
+            border: none; border-radius: 8px; color: #fff; font-size: 1.05rem; font-weight: 700; letter-spacing:.02em;
+            cursor: pointer; transition: opacity .2s, transform .15s; min-height: 54px;
+        }
+        .btn-login:hover { opacity: .92; transform: translateY(-1px); }
+        .login-footer { text-align: center; margin-top: 1.5rem; font-size: .75rem; color: rgba(255,255,255,0.3); }
+        .login-help {
+            text-align: center; margin-top: 1.1rem; font-size: .85rem; color: rgba(255,255,255,0.5); line-height: 1.5;
+        }
+        .btn-google {
+            width: 100%; display: flex; align-items: center; justify-content: center; gap: .65rem;
+            padding: .95rem 1rem; min-height: 54px; background: #fff; border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 8px; color: #3c4043; font-size: 1.02rem; font-weight: 600; letter-spacing: .01em;
+            cursor: pointer; text-decoration: none; transition: box-shadow .2s, transform .15s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+        }
+        .btn-google:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.25); transform: translateY(-1px); }
+        .btn-google svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .divider { display: flex; align-items: center; gap: .85rem; margin: 1.5rem 0; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.14); }
+        .divider span { font-size: .78rem; font-weight: 600; letter-spacing: .05em; color: rgba(255,255,255,0.4); }
+        .google-hint {
+            text-align: center; margin-top: 1rem; font-size: .82rem; color: rgba(255,255,255,0.45); line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="login-brand">
+                <img src="/images/logo-transparent.png" alt="Brikon Yapı" />
+            </div>
+            <p class="login-heading">Kat Maliki Girişi</p>
+            <p class="login-subheading">Bağımsız bölümünüzün durumunu görmek için giriş yapın</p>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="error-msg">@ViewBag.Error</div>
+            }
+
+            @if (ViewBag.GoogleEnabled == true)
+            {
+                <a class="btn-google" href="@Url.Action("GoogleLogin", "Account", new { area = "KatMaliki", returnUrl = ViewBag.ReturnUrl })">
+                    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+                        <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+                        <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+                        <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+                    </svg>
+                    Google ile Giriş Yap / Kayıt Ol
+                </a>
+                <p class="google-hint">İlk kez giriş yapıyorsanız Google hesabınızla otomatik olarak kayıt oluşturulur.</p>
+                <div class="divider"><span>VEYA</span></div>
+            }
+
+            <form method="post" asp-area="KatMaliki" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl">
+                @Html.AntiForgeryToken()
+
+                <div class="field">
+                    <label for="email">E-Posta Adresi</label>
+                    <input type="email" id="email" name="email" placeholder="ornek@eposta.com" required autofocus autocomplete="username" inputmode="email" />
+                </div>
+
+                <div class="field">
+                    <label for="password">Şifre</label>
+                    <div class="password-field">
+                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" />
+                        <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Şifreyi göster/gizle">Göster</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">Giriş Yap</button>
+            </form>
+
+            <p class="login-help">Şifrenizi unuttuysanız veya giriş yapamıyorsanız lütfen yöneticinizle iletişime geçin.</p>
+            <p class="login-footer">Brikon Yapı &copy; @DateTime.Now.Year</p>
+        </div>
+    </div>
+    <script>
+        function togglePassword() {
+            var input = document.getElementById('password');
+            var btn = document.querySelector('.password-toggle');
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = 'Gizle';
+            } else {
+                input.type = 'password';
+                btn.textContent = 'Göster';
+            }
+        }
+    </script>
+</body>
+</html>

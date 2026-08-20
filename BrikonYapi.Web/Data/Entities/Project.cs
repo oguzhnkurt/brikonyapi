@@ -36,9 +36,22 @@ namespace BrikonYapi.Web.Data.Entities
         public bool IsFeatured { get; set; } = false;
         public bool IsMarquee { get; set; } = true; // Kayan bant (marquee) bölümünde göster
         public int OrderIndex { get; set; } = 0;
+
+        // ── Kat Maliki Portalı alanları ──────────────────────────
+        /// <summary>360° sanal tur bağlantısı (CloudPano/Matterport vb.). Portalda tam ekran gömülü açılır.</summary>
+        [MaxLength(500)] public string? VirtualTourUrl { get; set; }
+
+        /// <summary>Maliklere gösterilen tahmini teslim tarihi.</summary>
+        public DateTime? EstimatedDeliveryDate { get; set; }
+
+        /// <summary>Projenin genel inşaat ilerlemesi (%). Aşama listesi bu değere göre işaretlenir.</summary>
+        [Range(0, 100)] public int OverallProgressPercentage { get; set; } = 0;
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
         public ICollection<ProjectImage> Images { get; set; } = new List<ProjectImage>();
         public ICollection<HeroSlide> HeroSlides { get; set; } = new List<HeroSlide>();
+        public ICollection<ProjectStage> Stages { get; set; } = new List<ProjectStage>();
+        public ICollection<SitePhoto> SitePhotos { get; set; } = new List<SitePhoto>();
     }
 }

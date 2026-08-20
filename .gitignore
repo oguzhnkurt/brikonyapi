@@ -6,3 +6,15 @@ obj/
 .env
 appsettings.Development.json
 BrikonYapi.Web/wwwroot/videos/
+
+# Oturum şifreleme anahtarları - asla depoya girmemeli
+dp-keys/
+BrikonYapi.Web/dp-keys/
+
+# Kullanıcı yüklemeleri - sunucuda kalıcı volume'de tutulur, depoya girmemeli
+BrikonYapi.Web/wwwroot/uploads/polls/
+BrikonYapi.Web/wwwroot/uploads/receipts/
+BrikonYapi.Web/wwwroot/uploads/site-photos/
+
+# Yanlışlıkla oluşmuş boş dosya
+BrikonYapi.Web/dotnet

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BrikonYapi.Web.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class CategoriesController : Controller
     {
         private readonly AppDbContext _db;

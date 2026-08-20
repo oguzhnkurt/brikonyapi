@@ -44,7 +44,8 @@
     };
 
     var aboutKeys = new[]{"AboutTitle","AboutTitleEn","AboutText","AboutTextEn","AboutText2","AboutText2En","AboutYearFounded","AboutYearLabel","AboutYearLabelEn","AboutCard1Title","AboutCard1TitleEn","AboutCard1Desc","AboutCard1DescEn","AboutCard2Title","AboutCard2TitleEn","AboutCard2Desc","AboutCard2DescEn","AboutCard3Title","AboutCard3TitleEn","AboutCard3Desc","AboutCard3DescEn","AboutCard4Title","AboutCard4TitleEn","AboutCard4Desc","AboutCard4DescEn","AboutMediaPath"};
-    var handled = new[]{"PhoneNumber","Email","Address","WhatsApp","Instagram","Facebook","LinkedIn","CompanySlogan","CompanySloganEn","AboutText","MarqueeMode"}.Concat(aboutKeys).ToArray();
+    var seoKeys = new[]{"SeoSiteName","SeoBaseUrl","SeoDefaultTitle","SeoDescription","SeoKeywords","SeoOgImage","SeoTwitterSite","SeoFacebook","SeoInstagram","SeoGoogleVerification","SeoNoIndex"};
+    var handled = new[]{"PhoneNumber","Email","Address","WhatsApp","Instagram","Facebook","LinkedIn","CompanySlogan","CompanySloganEn","AboutText","MarqueeMode"}.Concat(aboutKeys).Concat(seoKeys).ToArray();
     string V(string key) => Model.ContainsKey(key) ? (Model[key] ?? "") : "";
 }
 
@@ -231,6 +232,109 @@
                         </div>
                     }
 
+                    <!-- ── SEO (Arama Motoru) ───────────────────────────── -->
+                    <hr class="my-4" />
+                    <h6 class="fw-semibold mb-1">
+                        <iconify-icon icon="iconamoon:search-duotone" class="me-1 text-primary"></iconify-icon>
+                        SEO — Arama Motoru Ayarları
+                    </h6>
+                    <p class="text-muted small mb-3">
+                        Google sonuçlarında ve WhatsApp/LinkedIn link önizlemelerinde görünen bilgiler.
+                        Boş bırakılan alanlar için varsayılan değerler kullanılır.
+                    </p>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Site Adı</label>
+                            <input type="text" name="settings[SeoSiteName]" value="@V("SeoSiteName")"
+                                   class="form-control" placeholder="Brikon Yapı" />
+                            <div class="form-text">Sayfa başlıklarının sonuna eklenir: “Projeler - Brikon Yapı”.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Site Adresi</label>
+                            <input type="url" name="settings[SeoBaseUrl]" value="@V("SeoBaseUrl")"
+                                   class="form-control" placeholder="https://brikonyapi.com" />
+                            <div class="form-text">
+                                Canonical, sitemap ve paylaşım linkleri bu adresle üretilir.
+                                Boş bırakılırsa istek adresi kullanılır.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Varsayılan Sayfa Başlığı</label>
+                        <input type="text" name="settings[SeoDefaultTitle]" value="@V("SeoDefaultTitle")"
+                               class="form-control" placeholder="Brikon Yapı — Kentsel Dönüşüm ve İnşaat" />
+                        <div class="form-text">Kendi başlığı olmayan sayfalarda kullanılır. En fazla ~60 karakter önerilir.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Varsayılan Açıklama</label>
+                        <textarea name="settings[SeoDescription]" class="form-control" rows="2" maxlength="300"
+                                  placeholder="Brikon Yapı - Kaliteli ve güvenilir inşaat hizmetleriyle geleceği inşa ediyoruz.">@V("SeoDescription")</textarea>
+                        <div class="form-text">Google sonuçlarında başlığın altında görünen metin. 150-160 karakter idealdir.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Anahtar Kelimeler</label>
+                        <input type="text" name="settings[SeoKeywords]" value="@V("SeoKeywords")"
+                               class="form-control" placeholder="kentsel dönüşüm, inşaat, müteahhit, İstanbul" />
+                        <div class="form-text">Virgülle ayırın.</div>
+                    </div>
+
+                    <div class="alert alert-light border small mb-3">
+                        <iconify-icon icon="iconamoon:information-circle-duotone" class="me-1"></iconify-icon>
+                        <strong>Paylaşım görseli</strong> nedir? Bu bağlantı WhatsApp, Facebook, Instagram veya LinkedIn'de
+                        paylaşıldığında kart halinde çıkan önizleme resmidir. Sayfanın kendi görseli yoksa (ör. ana sayfa,
+                        iletişim) bu görsel kullanılır. Aşağıdaki kart üzerinden cihazınızdan seçip yükleyebilirsiniz.
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Facebook Sayfası</label>
+                            <input type="url" name="settings[SeoFacebook]" value="@V("SeoFacebook")"
+                                   class="form-control" placeholder="https://facebook.com/brikonyapi" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Instagram Hesabı</label>
+                            <input type="url" name="settings[SeoInstagram]" value="@V("SeoInstagram")"
+                                   class="form-control" placeholder="https://instagram.com/brikonyapi" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Google Doğrulama Kodu</label>
+                        <input type="text" name="settings[SeoGoogleVerification]" value="@V("SeoGoogleVerification")"
+                               class="form-control" placeholder="google-site-verification içeriği" />
+                        <div class="form-text">
+                            Google Search Console'un verdiği doğrulama kodu.
+                            <span class="text-muted" style="font-size:.78em;">
+                                Henüz alınmadıysa: <a href="https://search.google.com/search-console" target="_blank" rel="noopener">search.google.com/search-console</a> adresine girip
+                                siteyi ekleyin, doğrulama yöntemi olarak "HTML etiketi"ni seçin, verilen <code>content="..."</code> değerini kopyalayıp buraya yapıştırın.
+                            </span>
+                        </div>
+                    </div>
+
+                    @{ var noIndex = V("SeoNoIndex") == "true"; }
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Arama Motoru Erişimi</label>
+                        <select name="settings[SeoNoIndex]" class="form-select">
+                            <option value="false" selected="@(!noIndex)">Açık — site Google'da listelensin</option>
+                            <option value="true" selected="@noIndex">Kapalı — hiçbir sayfa listelenmesin (test ortamı)</option>
+                        </select>
+                        <div class="form-text">
+                            "Kapalı" seçilirse tüm sayfalara <code>noindex</code> eklenir ve robots.txt siteyi tamamen kapatır.
+                            Canlıda <strong>açık</strong> olmalıdır.
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info small mb-0">
+                        <iconify-icon icon="iconamoon:information-circle-duotone" class="me-1"></iconify-icon>
+                        Site haritanız <a href="/sitemap.xml" target="_blank" rel="noopener">/sitemap.xml</a>,
+                        tarayıcı kuralları <a href="/robots.txt" target="_blank" rel="noopener">/robots.txt</a>
+                        adresinde otomatik üretiliyor. Yönetim paneli ve kat maliki portalı aramaya kapalıdır.
+                    </div>
+
                     @foreach (var setting in Model.Where(s => !handled.Contains(s.Key)))
                     {
                         <div class="mb-3">
@@ -244,6 +348,46 @@
                             <iconify-icon icon="iconamoon:check-duotone" class="me-1"></iconify-icon>
                             Kaydet
                         </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @{
+            var ogImagePath = Model.ContainsKey("SeoOgImage") ? Model["SeoOgImage"] : "";
+            bool hasOgImage = !string.IsNullOrEmpty(ogImagePath);
+        }
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <iconify-icon icon="iconamoon:share-duotone" class="me-2"></iconify-icon>
+                    SEO — Paylaşım Görseli
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Link WhatsApp, Facebook, Instagram veya LinkedIn'de paylaşıldığında önizleme kartında çıkan görsel.
+                    Kendi görseli olmayan sayfalarda (ana sayfa, iletişim vb.) bu görsel kullanılır.
+                </p>
+                @if (hasOgImage)
+                {
+                    <div class="mb-3">
+                        <img src="@ogImagePath" style="max-width:260px;border-radius:8px;display:block;border:1px solid #dee2e6" />
+                        <form asp-area="Admin" asp-controller="Settings" asp-action="DeleteSeoImage" method="post" class="mt-2">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Kaldır</button>
+                        </form>
+                    </div>
+                }
+                <form asp-area="Admin" asp-controller="Settings" asp-action="UploadSeoImage" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="input-group">
+                        <input type="file" name="file" class="form-control" accept="image/jpeg,image/png,image/webp" />
+                        <button type="submit" class="btn btn-primary">Yükle</button>
+                    </div>
+                    <div class="form-text mt-1">
+                        Desteklenen formatlar: JPG, PNG, WEBP (en fazla 5 MB)<br/>
+                        <strong>Önerilen boyut: 1200 × 630 piksel</strong> — çoğu platformun önizleme kartı bu orana göre kırpar.
                     </div>
                 </form>
             </div>

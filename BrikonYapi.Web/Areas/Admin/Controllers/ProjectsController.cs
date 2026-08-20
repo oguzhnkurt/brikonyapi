@@ -10,7 +10,7 @@ using SixLabors.ImageSharp.Processing;
 
 namespace BrikonYapi.Web.Areas.Admin.Controllers
 {
-    [Area("Admin"), Authorize]
+    [Area("Admin"), Authorize(Roles = "Admin")]
     public class ProjectsController : Controller
     {
         private readonly ProjectService _projects;

@@ -105,6 +105,88 @@
                     </a>
                 </li>
 
+                <li class="menu-title">Kat Malikleri</li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Owners" ? "active" : "")"
+                       href="/Admin/Owners">
+                        <span class="nav-icon">
+                            <iconify-icon icon="iconamoon:profile-duotone"></iconify-icon>
+                        </span>
+                        <span class="nav-text">Kat Malikleri</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Units" ? "active" : "")"
+                       href="/Admin/Units">
+                        <span class="nav-icon">
+                            <iconify-icon icon="iconamoon:building-1-duotone"></iconify-icon>
+                        </span>
+                        <span class="nav-text">Bağımsız Bölümler</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "PaymentSchedules" ? "active" : "")"
+                       href="/Admin/PaymentSchedules">
+                        <span class="nav-icon">
+                            <iconify-icon icon="iconamoon:credit-card-duotone"></iconify-icon>
+                        </span>
+                        <span class="nav-text">Ödeme Planları</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ProjectProgress" ? "active" : "")"
+                       href="/Admin/ProjectProgress">
+                        <span class="nav-icon">
+                            <iconify-icon icon="iconamoon:trend-up-duotone"></iconify-icon>
+                        </span>
+                        <span class="nav-text">İnşaat İlerlemesi</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Announcements" ? "active" : "")"
+                       href="/Admin/Announcements">
+                        <span class="nav-icon">
+                            <iconify-icon icon="iconamoon:news-duotone"></iconify-icon>
+                        </span>
+                        <span class="nav-text">Duyurular</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Polls" ? "active" : "")"
+                       href="/Admin/Polls">
+                        <span class="nav-icon">
+                            <iconify-icon icon="iconamoon:check-square-duotone"></iconify-icon>
+                        </span>
+                        <span class="nav-text">Oylamalar</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ChatModeration" ? "active" : "")"
+                       href="/Admin/ChatModeration">
+                        <span class="nav-icon">
+                            <iconify-icon icon="iconamoon:comment-dots-duotone"></iconify-icon>
+                        </span>
+                        <span class="nav-text">Sohbet Moderasyonu</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Faq" ? "active" : "")"
+                       href="/Admin/Faq">
+                        <span class="nav-icon">
+                            <iconify-icon icon="iconamoon:question-mark-circle-duotone"></iconify-icon>
+                        </span>
+                        <span class="nav-text">Sıkça Sorulan Sorular</span>
+                    </a>
+                </li>
+
                 <li class="menu-title">Sistem</li>
 
                 <li class="nav-item">

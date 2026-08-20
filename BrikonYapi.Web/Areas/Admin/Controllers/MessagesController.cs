@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BrikonYapi.Web.Areas.Admin.Controllers
 {
-    [Area("Admin"), Authorize]
+    [Area("Admin"), Authorize(Roles = "Admin")]
     public class MessagesController : Controller
     {
         private readonly ContactService _contact;

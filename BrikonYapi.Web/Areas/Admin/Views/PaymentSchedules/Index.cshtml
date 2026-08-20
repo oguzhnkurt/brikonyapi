@@ -1,0 +1,161 @@
+@model List<BrikonYapi.Web.Data.Entities.PaymentSchedule>
+@using BrikonYapi.Web.Data.Entities
+@inject BrikonYapi.Web.Services.ExchangeRateService Fx
+@{
+    var unit = (Unit)ViewBag.Unit;
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    ViewData["Title"] = "Ödeme Planı";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    string StatusBadge(PaymentScheduleStatus s) => s switch
+    {
+        PaymentScheduleStatus.Paid      => "<span class=\"badge bg-success-subtle text-success\">Ödendi</span>",
+        PaymentScheduleStatus.Overdue   => "<span class=\"badge bg-danger-subtle text-danger\">Gecikti</span>",
+        PaymentScheduleStatus.Cancelled => "<span class=\"badge bg-secondary-subtle text-secondary\">İptal</span>",
+        _                                => "<span class=\"badge bg-warning-subtle text-warning\">Bekliyor</span>"
+    };
+
+    string TxStatusBadge(PaymentTransactionStatus s) => s switch
+    {
+        PaymentTransactionStatus.Approved => "<span class=\"badge bg-success-subtle text-success\">Onaylandı</span>",
+        PaymentTransactionStatus.Rejected => "<span class=\"badge bg-danger-subtle text-danger\">Reddedildi</span>",
+        PaymentTransactionStatus.Completed => "<span class=\"badge bg-success-subtle text-success\">Tamamlandı</span>",
+        PaymentTransactionStatus.Failed   => "<span class=\"badge bg-danger-subtle text-danger\">Başarısız</span>",
+        _                                   => "<span class=\"badge bg-warning-subtle text-warning\">Onay Bekliyor</span>"
+    };
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+        <h5 class="mb-0">@unit.Project?.Name — @unit.UnitNo</h5>
+        <span class="text-muted small">Malik: @(unit.Owner?.FullName ?? "Atanmamış") &middot; İlerleme: %@unit.ProgressPercentage</span>
+    </div>
+    <a href="/Admin/PaymentSchedules/Create?unitId=@unit.Id" class="btn btn-primary btn-sm">
+        <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>
+        Yeni Ödeme Kalemi
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card">
+        <div class="card-body text-center text-muted py-5">Henüz ödeme kalemi eklenmemiş.</div>
+    </div>
+}
+else
+{
+    foreach (var s in Model)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <div>
+                        <div class="fw-semibold">
+                            ₺@s.Amount.ToString("N0", tr) — @(string.IsNullOrWhiteSpace(s.Description) ? "Ödeme" : s.Description)
+                            @{ var usdEq = await Fx.FormatUsdEquivalentAsync(s.Amount); }
+                            @if (usdEq != null)
+                            {
+                                <span class="text-muted small">(@usdEq)</span>
+                            }
+                        </div>
+                        <div class="text-muted small">
+                            Vade: @s.DueDate.ToString("dd.MM.yyyy")
+                            @if (s.InstallmentNo > 0)
+                            {
+                                <span class="badge bg-secondary-subtle text-secondary ms-1">Taksit @s.InstallmentNo</span>
+                            }
+                            @if (s.ProjectStage != null)
+                            {
+                                <span class="badge bg-info-subtle text-info ms-1">@s.ProjectStage.Name (%@s.ProjectStage.ThresholdPercentage)</span>
+                            }
+                            else if (s.HakedisPercentage.HasValue)
+                            {
+                                <span class="badge bg-info-subtle text-info ms-1">Hakediş %@s.HakedisPercentage</span>
+                            }
+                            @if (s.ProjectStage != null && s.ProjectStage.Status == ProjectStageStatus.Completed && s.Status == PaymentScheduleStatus.Pending)
+                            {
+                                <span class="badge bg-success-subtle text-success ms-1">
+                                    <iconify-icon icon="iconamoon:certificate-badge-duotone"></iconify-icon>
+                                    İlerleme tamamlandı, ödeme bekleniyor
+                                </span>
+                            }
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        @Html.Raw(StatusBadge(s.Status))
+                        <a href="/Admin/PaymentSchedules/Edit/@s.Id" class="btn btn-sm btn-outline-secondary">
+                            <iconify-icon icon="iconamoon:edit-duotone"></iconify-icon>
+                        </a>
+                        <form asp-area="Admin" asp-controller="PaymentSchedules" asp-action="Delete" method="post" class="d-inline"
+                              onsubmit="return confirm('Bu ödeme kalemini silmek istediğinize emin misiniz?')">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@s.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <iconify-icon icon="iconamoon:trash-duotone"></iconify-icon>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                @if (s.Transactions.Any())
+                {
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Yöntem</th>
+                                    <th>Tutar</th>
+                                    <th>Dekont</th>
+                                    <th>Durum</th>
+                                    <th>Tarih</th>
+                                    <th class="text-end">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in s.Transactions.OrderByDescending(t => t.CreatedAt))
+                                {
+                                    <tr>
+                                        <td>@(t.Method == PaymentMethod.BankTransfer ? "Havale/EFT" : "Kredi Kartı")</td>
+                                        <td>₺@t.Amount.ToString("N0", tr)</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(t.ReceiptFilePath))
+                                            {
+                                                <a href="@t.ReceiptFilePath" target="_blank">Dekontu Gör</a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                        <td>@Html.Raw(TxStatusBadge(t.Status))</td>
+                                        <td class="text-muted small">@t.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td class="text-end">
+                                            @if (t.Status == PaymentTransactionStatus.PendingApproval)
+                                            {
+                                                <form asp-area="Admin" asp-controller="PaymentSchedules" asp-action="ApproveTransaction" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="transactionId" value="@t.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-success">Onayla</button>
+                                                </form>
+                                                <form asp-area="Admin" asp-controller="PaymentSchedules" asp-action="RejectTransaction" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="transactionId" value="@t.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Reddet</button>
+                                                </form>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+<a href="/Admin/Units" class="btn btn-outline-secondary btn-sm">
+    <iconify-icon icon="iconamoon:arrow-left-2-duotone" class="me-1"></iconify-icon>
+    Bağımsız Bölümlere Dön
+</a>

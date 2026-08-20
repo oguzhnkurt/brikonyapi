@@ -1,0 +1,92 @@
+@model BrikonYapi.Web.Data.Entities.Unit
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Bağımsız Bölüm Düzenle";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Bağımsız Bölüm Düzenle</h5>
+            </div>
+            <div class="card-body">
+                <form asp-area="Admin" asp-controller="Units" asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Proje <span class="text-danger">*</span></label>
+                        <select asp-for="ProjectId" asp-items="(SelectList)ViewBag.Projects" class="form-select" required></select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold">Bağımsız Bölüm No <span class="text-danger">*</span></label>
+                            <input asp-for="UnitNo" class="form-control" required />
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold">Blok</label>
+                            <input asp-for="BlockNo" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-4 mb-3">
+                            <label class="form-label fw-semibold">Kat</label>
+                            <input asp-for="FloorNo" type="number" class="form-control" placeholder="Örn: 3" />
+                        </div>
+                        <div class="col-4 mb-3">
+                            <label class="form-label fw-semibold">Oda Düzeni</label>
+                            <input asp-for="RoomLayout" class="form-control" placeholder="Örn: 3+1" />
+                        </div>
+                        <div class="col-4 mb-3">
+                            <label class="form-label fw-semibold">m²</label>
+                            <input asp-for="AreaM2" type="number" class="form-control" placeholder="Örn: 145" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">İlerleme Yüzdesi (%)</label>
+                        <input asp-for="ProgressPercentage" type="number" min="0" max="100" class="form-control" />
+                        @if (Model.ProgressUpdatedAt.HasValue)
+                        {
+                            <div class="form-text">Son güncelleme: @Model.ProgressUpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</div>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kat Maliki</label>
+                        <select asp-for="OwnerId" asp-items="(SelectList)ViewBag.Owners" class="form-select">
+                            <option value="">Atanmamış</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notlar</label>
+                        <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsActive" class="form-check-label">Aktif</label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                            Kaydet
+                        </button>
+                        <a href="/Admin/PaymentSchedules?unitId=@Model.Id" class="btn btn-outline-primary">
+                            <iconify-icon icon="iconamoon:credit-card-duotone" class="me-1"></iconify-icon>
+                            Ödeme Planı
+                        </a>
+                        <a href="/Admin/Units" class="btn btn-outline-secondary">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

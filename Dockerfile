@@ -11,6 +11,10 @@ WORKDIR /app
 COPY --from=build /app/publish .
 RUN apt-get update && apt-get install -y --no-install-recommends ghostscript && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /app/wwwroot/uploads
+# Oturum (cookie) şifreleme anahtarları. Coolify'da kalıcı volume olarak bağlanmalıdır,
+# aksi halde her deploy sonrası tüm kullanıcılar çıkış yapmış olur.
+RUN mkdir -p /app/dp-keys
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
+ENV DataProtection__KeysPath=/app/dp-keys
 ENTRYPOINT ["dotnet", "BrikonYapi.Web.dll"]

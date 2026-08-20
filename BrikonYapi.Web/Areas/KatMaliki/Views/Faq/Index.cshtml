@@ -1,0 +1,66 @@
+@model List<BrikonYapi.Web.Data.Entities.FaqItem>
+@{
+    ViewData["Title"] = "Sıkça Sorulan Sorular";
+}
+
+<div class="km-hero mb-4">
+    <div class="km-hero-greeting">Sıkça Sorulan Sorular</div>
+    <div class="km-hero-sub">Bir soruya dokunun, cevabı altında açılsın</div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card">
+        <div class="card-body text-center text-muted py-5">
+            Henüz eklenmiş bir soru bulunmuyor.
+        </div>
+    </div>
+}
+else
+{
+    <div class="km-faq-list">
+        @foreach (var f in Model)
+        {
+            <details class="km-faq-item">
+                <summary class="km-faq-question">
+                    <span>@f.Question</span>
+                    <iconify-icon class="km-faq-chevron" icon="iconamoon:arrow-down-2"></iconify-icon>
+                </summary>
+                <div class="km-faq-answer">@f.Answer</div>
+            </details>
+        }
+    </div>
+}
+
+@section Styles {
+<style>
+    .km-hero-greeting { font-size: 1.5rem; font-weight: 700; }
+    .km-hero-sub { color: #6c7580; font-size: .95rem; margin-top: .2rem; }
+
+    .km-faq-list { display: flex; flex-direction: column; gap: .7rem; }
+
+    .km-faq-item {
+        background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.05);
+        overflow: hidden;
+    }
+    .km-faq-question {
+        list-style: none; cursor: pointer; padding: 1.1rem 1.2rem; min-height: 54px;
+        display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+        font-weight: 700; font-size: 1rem; color: #2B2A29;
+    }
+    .km-faq-question::-webkit-details-marker { display: none; }
+    .km-faq-chevron { font-size: 1.3rem; color: var(--c-primary); flex-shrink: 0; transition: transform .2s; }
+    .km-faq-item[open] .km-faq-chevron { transform: rotate(180deg); }
+    .km-faq-item[open] .km-faq-question { border-bottom: 1px solid #eef0f2; }
+
+    .km-faq-answer {
+        padding: 0 1.2rem 1.15rem; font-size: .95rem; line-height: 1.65; color: #4a5158;
+        white-space: pre-line;
+    }
+
+    @@media (max-width: 576px) {
+        .km-hero-greeting { font-size: 1.3rem; }
+        .km-faq-question { font-size: .96rem; padding: 1rem 1.05rem; }
+    }
+</style>
+}

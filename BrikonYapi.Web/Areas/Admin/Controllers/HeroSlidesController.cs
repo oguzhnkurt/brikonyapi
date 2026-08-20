@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BrikonYapi.Web.Areas.Admin.Controllers
 {
-    [Area("Admin"), Authorize]
+    [Area("Admin"), Authorize(Roles = "Admin")]
     public class HeroSlidesController : Controller
     {
         private readonly AppDbContext _db;

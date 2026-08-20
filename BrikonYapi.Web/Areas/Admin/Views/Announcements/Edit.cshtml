@@ -1,0 +1,92 @@
+@model BrikonYapi.Web.Data.Entities.Announcement
+@{
+    ViewData["Title"] = "Duyuru / Haber Düzenle";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Duyuru / Haber Düzenle</h5>
+            </div>
+            <div class="card-body">
+                <form asp-area="Admin" asp-controller="Announcements" asp-action="Edit" asp-route-id="@Model.Id"
+                      method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Başlık <span class="text-danger">*</span></label>
+                        <input asp-for="Title" class="form-control" required />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kategori</label>
+                            <input asp-for="Tag" class="form-control" placeholder="Haber, Bilgi, Uyarı..." />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kaynak</label>
+                            <input asp-for="Source" class="form-control" placeholder="Brikon Yapı" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kapak görseli</label>
+                        @if (!string.IsNullOrEmpty(Model.CoverImagePath))
+                        {
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div style="width:140px; height:80px; border-radius:8px;
+                                            background:#eef0f2 url('@Model.CoverImagePath') center/cover no-repeat;"></div>
+                                <div class="form-check">
+                                    <input type="checkbox" name="removeCover" value="true" class="form-check-input" id="removeCover" />
+                                    <label class="form-check-label small" for="removeCover">Mevcut görseli kaldır</label>
+                                </div>
+                            </div>
+                        }
+                        <input type="file" name="cover" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                        <div class="form-text">Yeni dosya seçerseniz mevcut görselin yerine geçer. JPG/PNG/WEBP, en fazla 10 MB.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kısa özet</label>
+                        <input asp-for="Summary" class="form-control" maxlength="300" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Metin <span class="text-danger">*</span></label>
+                        <textarea asp-for="Body" class="form-control" rows="8" required></textarea>
+                        <span asp-validation-for="Body" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Sıra</label>
+                            <input asp-for="OrderIndex" type="number" class="form-control" />
+                        </div>
+                        <div class="col-md-8 d-flex flex-column justify-content-center gap-2">
+                            <div class="form-check form-switch">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                <label asp-for="IsActive" class="form-check-label">Yayında</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input asp-for="ShowOnHome" class="form-check-input" type="checkbox" />
+                                <label asp-for="ShowOnHome" class="form-check-label">Ana sayfadaki "Duyurular" bölümünde de göster</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                            Kaydet
+                        </button>
+                        <a href="/Admin/Announcements" class="btn btn-outline-secondary">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

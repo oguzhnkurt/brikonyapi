@@ -1,0 +1,395 @@
+@model Owner
+@inject BrikonYapi.Web.Services.ExchangeRateService Fx
+@{
+    ViewData["Title"] = "Ödemelerim";
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+
+    var allSchedules = Model.Units
+        .SelectMany(u => u.PaymentSchedules.Select(s => new { Unit = u, Schedule = s }))
+        .OrderBy(x => x.Schedule.InstallmentNo == 0 ? int.MaxValue : x.Schedule.InstallmentNo)
+        .ThenBy(x => x.Schedule.DueDate)
+        .ToList();
+
+    var paidTotal = allSchedules
+        .Where(x => x.Schedule.Status == PaymentScheduleStatus.Paid)
+        .Sum(x => x.Schedule.Amount);
+
+    var remainingTotal = allSchedules
+        .Where(x => x.Schedule.Status == PaymentScheduleStatus.Pending || x.Schedule.Status == PaymentScheduleStatus.Overdue)
+        .Sum(x => x.Schedule.Amount);
+
+    // Sadece bilgi amaçlı dolar karşılığı — resmi tutar ve tahsilat her zaman TL'dir.
+    var paidUsd = await Fx.FormatUsdEquivalentAsync(paidTotal);
+    var remainingUsd = await Fx.FormatUsdEquivalentAsync(remainingTotal);
+
+    // Filtre çipleri için kategori belirleme
+    string FilterOf(PaymentSchedule s)
+    {
+        if (s.Status == PaymentScheduleStatus.Paid) return "odenen";
+        if (s.Status == PaymentScheduleStatus.Overdue || (s.Status == PaymentScheduleStatus.Pending && s.DueDate.Date < DateTime.Today)) return "geciken";
+        if (s.Status == PaymentScheduleStatus.Pending) return "yaklasan";
+        return "iptal";
+    }
+
+    string StatusChip(PaymentSchedule s)
+    {
+        var f = FilterOf(s);
+        return f switch
+        {
+            "odenen"   => "<span class=\"km-pay-chip is-paid\">Ödendi</span>",
+            "geciken"  => "<span class=\"km-pay-chip is-late\">Gecikti</span>",
+            "yaklasan" => "<span class=\"km-pay-chip is-soon\">Bekliyor</span>",
+            _           => "<span class=\"km-pay-chip is-cancel\">İptal</span>"
+        };
+    }
+
+    // ── Takvim (yıllık) görünümü için ay bazlı gruplama ──────────────
+    string[] monthNamesTr = { "Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara" };
+    var todayYear = DateTime.Today.Year;
+    var todayMonth = DateTime.Today.Month;
+    var years = allSchedules.Select(x => x.Schedule.DueDate.Year).Distinct().ToList();
+    if (!years.Contains(todayYear)) years.Add(todayYear);
+    years = years.OrderBy(y => y).ToList();
+    var defaultYear = todayYear;
+}
+
+<div class="km-pay-hero mb-3">
+    <div class="km-pay-hero-title">Ödeme Planım</div>
+    <div class="km-pay-stats">
+        <div class="km-pay-stat">
+            <div class="km-pay-stat-label">Ödenen</div>
+            <div class="km-pay-stat-value">₺@paidTotal.ToString("N0", tr)</div>
+            @if (paidUsd != null)
+            {
+                <div class="km-pay-stat-fx">@paidUsd</div>
+            }
+        </div>
+        <div class="km-pay-stat">
+            <div class="km-pay-stat-label">Kalan</div>
+            <div class="km-pay-stat-value">₺@remainingTotal.ToString("N0", tr)</div>
+            @if (remainingUsd != null)
+            {
+                <div class="km-pay-stat-fx">@remainingUsd</div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (!allSchedules.Any())
+{
+    <div class="card">
+        <div class="card-body text-center text-muted py-5">
+            @if (!Model.Units.Any())
+            {
+                <text>Hesabınıza henüz bir bağımsız bölüm atanmamış. Lütfen yönetici ile iletişime geçin.</text>
+            }
+            else
+            {
+                <text>Henüz tanımlanmış bir ödeme kalemi yok.</text>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="km-view-toggle mb-3">
+        <button type="button" class="km-view-btn active" data-view="liste">
+            <iconify-icon icon="mdi:format-list-bulleted"></iconify-icon> Liste
+        </button>
+        <button type="button" class="km-view-btn" data-view="takvim">
+            <iconify-icon icon="mdi:calendar-month-outline"></iconify-icon> Takvim
+        </button>
+    </div>
+
+    <div id="pmViewListe">
+        <div class="km-pay-filters mb-2">
+            <button type="button" class="km-chip active" data-filter="tumu">Tümü</button>
+            <button type="button" class="km-chip" data-filter="geciken">Geciken</button>
+            <button type="button" class="km-chip" data-filter="yaklasan">Yaklaşan</button>
+            <button type="button" class="km-chip" data-filter="odenen">Ödenen</button>
+        </div>
+        <button type="button" id="pmMonthClear" class="km-month-clear mb-3" hidden>
+            <iconify-icon icon="mdi:calendar-month-outline"></iconify-icon>
+            <span id="pmMonthClearLabel"></span>
+            <iconify-icon icon="mdi:close"></iconify-icon>
+        </button>
+
+        <div class="km-pay-list mb-4">
+            @foreach (var x in allSchedules)
+            {
+                var s = x.Schedule;
+                var no = s.InstallmentNo > 0 ? s.InstallmentNo : allSchedules.IndexOf(x) + 1;
+                var f = FilterOf(s);
+                var pendingTx = s.Transactions.Any(t => t.Status == PaymentTransactionStatus.PendingApproval);
+                var stageReady = s.ProjectStage != null && s.ProjectStage.Status == ProjectStageStatus.Completed && s.Status == PaymentScheduleStatus.Pending;
+
+                <a class="km-pay-row" data-cat="@f" data-year="@s.DueDate.Year" data-month="@s.DueDate.Month" href="/KatMaliki/Dashboard/Detail/@s.Id">
+                    <span class="km-pay-icon is-@f">
+                        @if (f == "odenen")
+                        {
+                            <iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon>
+                        }
+                        else if (f == "geciken")
+                        {
+                            <iconify-icon icon="iconamoon:sign-exclamation-circle-duotone"></iconify-icon>
+                        }
+                        else
+                        {
+                            <iconify-icon icon="iconamoon:clock-duotone"></iconify-icon>
+                        }
+                    </span>
+                    <span class="km-pay-main">
+                        <span class="km-pay-top">
+                            <span class="km-pay-no">Taksit @no</span>
+                            @Html.Raw(StatusChip(s))
+                            @if (pendingTx)
+                            {
+                                <span class="km-pay-chip is-review">Onay bekliyor</span>
+                            }
+                            @if (stageReady)
+                            {
+                                <span class="km-pay-chip is-stage">
+                                    <iconify-icon icon="iconamoon:certificate-badge-duotone"></iconify-icon>
+                                    İlerleme tamamlandı
+                                </span>
+                            }
+                        </span>
+                        <span class="km-pay-desc">@(string.IsNullOrWhiteSpace(s.Description) ? "Ödeme" : s.Description)</span>
+                        <span class="km-pay-due">Vade: @s.DueDate.ToString("dd MMM yyyy", tr)</span>
+                    </span>
+                    <span class="km-pay-right">
+                        <span class="km-pay-amount">₺@s.Amount.ToString("N0", tr)</span>
+                        <iconify-icon icon="iconamoon:arrow-right-2" class="km-pay-chev"></iconify-icon>
+                    </span>
+                </a>
+            }
+            <div class="km-pay-empty" hidden>Bu filtreye uygun ödeme bulunmuyor.</div>
+        </div>
+    </div>
+
+    <div id="pmViewTakvim" hidden>
+        <div class="km-cal-nav mb-2">
+            <button type="button" id="pmCalPrev" class="km-cal-nav-btn"><iconify-icon icon="mdi:chevron-left"></iconify-icon></button>
+            <div class="km-cal-nav-label" id="pmCalYearLabel">@defaultYear</div>
+            <button type="button" id="pmCalNext" class="km-cal-nav-btn"><iconify-icon icon="mdi:chevron-right"></iconify-icon></button>
+        </div>
+
+        @foreach (var y in years)
+        {
+            <div class="km-cal-grid @(y == defaultYear ? "active" : "")" data-year="@y">
+                @for (var m = 1; m <= 12; m++)
+                {
+                    var monthSchedules = allSchedules.Where(x => x.Schedule.DueDate.Year == y && x.Schedule.DueDate.Month == m).ToList();
+                    var sum = monthSchedules.Sum(x => x.Schedule.Amount);
+                    var count = monthSchedules.Count;
+                    var isToday = y == todayYear && m == todayMonth;
+
+                    <div class="km-cal-cell @(isToday ? "is-today" : "") @(count > 0 ? "has-pay" : "")" data-year="@y" data-month="@m">
+                        <div class="km-cal-month">@monthNamesTr[m - 1]</div>
+                        @if (count > 0)
+                        {
+                            <div class="km-cal-amount">₺@sum.ToString("N0", tr)</div>
+                            <div class="km-cal-count"><span class="km-cal-dot"></span>@count ödeme</div>
+                        }
+                        else
+                        {
+                            <div class="km-cal-empty">Ödeme yok</div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@section Styles {
+<style>
+    .km-pay-hero {
+        background:linear-gradient(135deg,var(--c-primary),var(--c-secondary));
+        border-radius:18px; padding:1.3rem 1.35rem 1.4rem; color:#fff;
+        box-shadow:0 6px 18px rgba(0,130,180,.22);
+    }
+    .km-pay-hero-title { font-size:1.35rem; font-weight:800; margin-bottom:.9rem; }
+    .km-pay-stats { display:flex; gap:.7rem; }
+    .km-pay-stat { flex:1; background:rgba(255,255,255,.16); border-radius:12px; padding:.7rem .85rem; }
+    .km-pay-stat-label { font-size:.78rem; color:rgba(255,255,255,.85); font-weight:600; }
+    .km-pay-stat-value { font-size:1.25rem; font-weight:800; margin-top:.1rem; }
+    .km-pay-stat-fx { font-size:.74rem; color:rgba(255,255,255,.75); margin-top:.1rem; }
+
+    .km-view-toggle { display:flex; gap:.3rem; background:#eef0f2; border-radius:14px; padding:.3rem; width:fit-content; }
+    .km-view-btn { border:none; background:transparent; color:#4a5158; font-weight:700; font-size:.88rem;
+                   padding:.5rem 1rem; border-radius:11px; display:flex; align-items:center; gap:.35rem; min-height:38px; }
+    .km-view-btn.active { background:#fff; color:var(--c-primary); box-shadow:0 2px 6px rgba(0,0,0,.08); }
+
+    .km-pay-filters { display:flex; gap:.5rem; overflow-x:auto; padding-bottom:.2rem; }
+    .km-pay-filters::-webkit-scrollbar { display:none; }
+    .km-chip {
+        border:1px solid #dfe3e7; background:#fff; color:#4a5158; border-radius:20px;
+        padding:.5rem 1rem; font-size:.9rem; font-weight:600; white-space:nowrap; min-height:42px;
+    }
+    .km-chip.active { background:var(--c-primary); border-color:var(--c-primary); color:#fff; }
+
+    .km-month-clear {
+        display:flex; align-items:center; gap:.4rem; border:1px dashed var(--c-primary); background:#e6f4fb;
+        color:var(--c-primary); border-radius:20px; padding:.4rem .8rem; font-size:.82rem; font-weight:600;
+    }
+
+    .km-pay-list { display:flex; flex-direction:column; gap:.7rem; }
+    .km-pay-row {
+        display:flex; align-items:center; gap:.85rem; background:#fff; border-radius:14px;
+        padding:.95rem 1rem; text-decoration:none; color:inherit; box-shadow:0 2px 8px rgba(0,0,0,.05);
+    }
+    .km-pay-row:active { background:#f7f9fa; }
+    .km-pay-icon {
+        width:40px; height:40px; flex-shrink:0; border-radius:12px; display:flex;
+        align-items:center; justify-content:center; font-size:1.35rem;
+    }
+    .km-pay-icon.is-odenen  { background:#e6f7ed; color:#1e9e5a; }
+    .km-pay-icon.is-geciken { background:#fdeaea; color:#c0392b; }
+    .km-pay-icon.is-yaklasan{ background:#e6f4fb; color:var(--c-primary); }
+    .km-pay-icon.is-iptal   { background:#eef0f2; color:#9aa3ac; }
+
+    .km-pay-main { flex:1; min-width:0; display:block; }
+    .km-pay-top { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
+    .km-pay-no { font-size:.78rem; color:#8a939c; font-weight:600; }
+    .km-pay-chip { font-size:.7rem; font-weight:700; padding:.18rem .5rem; border-radius:20px; }
+    .km-pay-chip.is-paid   { background:#e6f7ed; color:#1e9e5a; }
+    .km-pay-chip.is-late   { background:#fdeaea; color:#c0392b; }
+    .km-pay-chip.is-soon   { background:#fef6e0; color:#b8860b; }
+    .km-pay-chip.is-cancel { background:#eef0f2; color:#8a939c; }
+    .km-pay-chip.is-review { background:#e6f4fb; color:var(--c-primary); }
+    .km-pay-chip.is-stage  { background:#e6f7ed; color:#1e9e5a; display:inline-flex; align-items:center; gap:.2rem; }
+    .km-pay-desc { display:block; font-size:1rem; font-weight:700; margin-top:.15rem; line-height:1.3; }
+    .km-pay-due  { display:block; font-size:.82rem; color:#9aa3ac; margin-top:.1rem; }
+
+    .km-pay-right { display:flex; align-items:center; gap:.35rem; flex-shrink:0; }
+    .km-pay-amount { font-size:1.02rem; font-weight:800; color:var(--c-primary); white-space:nowrap; }
+    .km-pay-chev { color:#c3cad1; font-size:1.2rem; }
+
+    .km-pay-empty { text-align:center; color:#9aa3ac; padding:2rem 1rem; font-size:.95rem; }
+
+    /* ── Takvim görünümü ── */
+    .km-cal-nav { display:flex; align-items:center; justify-content:space-between; padding:0 .1rem; }
+    .km-cal-nav-btn {
+        border:none; background:#eef0f2; width:36px; height:36px; border-radius:50%;
+        display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:#4a5158;
+    }
+    .km-cal-nav-btn:disabled { opacity:.35; }
+    .km-cal-nav-label { font-size:1.1rem; font-weight:800; }
+
+    .km-cal-grid { display:none; grid-template-columns:repeat(3,1fr); gap:.6rem; margin-top:.7rem; }
+    .km-cal-grid.active { display:grid; }
+    .km-cal-cell { background:#fff; border-radius:12px; padding:.8rem .7rem; box-shadow:0 2px 8px rgba(0,0,0,.05); }
+    .km-cal-cell.is-today { border:1.5px solid var(--c-primary); }
+    .km-cal-cell.has-pay { cursor:pointer; }
+    .km-cal-cell.has-pay:active { background:#f7f9fa; }
+    .km-cal-month { font-size:.85rem; font-weight:700; color:#4a5158; }
+    .km-cal-amount { font-size:.88rem; font-weight:800; color:var(--c-primary); margin-top:.3rem; line-height:1.2; }
+    .km-cal-count { font-size:.72rem; color:#8a939c; margin-top:.15rem; display:flex; align-items:center; gap:.3rem; }
+    .km-cal-dot { width:6px; height:6px; border-radius:50%; background:var(--c-primary); display:inline-block; flex-shrink:0; }
+    .km-cal-empty { font-size:.78rem; color:#c3cad1; margin-top:.3rem; }
+
+    @@media (max-width: 576px) {
+        .km-pay-hero-title { font-size:1.2rem; }
+        .km-pay-stat-value { font-size:1.1rem; }
+        .km-pay-desc { font-size:.95rem; }
+        .km-cal-amount { font-size:.8rem; }
+    }
+</style>
+}
+
+@section Scripts {
+<script>
+(function () {
+    var monthNamesFull = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+
+    var chips = document.querySelectorAll('.km-chip');
+    var rows  = document.querySelectorAll('.km-pay-row');
+    var empty = document.querySelector('.km-pay-empty');
+    var monthClearBtn = document.getElementById('pmMonthClear');
+    var monthClearLabel = document.getElementById('pmMonthClearLabel');
+    var monthFilter = null; // { year, month } | null
+
+    function applyFilters() {
+        var activeChip = document.querySelector('.km-chip.active');
+        var catFilter = activeChip ? activeChip.dataset.filter : 'tumu';
+        var visible = 0;
+        rows.forEach(function (row) {
+            var catOk = catFilter === 'tumu' || row.dataset.cat === catFilter;
+            var monthOk = !monthFilter || (row.dataset.year === String(monthFilter.year) && row.dataset.month === String(monthFilter.month));
+            var show = catOk && monthOk;
+            row.hidden = !show;
+            if (show) visible++;
+        });
+        if (empty) empty.hidden = visible > 0;
+    }
+
+    chips.forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            chips.forEach(function (c) { c.classList.remove('active'); });
+            chip.classList.add('active');
+            applyFilters();
+        });
+    });
+
+    if (monthClearBtn) {
+        monthClearBtn.addEventListener('click', function () {
+            monthFilter = null;
+            monthClearBtn.hidden = true;
+            applyFilters();
+        });
+    }
+
+    // ── Liste / Takvim geçişi ──────────────────────────────
+    var viewBtns = document.querySelectorAll('.km-view-btn');
+    var viewListe = document.getElementById('pmViewListe');
+    var viewTakvim = document.getElementById('pmViewTakvim');
+
+    function showView(v) {
+        viewBtns.forEach(function (b) { b.classList.toggle('active', b.dataset.view === v); });
+        if (viewListe) viewListe.hidden = v !== 'liste';
+        if (viewTakvim) viewTakvim.hidden = v !== 'takvim';
+    }
+
+    viewBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () { showView(btn.dataset.view); });
+    });
+
+    // ── Takvim yıl gezinme ──────────────────────────────────
+    var calGrids = Array.prototype.slice.call(document.querySelectorAll('.km-cal-grid'));
+    var calLabel = document.getElementById('pmCalYearLabel');
+    var calPrev  = document.getElementById('pmCalPrev');
+    var calNext  = document.getElementById('pmCalNext');
+    var calIndex = calGrids.findIndex(function (g) { return g.classList.contains('active'); });
+    if (calIndex < 0) calIndex = 0;
+
+    function showCalYear(idx) {
+        calGrids.forEach(function (g, i) { g.classList.toggle('active', i === idx); });
+        if (calLabel && calGrids[idx]) calLabel.textContent = calGrids[idx].dataset.year;
+        if (calPrev) calPrev.disabled = idx <= 0;
+        if (calNext) calNext.disabled = idx >= calGrids.length - 1;
+    }
+    if (calGrids.length) showCalYear(calIndex);
+
+    if (calPrev) calPrev.addEventListener('click', function () { if (calIndex > 0) { calIndex--; showCalYear(calIndex); } });
+    if (calNext) calNext.addEventListener('click', function () { if (calIndex < calGrids.length - 1) { calIndex++; showCalYear(calIndex); } });
+
+    // Ödemesi olan bir aya tıklayınca listeye dönüp o aya filtreler
+    document.querySelectorAll('.km-cal-cell.has-pay').forEach(function (cell) {
+        cell.addEventListener('click', function () {
+            monthFilter = { year: parseInt(cell.dataset.year, 10), month: parseInt(cell.dataset.month, 10) };
+
+            chips.forEach(function (c) { c.classList.remove('active'); });
+            var tumuChip = document.querySelector('.km-chip[data-filter="tumu"]');
+            if (tumuChip) tumuChip.classList.add('active');
+            applyFilters();
+
+            if (monthClearBtn) monthClearBtn.hidden = false;
+            if (monthClearLabel) monthClearLabel.textContent = monthNamesFull[monthFilter.month - 1] + ' ' + monthFilter.year;
+
+            showView('liste');
+        });
+    });
+})();
+</script>
+}

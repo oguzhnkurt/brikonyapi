@@ -8,7 +8,7 @@ using System.Diagnostics;
 
 namespace BrikonYapi.Web.Areas.Admin.Controllers
 {
-    [Area("Admin"), Authorize]
+    [Area("Admin"), Authorize(Roles = "Admin")]
     public class CatalogController : Controller
     {
         private readonly AppDbContext _db;

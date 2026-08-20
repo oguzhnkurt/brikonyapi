@@ -1,0 +1,260 @@
+@model Owner
+@{
+    ViewData["Title"] = "Ana Sayfa";
+    var announcements = ViewBag.Announcements as List<Announcement> ?? new List<Announcement>();
+    var projects = ViewBag.Projects as List<Project> ?? new List<Project>();
+
+    string TagColor(string? tag) => (tag ?? "").ToLower() switch
+    {
+        "uyarı" or "uyari" => "km-tag-warn",
+        "önemli" or "onemli" => "km-tag-danger",
+        _ => "km-tag-info"
+    };
+}
+
+<div id="km-install-banner" class="km-install-banner mb-3" style="display:none;">
+    <div class="km-install-icon">
+        <img src="/android-chrome-192x192.png" alt="Kat Maliki Paneli" />
+    </div>
+    <div class="km-install-text">
+        <div class="km-install-title">Uygulama gibi kullanın</div>
+        <div class="km-install-sub" id="km-install-sub">Bu paneli ana ekranınıza ekleyin, tek dokunuşla açılsın.</div>
+    </div>
+    <button type="button" class="km-install-btn" id="km-install-btn">Ekle</button>
+    <button type="button" class="km-install-close" id="km-install-close" aria-label="Kapat">
+        <iconify-icon icon="iconamoon:close"></iconify-icon>
+    </button>
+</div>
+
+<div class="km-hero mb-4">
+    <div class="km-hero-greeting">Merhaba, @Model.FullName.Split(' ')[0] 👋</div>
+    <div class="km-hero-sub">Bağımsız bölümünüzün son durumu aşağıda</div>
+</div>
+
+@if (!Model.Units.Any())
+{
+    <div class="card">
+        <div class="card-body text-center text-muted py-5">
+            Hesabınıza henüz bir bağımsız bölüm atanmamış. Lütfen yönetici ile iletişime geçin.
+        </div>
+    </div>
+}
+else
+{
+    @foreach (var unit in Model.Units)
+    {
+        var nextPending = unit.PaymentSchedules
+            .Where(s => s.Status == PaymentScheduleStatus.Pending || s.Status == PaymentScheduleStatus.Overdue)
+            .OrderBy(s => s.DueDate).FirstOrDefault();
+
+        <a href="/KatMaliki/Dashboard" class="km-unit-card mb-3">
+            <div class="km-unit-card-top">
+                <div>
+                    <div class="km-unit-project">@unit.Project?.Name</div>
+                    <div class="km-unit-no">Bağımsız Bölüm: @unit.UnitNo @(string.IsNullOrEmpty(unit.BlockNo) ? "" : $"({unit.BlockNo})")</div>
+                </div>
+                <div class="km-unit-progress-badge">%@unit.ProgressPercentage</div>
+            </div>
+            <div class="progress km-unit-progress">
+                <div class="progress-bar" style="width:@(unit.ProgressPercentage)%"></div>
+            </div>
+            <div class="km-unit-card-bottom">
+                @if (nextPending != null)
+                {
+                    <span>Yaklaşan ödeme: <strong>@nextPending.Amount.ToString("N0") TL</strong> — @nextPending.DueDate.ToString("dd.MM.yyyy")</span>
+                }
+                else
+                {
+                    <span class="text-success">Bekleyen ödeme bulunmuyor ✓</span>
+                }
+                <span class="km-unit-cta">Ödeme Planım <iconify-icon icon="iconamoon:arrow-right-2"></iconify-icon></span>
+            </div>
+        </a>
+    }
+}
+
+@if (announcements.Any())
+{
+    <div class="d-flex justify-content-between align-items-baseline">
+        <h6 class="km-section-title">Duyurular</h6>
+        <a href="/KatMaliki/News" class="km-see-all">Tümünü gör ›</a>
+    </div>
+    <div class="km-announce-list mb-4">
+        @foreach (var a in announcements)
+        {
+            <div class="km-announce-card">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                    @if (!string.IsNullOrEmpty(a.Tag))
+                    {
+                        <span class="km-tag @TagColor(a.Tag)">@a.Tag</span>
+                    }
+                    else
+                    {
+                        <span></span>
+                    }
+                    <span class="km-announce-date">@a.CreatedAt.ToString("dd MMM", new System.Globalization.CultureInfo("tr-TR"))</span>
+                </div>
+                <div class="km-announce-title">@a.Title</div>
+                <div class="km-announce-body">@a.Body</div>
+            </div>
+        }
+    </div>
+}
+
+@if (projects.Any())
+{
+    <h6 class="km-section-title">Projelerimiz</h6>
+    <div class="km-project-scroll mb-4">
+        @foreach (var p in projects)
+        {
+            <div class="km-project-card">
+                <div class="km-project-img" style="@(!string.IsNullOrEmpty(p.MainImagePath) ? $"background-image:url('{p.MainImagePath}')" : "")">
+                    @if (!string.IsNullOrEmpty(p.CardTag))
+                    {
+                        <span class="km-project-tag">@p.CardTag</span>
+                    }
+                </div>
+                <div class="km-project-info">
+                    <div class="km-project-name">@p.Name</div>
+                    @if (!string.IsNullOrEmpty(p.District) || !string.IsNullOrEmpty(p.City))
+                    {
+                        <div class="km-project-loc">@string.Join(" • ", new[] { p.District, p.City }.Where(x => !string.IsNullOrEmpty(x)))</div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Styles {
+<style>
+    .km-install-banner {
+        display: flex; align-items: center; gap: .7rem; background: #fff; border-radius: 14px;
+        padding: .8rem .9rem; box-shadow: 0 2px 10px rgba(0,0,0,.06); border: 1px solid #eef0f2;
+    }
+    .km-install-icon img { width: 42px; height: 42px; border-radius: 10px; display: block; }
+    .km-install-text { flex: 1; min-width: 0; }
+    .km-install-title { font-weight: 700; font-size: .92rem; }
+    .km-install-sub { font-size: .78rem; color: #6c7580; line-height: 1.35; margin-top: .1rem; }
+    .km-install-btn {
+        background: var(--c-primary); color: #fff; border: none; border-radius: 8px;
+        font-weight: 700; font-size: .85rem; padding: .55rem .9rem; min-height: 40px; white-space: nowrap;
+    }
+    .km-install-close {
+        background: none; border: none; color: #9aa3ac; font-size: 1.2rem; padding: .2rem; min-height: 40px; min-width: 32px;
+    }
+
+    .km-hero-greeting { font-size: 1.5rem; font-weight: 700; }
+    .km-hero-sub { color: #6c7580; font-size: .95rem; margin-top: .2rem; }
+
+    .km-unit-card {
+        display: block; background: linear-gradient(135deg, var(--c-primary), var(--c-secondary));
+        color: #fff; border-radius: 16px; padding: 1.25rem 1.4rem; text-decoration: none;
+        box-shadow: 0 6px 18px rgba(0,130,180,.25);
+    }
+    .km-unit-card:hover { color: #fff; opacity: .96; }
+    .km-unit-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; margin-bottom: .9rem; }
+    .km-unit-project { font-weight: 700; font-size: 1.1rem; }
+    .km-unit-no { font-size: .88rem; color: rgba(255,255,255,.8); margin-top: .15rem; }
+    .km-unit-progress-badge { background: rgba(255,255,255,.18); border-radius: 20px; padding: .35rem .8rem; font-weight: 700; font-size: 1rem; white-space: nowrap; }
+    .km-unit-progress { height: 10px !important; background: rgba(255,255,255,.25); }
+    .km-unit-progress .progress-bar { background: #fff; }
+    .km-unit-card-bottom {
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem;
+        margin-top: .9rem; font-size: .88rem; color: rgba(255,255,255,.92);
+    }
+    .km-unit-cta { display: inline-flex; align-items: center; gap: .2rem; font-weight: 700; }
+
+    .km-section-title { font-size: 1.05rem; font-weight: 700; margin-bottom: .8rem; }
+    .km-see-all { font-size: .85rem; font-weight: 600; color: var(--c-primary); text-decoration: none; }
+
+    .km-announce-list { display: flex; flex-direction: column; gap: .7rem; }
+    .km-announce-card { background: #fff; border-radius: 12px; padding: 1rem 1.1rem; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+    .km-announce-title { font-weight: 700; font-size: 1rem; margin-bottom: .25rem; }
+    .km-announce-body { font-size: .9rem; color: #6c7580; line-height: 1.45; }
+    .km-announce-date { font-size: .78rem; color: #9aa3ac; white-space: nowrap; }
+    .km-tag { font-size: .72rem; font-weight: 700; padding: .25rem .6rem; border-radius: 20px; text-transform: uppercase; letter-spacing: .02em; }
+    .km-tag-info { background: #e6f4fb; color: #0082B4; }
+    .km-tag-warn { background: #fef6e0; color: #b8860b; }
+    .km-tag-danger { background: #fde8e8; color: #c0392b; }
+
+    .km-project-scroll {
+        display: flex; gap: .9rem; overflow-x: auto; padding-bottom: .3rem; scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+    .km-project-scroll::-webkit-scrollbar { height: 5px; }
+    .km-project-scroll::-webkit-scrollbar-thumb { background: #d8dde1; border-radius: 10px; }
+    .km-project-card {
+        flex: 0 0 220px; scroll-snap-align: start; background: #fff; border-radius: 12px; overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .km-project-img {
+        height: 130px; background: linear-gradient(160deg,#1a2540,#0d1520) center/cover no-repeat; position: relative;
+    }
+    .km-project-tag {
+        position: absolute; top: .55rem; left: .55rem; background: rgba(0,0,0,.55); color: #fff;
+        font-size: .68rem; font-weight: 600; padding: .25rem .55rem; border-radius: 20px;
+    }
+    .km-project-info { padding: .75rem .85rem .9rem; }
+    .km-project-name { font-weight: 700; font-size: .92rem; line-height: 1.3; }
+    .km-project-loc { font-size: .78rem; color: #9aa3ac; margin-top: .2rem; }
+
+    @@media (max-width: 576px) {
+        .km-hero-greeting { font-size: 1.3rem; }
+        .km-project-card { flex-basis: 190px; }
+    }
+</style>
+}
+
+@section Scripts {
+<script>
+(function () {
+    var DISMISS_KEY = 'km_install_dismissed_at';
+    var banner = document.getElementById('km-install-banner');
+    var subEl = document.getElementById('km-install-sub');
+    var btn = document.getElementById('km-install-btn');
+    var closeBtn = document.getElementById('km-install-close');
+    if (!banner) return;
+
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) return; // zaten ana ekrandan acilmis, banner gereksiz
+
+    var dismissedAt = localStorage.getItem(DISMISS_KEY);
+    if (dismissedAt && (Date.now() - parseInt(dismissedAt, 10)) < 1000 * 60 * 60 * 24 * 14) return; // 14 gun sessiz kal
+
+    var isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+    var deferredPrompt = null;
+
+    function showBanner() { banner.style.display = 'flex'; }
+    function hideBanner() {
+        banner.style.display = 'none';
+        localStorage.setItem(DISMISS_KEY, String(Date.now()));
+    }
+
+    if (isIos) {
+        subEl.textContent = "Safari'de paylaş simgesine dokunup 'Ana Ekrana Ekle'yi seçin.";
+        btn.textContent = 'Nasıl?';
+        btn.addEventListener('click', function () {
+            alert("1) Alt menüdeki paylaş (kare + ok) simgesine dokunun.\n2) 'Ana Ekrana Ekle' seçeneğini bulun.\n3) 'Ekle'ye dokunun.\nPanel artık telefonunuzda bir uygulama gibi görünecek.");
+        });
+        showBanner();
+    } else {
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            showBanner();
+        });
+        btn.addEventListener('click', function () {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.finally(function () {
+                deferredPrompt = null;
+                hideBanner();
+            });
+        });
+    }
+
+    closeBtn.addEventListener('click', hideBanner);
+})();
+</script>
+}

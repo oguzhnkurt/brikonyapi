@@ -8,7 +8,7 @@ using SixLabors.ImageSharp.Processing;
 
 namespace BrikonYapi.Web.Areas.Admin.Controllers
 {
-    [Area("Admin"), Authorize]
+    [Area("Admin"), Authorize(Roles = "Admin")]
     public class CertificatesController : Controller
     {
         private readonly AppDbContext _db;

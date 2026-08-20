@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BrikonYapi.Web.Areas.Admin.Controllers
 {
-    [Area("Admin"), Authorize]
+    [Area("Admin"), Authorize(Roles = "Admin")]
     public class DashboardController : Controller
     {
         private readonly ProjectService _projects;

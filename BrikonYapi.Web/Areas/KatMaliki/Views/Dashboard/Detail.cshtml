@@ -1,0 +1,244 @@
+@model PaymentSchedule
+@inject BrikonYapi.Web.Services.ExchangeRateService Fx
+@{
+    ViewData["Title"] = "Taksit Detayı";
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var unit = ViewBag.Unit as Unit;
+    var amountUsd = await Fx.FormatUsdEquivalentAsync(Model.Amount);
+
+    var isPaid = Model.Status == PaymentScheduleStatus.Paid;
+    var isLate = Model.Status == PaymentScheduleStatus.Overdue
+                 || (Model.Status == PaymentScheduleStatus.Pending && Model.DueDate.Date < DateTime.Today);
+
+    var pendingTx  = Model.Transactions.FirstOrDefault(t => t.Status == PaymentTransactionStatus.PendingApproval);
+    var rejectedTx = Model.Transactions.FirstOrDefault(t => t.Status == PaymentTransactionStatus.Rejected);
+    var approvedTx = Model.Transactions.FirstOrDefault(t => t.Status == PaymentTransactionStatus.Approved
+                                                        || t.Status == PaymentTransactionStatus.Completed);
+    var stageReady = Model.ProjectStage != null && Model.ProjectStage.Status == ProjectStageStatus.Completed && Model.Status == PaymentScheduleStatus.Pending;
+}
+
+<div class="km-det-hero mb-3">
+    <a href="/KatMaliki/Dashboard" class="km-det-back">
+        <iconify-icon icon="iconamoon:arrow-left-2"></iconify-icon> Ödemeler
+    </a>
+    <div class="d-flex justify-content-between align-items-start gap-2 mt-2">
+        <div>
+            @if (Model.InstallmentNo > 0)
+            {
+                <div class="km-det-no">Taksit @Model.InstallmentNo</div>
+            }
+            <div class="km-det-title">@(string.IsNullOrWhiteSpace(Model.Description) ? "Ödeme" : Model.Description)</div>
+        </div>
+        <span class="km-det-badge @(isPaid ? "is-paid" : isLate ? "is-late" : "is-soon")">
+            @(isPaid ? "Ödendi" : isLate ? "Gecikti" : "Bekliyor")
+        </span>
+    </div>
+    <div class="km-det-amount">₺@Model.Amount.ToString("N0", tr)</div>
+    @if (amountUsd != null)
+    {
+        <div class="km-det-amount-fx">@amountUsd</div>
+    }
+</div>
+
+<div class="km-card mb-3">
+    <div class="km-det-row">
+        <span class="km-det-key">Vade tarihi</span>
+        <span class="km-det-val @(isLate ? "text-danger" : "")">@Model.DueDate.ToString("dd MMMM yyyy", tr)</span>
+    </div>
+    @if (Model.ProjectStage != null)
+    {
+        <div class="km-det-row">
+            <span class="km-det-key">İnşaat aşaması</span>
+            <span class="km-det-val">@Model.ProjectStage.Name (%@Model.ProjectStage.ThresholdPercentage)</span>
+        </div>
+    }
+    else if (Model.HakedisPercentage.HasValue)
+    {
+        <div class="km-det-row">
+            <span class="km-det-key">Hakediş yüzdesi</span>
+            <span class="km-det-val">%@Model.HakedisPercentage</span>
+        </div>
+    }
+    @if (Model.PaidAt.HasValue)
+    {
+        <div class="km-det-row">
+            <span class="km-det-key">Ödeme tarihi</span>
+            <span class="km-det-val text-success">@Model.PaidAt.Value.ToString("dd MMMM yyyy", tr)</span>
+        </div>
+    }
+    @if (unit != null)
+    {
+        <div class="km-det-row">
+            <span class="km-det-key">Bağımsız bölüm</span>
+            <span class="km-det-val">@unit.UnitNo @(string.IsNullOrEmpty(unit.BlockNo) ? "" : $"({unit.BlockNo})")</span>
+        </div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Description))
+    {
+        <div class="km-det-note">
+            <div class="km-det-key mb-1">Açıklama</div>
+            <div>@Model.Description</div>
+        </div>
+    }
+</div>
+
+@if (stageReady && !isPaid && approvedTx == null && pendingTx == null)
+{
+    <div class="km-note is-stage mb-3">
+        <iconify-icon icon="iconamoon:certificate-badge-duotone"></iconify-icon>
+        <div>
+            <div class="km-note-title">İlerleme tamamlandı, ödeme bekleniyor</div>
+            <div class="km-note-sub">"@Model.ProjectStage!.Name" aşaması tamamlandı. Bu hakediş taksitini şimdi ödeyebilirsiniz.</div>
+        </div>
+    </div>
+}
+
+@if (isPaid || approvedTx != null)
+{
+    <div class="km-note is-ok mb-4">
+        <iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon>
+        <div>
+            <div class="km-note-title">Ödeme tamamlandı</div>
+            <div class="km-note-sub">Bu taksit ödenmiştir. Teşekkürler.</div>
+        </div>
+    </div>
+}
+else if (pendingTx != null)
+{
+    <div class="km-note is-info mb-4">
+        <iconify-icon icon="iconamoon:clock-duotone"></iconify-icon>
+        <div>
+            <div class="km-note-title">Bildiriminiz inceleniyor</div>
+            <div class="km-note-sub">
+                @pendingTx.CreatedAt.ToString("dd MMMM yyyy HH:mm", tr) tarihinde gönderdiğiniz dekont
+                yönetim tarafından kontrol ediliyor.
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    @if (rejectedTx != null)
+    {
+        <div class="km-note is-warn mb-3">
+            <iconify-icon icon="iconamoon:sign-exclamation-circle-duotone"></iconify-icon>
+            <div>
+                <div class="km-note-title">Önceki bildiriminiz onaylanmadı</div>
+                <div class="km-note-sub">@(string.IsNullOrWhiteSpace(rejectedTx.Note) ? "Lütfen dekontu tekrar yükleyin veya yönetim ile iletişime geçin." : rejectedTx.Note)</div>
+            </div>
+        </div>
+    }
+
+    <h6 class="km-section-title">Ödeme Bildirimi</h6>
+    <div class="km-card mb-4">
+        <form asp-area="KatMaliki" asp-controller="Dashboard" asp-action="ReportBankTransfer"
+              method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="scheduleId" value="@Model.Id" />
+
+            <p class="km-det-help">
+                Havale/EFT ile ödeme yaptıysanız dekontunuzu yükleyin. Yönetim onayladıktan sonra
+                taksit "Ödendi" olarak işaretlenir.
+            </p>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Dekont (JPG, PNG, WEBP veya PDF — en fazla 10 MB)</label>
+                <input type="file" name="receipt" class="form-control" accept=".jpg,.jpeg,.png,.pdf,.webp" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                <iconify-icon icon="iconamoon:cloud-upload-duotone" class="me-1"></iconify-icon>
+                Dekontu Gönder
+            </button>
+        </form>
+
+        <button class="btn btn-outline-primary w-100 mt-2" disabled
+                title="Sanal pos entegrasyonu yakında aktif olacak">
+            Kredi Kartı ile Öde (Yakında)
+        </button>
+    </div>
+}
+
+@if (Model.Transactions.Any())
+{
+    <h6 class="km-section-title">İşlem Geçmişi</h6>
+    <div class="km-card mb-4">
+        @foreach (var t in Model.Transactions.OrderByDescending(t => t.CreatedAt))
+        {
+            <div class="km-tx">
+                <div>
+                    <div class="km-tx-title">@(t.Method == PaymentMethod.BankTransfer ? "Havale/EFT bildirimi" : "Kredi kartı ödemesi")</div>
+                    <div class="km-tx-date">@t.CreatedAt.ToString("dd MMMM yyyy HH:mm", tr)</div>
+                </div>
+                <span class="km-pay-chip @(t.Status switch {
+                    PaymentTransactionStatus.Approved or PaymentTransactionStatus.Completed => "is-paid",
+                    PaymentTransactionStatus.Rejected or PaymentTransactionStatus.Failed => "is-late",
+                    _ => "is-review" })">
+                    @(t.Status switch {
+                        PaymentTransactionStatus.Approved  => "Onaylandı",
+                        PaymentTransactionStatus.Completed => "Tamamlandı",
+                        PaymentTransactionStatus.Rejected  => "Reddedildi",
+                        PaymentTransactionStatus.Failed    => "Başarısız",
+                        _ => "Onay bekliyor" })
+                </span>
+            </div>
+        }
+    </div>
+}
+
+@section Styles {
+<style>
+    .km-card { background:#fff; border-radius:16px; padding:1.1rem 1.25rem; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+    .km-section-title { font-size:1.05rem; font-weight:700; margin-bottom:.8rem; }
+
+    .km-det-hero {
+        background:linear-gradient(135deg,var(--c-primary),var(--c-secondary));
+        border-radius:18px; padding:1.1rem 1.3rem 1.3rem; color:#fff;
+        box-shadow:0 6px 18px rgba(0,130,180,.22);
+    }
+    .km-det-back { color:rgba(255,255,255,.9); text-decoration:none; font-size:.9rem; font-weight:600;
+                   display:inline-flex; align-items:center; gap:.2rem; min-height:36px; }
+    .km-det-back:hover { color:#fff; }
+    .km-det-no { font-size:.82rem; color:rgba(255,255,255,.85); font-weight:600; }
+    .km-det-title { font-size:1.25rem; font-weight:800; line-height:1.25; }
+    .km-det-amount { font-size:2.1rem; font-weight:800; margin-top:.6rem; }
+    .km-det-amount-fx { font-size:.82rem; color:rgba(255,255,255,.75); margin-top:.15rem; }
+    .km-det-badge { font-size:.75rem; font-weight:700; padding:.35rem .7rem; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+    .km-det-badge.is-paid { background:#d7f5e4; color:#15794a; }
+    .km-det-badge.is-late { background:#ffd9d6; color:#a32b1f; }
+    .km-det-badge.is-soon { background:rgba(255,255,255,.22); color:#fff; }
+
+    .km-det-row { display:flex; justify-content:space-between; align-items:center; gap:1rem;
+                  padding:.75rem 0; border-bottom:1px solid #f1f3f5; }
+    .km-det-row:last-child { border-bottom:none; }
+    .km-det-key { font-size:.9rem; color:#8a939c; }
+    .km-det-val { font-size:.98rem; font-weight:700; text-align:right; }
+    .km-det-note { padding-top:.75rem; border-top:1px solid #f1f3f5; font-size:.95rem; color:#4a5158; line-height:1.5; }
+    .km-det-help { font-size:.9rem; color:#6c7580; line-height:1.5; }
+
+    .km-note { display:flex; gap:.75rem; align-items:flex-start; border-radius:14px; padding:1rem 1.1rem; }
+    .km-note iconify-icon { font-size:1.5rem; flex-shrink:0; }
+    .km-note-title { font-weight:700; font-size:1rem; }
+    .km-note-sub { font-size:.88rem; opacity:.85; line-height:1.45; margin-top:.1rem; }
+    .km-note.is-ok   { background:#e6f7ed; color:#15794a; }
+    .km-note.is-info { background:#e6f4fb; color:#0a6c94; }
+    .km-note.is-warn { background:#fef6e0; color:#8a6100; }
+    .km-note.is-stage { background:#e6f7ed; color:#15794a; }
+
+    .km-tx { display:flex; justify-content:space-between; align-items:center; gap:1rem;
+             padding:.7rem 0; border-bottom:1px solid #f1f3f5; }
+    .km-tx:last-child { border-bottom:none; }
+    .km-tx-title { font-size:.95rem; font-weight:600; }
+    .km-tx-date { font-size:.8rem; color:#9aa3ac; margin-top:.1rem; }
+
+    .km-pay-chip { font-size:.7rem; font-weight:700; padding:.2rem .55rem; border-radius:20px; white-space:nowrap; }
+    .km-pay-chip.is-paid   { background:#e6f7ed; color:#1e9e5a; }
+    .km-pay-chip.is-late   { background:#fdeaea; color:#c0392b; }
+    .km-pay-chip.is-review { background:#e6f4fb; color:var(--c-primary); }
+
+    @@media (max-width: 576px) {
+        .km-det-title { font-size:1.1rem; }
+        .km-det-amount { font-size:1.8rem; }
+    }
+</style>
+}

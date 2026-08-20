@@ -1,0 +1,178 @@
+@model BrikonYapi.Web.Data.Entities.PaymentSchedule
+@using BrikonYapi.Web.Data.Entities
+@{
+    var unit = (Unit)ViewBag.Unit;
+    var stages = (List<ProjectStage>)ViewBag.Stages;
+    ViewData["Title"] = "Yeni Ödeme Kalemi";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Yeni Ödeme Kalemi — @unit.Project?.Name / @unit.UnitNo</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Hakedişe göre birden fazla taksit tanımlayacaksanız "+ Taksit Ekle" ile satır ekleyip
+                    hepsini tek seferde kaydedebilirsiniz. Tutar kaydedilirken malike (varsa) bilgilendirme gönderilir.
+                </p>
+
+                <form asp-area="Admin" asp-controller="PaymentSchedules" asp-action="Create" asp-route-unitId="@unit.Id" method="post" id="pmForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="unitId" value="@unit.Id" />
+
+                    <div id="pmRows">
+                        <div class="pm-row border rounded-3 p-3 mb-3">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="fw-semibold small text-muted pm-row-label">Taksit 1</span>
+                                <button type="button" class="btn btn-sm btn-outline-danger pm-remove" hidden>
+                                    <iconify-icon icon="iconamoon:close"></iconify-icon>
+                                </button>
+                            </div>
+
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Tutar <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₺</span>
+                                        <input type="text" name="amount" inputmode="numeric" class="form-control pm-amount"
+                                               placeholder="323.475" required autocomplete="off" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Vade Tarihi <span class="text-danger">*</span></label>
+                                    <input type="date" name="dueDate" class="form-control"
+                                           value="@DateTime.Today.AddMonths(1).ToString("yyyy-MM-dd")" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Açıklama</label>
+                                    <input type="text" name="description" class="form-control" placeholder="Örn: 3. Hakediş Taksiti" maxlength="300" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold">İnşaat Aşaması</label>
+                                    <select name="projectStageId" class="form-select pm-stage">
+                                        <option value="">Aşamaya bağlı değil (elle gir)</option>
+                                        @foreach (var st in stages)
+                                        {
+                                            <option value="@st.Id" data-percentage="@st.ThresholdPercentage">@st.Name (%@st.ThresholdPercentage)</option>
+                                        }
+                                    </select>
+                                    <div class="form-text small">Seçilirse hakediş yüzdesi otomatik doldurulur; aşama "Tamamlandı" olunca malike gösterilir.</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-semibold">Hakediş %</label>
+                                    <input type="number" name="hakedisPercentage" class="form-control pm-hakedis" min="0" max="100" placeholder="20" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">Taksit No</label>
+                                    <input type="number" name="installmentNo" class="form-control" min="0" placeholder="3" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" id="pmAddRow" class="btn btn-link btn-sm px-0 mb-3 text-decoration-none">
+                        <iconify-icon icon="mdi:plus" class="me-1"></iconify-icon>Taksit Ekle
+                    </button>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                            Kaydet
+                        </button>
+                        <a href="/Admin/PaymentSchedules?unitId=@unit.Id" class="btn btn-outline-secondary">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    var rowsWrap = document.getElementById('pmRows');
+    var addBtn   = document.getElementById('pmAddRow');
+    var form     = document.getElementById('pmForm');
+
+    // ── Tutar alanına yazarken binlik ayraç (323.475 gibi) ──────
+    function formatAmountInput(input) {
+        var digits = input.value.replace(/\D/g, '');
+        input.value = digits ? Number(digits).toLocaleString('tr-TR') : '';
+    }
+
+    function wireAmountField(input) {
+        input.addEventListener('input', function () { formatAmountInput(input); });
+    }
+
+    // ── Aşama seçilince hakediş % alanını otomatik doldur ───────
+    function wireStageField(row) {
+        var select = row.querySelector('.pm-stage');
+        var hakedis = row.querySelector('.pm-hakedis');
+        select.addEventListener('change', function () {
+            var opt = select.options[select.selectedIndex];
+            var pct = opt.getAttribute('data-percentage');
+            if (pct) {
+                hakedis.value = pct;
+                hakedis.readOnly = true;
+            } else {
+                hakedis.readOnly = false;
+            }
+        });
+    }
+
+    function renumberRows() {
+        var rows = rowsWrap.querySelectorAll('.pm-row');
+        rows.forEach(function (row, i) {
+            row.querySelector('.pm-row-label').textContent = 'Taksit ' + (i + 1);
+            var removeBtn = row.querySelector('.pm-remove');
+            removeBtn.hidden = rows.length <= 1;
+        });
+    }
+
+    rowsWrap.querySelectorAll('.pm-amount').forEach(wireAmountField);
+    rowsWrap.querySelectorAll('.pm-row').forEach(wireStageField);
+    renumberRows();
+
+    addBtn.addEventListener('click', function () {
+        var firstRow = rowsWrap.querySelector('.pm-row');
+        var clone = firstRow.cloneNode(true);
+        clone.querySelectorAll('input').forEach(function (inp) {
+            if (inp.type === 'date') {
+                inp.value = firstRow.querySelector('input[name="dueDate"]').value;
+            } else {
+                inp.value = '';
+                inp.readOnly = false;
+            }
+        });
+        var cloneSelect = clone.querySelector('.pm-stage');
+        if (cloneSelect) cloneSelect.selectedIndex = 0;
+        clone.querySelector('.pm-remove').addEventListener('click', function () {
+            clone.remove();
+            renumberRows();
+        });
+        wireAmountField(clone.querySelector('.pm-amount'));
+        wireStageField(clone);
+        rowsWrap.appendChild(clone);
+        renumberRows();
+        clone.querySelector('.pm-amount').focus();
+    });
+
+    rowsWrap.querySelectorAll('.pm-remove').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            btn.closest('.pm-row').remove();
+            renumberRows();
+        });
+    });
+
+    // Gönderilmeden hemen önce binlik ayraçları temizle (sunucu düz sayı bekler).
+    form.addEventListener('submit', function () {
+        form.querySelectorAll('.pm-amount').forEach(function (inp) {
+            inp.value = inp.value.replace(/\D/g, '');
+        });
+    });
+})();
+</script>
+}
