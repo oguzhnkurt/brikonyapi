@@ -97,6 +97,45 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(Manage), new { id });
         }
 
+        /// <summary>
+        /// Oylamanın başlangıç/bitiş tarihlerini günceller. Oylama oluşturulduktan sonra tarih
+        /// değiştirilemiyordu; ileri tarihli bir başlangıç girildiğinde oylamayı açmanın tek yolu
+        /// silip yeniden oluşturmaktı. "Hemen başlat" (startNow) başlangıcı temizleyerek oylamayı
+        /// anında maliklere açar.
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetSchedule(int id, DateTime? startsAt, DateTime? endsAt, bool startNow = false)
+        {
+            var poll = await _db.Polls.FindAsync(id);
+            if (poll == null) return NotFound();
+
+            if (startNow)
+            {
+                poll.StartsAt = null;
+                // Bitiş tarihi geçmişse oylama yine kapalı kalırdı; bu durumda bitişi de temizleyelim.
+                if (poll.EndsAt.HasValue && poll.EndsAt.Value < DateTime.Now)
+                    poll.EndsAt = null;
+            }
+            else
+            {
+                if (startsAt.HasValue && endsAt.HasValue && endsAt.Value <= startsAt.Value)
+                {
+                    TempData["Error"] = "Bitiş tarihi başlangıçtan sonra olmalıdır.";
+                    return RedirectToAction(nameof(Manage), new { id });
+                }
+                poll.StartsAt = startsAt;
+                poll.EndsAt   = endsAt;
+            }
+
+            poll.UpdatedAt = DateTime.Now;
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = startNow
+                ? "Oylama hemen başlatıldı, malikler artık oy verebilir."
+                : "Oylama tarihleri güncellendi.";
+            return RedirectToAction(nameof(Manage), new { id });
+        }
+
         [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(12 * 1024 * 1024)]
         public async Task<IActionResult> SetOptionImage(int optionId, IFormFile image)

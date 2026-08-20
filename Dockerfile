@@ -9,7 +9,14 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-RUN apt-get update && apt-get install -y --no-install-recommends ghostscript && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ghostscript tzdata && rm -rf /var/lib/apt/lists/*
+
+# Saat dilimi: Türkiye. Varsayılan olarak konteyner UTC çalışır ve DateTime.Now 3 saat geride
+# kalır; bu yüzden "şimdi başlasın" denilen bir oylama 3 saat açılmaz, vadesi gelen taksit geç
+# işaretlenir, sohbet/kayıt saatleri yanlış görünür. Aşağıdaki ayar bunların hepsini düzeltir.
+ENV TZ=Europe/Istanbul
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 RUN mkdir -p /app/wwwroot/uploads
 # Oturum (cookie) şifreleme anahtarları. Coolify'da kalıcı volume olarak bağlanmalıdır,
 # aksi halde her deploy sonrası tüm kullanıcılar çıkış yapmış olur.

@@ -117,6 +117,18 @@ namespace BrikonYapi.Web.Controllers
             return RedirectToAction(nameof(Iletisim));
         }
 
+        /// <summary>Herkese açık Sıkça Sorulan Sorular sayfası. İçerik, admin panelindeki
+        /// "Sıkça Sorulan Sorular" kayıtlarından gelir (Kat Maliki portalıyla aynı liste).</summary>
+        [Route("SSS")]
+        public async Task<IActionResult> Sss()
+        {
+            var items = await _db.Faqs
+                .Where(f => f.IsActive)
+                .OrderBy(f => f.OrderIndex).ThenBy(f => f.Id)
+                .ToListAsync();
+            return View(items);
+        }
+
         [Route("Sertifikalar")]
         public async Task<IActionResult> Sertifikalar()
         {

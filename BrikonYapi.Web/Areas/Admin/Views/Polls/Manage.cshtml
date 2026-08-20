@@ -5,6 +5,14 @@
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
     var tr = new System.Globalization.CultureInfo("tr-TR");
     var total = Model.Votes.Count;
+
+    // Rozet, malik ekranıyla aynı mantığı kullanmalı: durum "Aktif" olsa bile başlangıç tarihi
+    // gelmemişse malik henüz oy veremez. Aksi halde admin "Aktif" görürken malik göremiyordu.
+    var now        = DateTime.Now;
+    var notStarted = Model.Status == PollStatus.Active && Model.StartsAt != null && Model.StartsAt > now;
+    var expired    = Model.Status == PollStatus.Active && Model.EndsAt != null && Model.EndsAt < now;
+    var startsText = Model.StartsAt?.ToString("dd MMMM yyyy HH:mm", tr) ?? "";
+    var endsText   = Model.EndsAt?.ToString("dd MMMM yyyy HH:mm", tr) ?? "";
 }
 
 <div class="d-flex align-items-center gap-2 mb-3">
@@ -12,19 +20,49 @@
         <iconify-icon icon="iconamoon:arrow-left-2"></iconify-icon> Geri
     </a>
     <h5 class="mb-0">@Model.Title</h5>
-    @switch (Model.Status)
+    @if (Model.Status == PollStatus.Closed)
     {
-        case PollStatus.Active:
-            <span class="badge bg-success-subtle text-success">Aktif</span>
-            break;
-        case PollStatus.Closed:
-            <span class="badge bg-secondary-subtle text-secondary">Kapandı</span>
-            break;
-        default:
-            <span class="badge bg-warning-subtle text-warning">Taslak</span>
-            break;
+        <span class="badge bg-secondary-subtle text-secondary">Kapandı</span>
+    }
+    else if (Model.Status == PollStatus.Draft)
+    {
+        <span class="badge bg-warning-subtle text-warning">Taslak</span>
+    }
+    else if (notStarted)
+    {
+        <span class="badge bg-warning-subtle text-warning">Başlamadı</span>
+    }
+    else if (expired)
+    {
+        <span class="badge bg-secondary-subtle text-secondary">Süresi doldu</span>
+    }
+    else
+    {
+        <span class="badge bg-success-subtle text-success">Aktif</span>
     }
 </div>
+
+@if (notStarted)
+{
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-2">
+        <iconify-icon icon="iconamoon:clock-duotone"></iconify-icon>
+        <div class="small">
+            Bu oylama <strong>@startsText</strong> tarihinde başlayacak.
+            Maliklerin ekranında şu an "Başlamadı" olarak görünüyor ve oy veremiyorlar.
+            Hemen açmak isterseniz başlangıç tarihini geçmiş bir tarihe çekin veya boş bırakın.
+        </div>
+    </div>
+}
+else if (expired)
+{
+    <div class="alert alert-secondary d-flex align-items-center gap-2 py-2">
+        <iconify-icon icon="iconamoon:clock-duotone"></iconify-icon>
+        <div class="small">
+            Bitiş tarihi (<strong>@endsText</strong>) geçtiği için
+            malikler artık oy veremiyor. Uzatmak için bitiş tarihini ileri alın veya boş bırakın.
+        </div>
+    </div>
+}
 
 <div class="row g-3">
     <div class="col-lg-4">
@@ -52,6 +90,38 @@
                 {
                     <div class="border-top pt-2 small text-muted">@Model.Description</div>
                 }
+
+                <div class="border-top pt-3 mt-3">
+                    <div class="fw-semibold small mb-2">Tarihler</div>
+                    <form asp-area="Admin" asp-controller="Polls" asp-action="SetSchedule" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+
+                        <label class="form-label small mb-1">Başlangıç</label>
+                        <input type="datetime-local" name="startsAt" class="form-control form-control-sm mb-2"
+                               value="@(Model.StartsAt?.ToString("yyyy-MM-ddTHH:mm"))" />
+
+                        <label class="form-label small mb-1">Bitiş</label>
+                        <input type="datetime-local" name="endsAt" class="form-control form-control-sm mb-2"
+                               value="@(Model.EndsAt?.ToString("yyyy-MM-ddTHH:mm"))" />
+
+                        <div class="form-text small mb-2">Boş bırakılan alan sınır tanımaz.</div>
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">Tarihleri Kaydet</button>
+                    </form>
+
+                    @if (notStarted || expired)
+                    {
+                        <form asp-area="Admin" asp-controller="Polls" asp-action="SetSchedule" method="post" class="mt-2">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="startNow" value="true" />
+                            <button type="submit" class="btn btn-sm btn-success w-100">
+                                <iconify-icon icon="iconamoon:player-play-duotone" class="me-1"></iconify-icon>
+                                Hemen Başlat
+                            </button>
+                        </form>
+                    }
+                </div>
 
                 <div class="d-flex gap-2 mt-3">
                     @if (Model.Status != PollStatus.Active)

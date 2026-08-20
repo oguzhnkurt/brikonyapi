@@ -1,0 +1,137 @@
+@model List<BrikonYapi.Web.Data.Entities.FaqItem>
+@{
+    bool isEn = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en";
+    ViewData["Title"] = isEn ? "Frequently Asked Questions" : "Sıkça Sorulan Sorular";
+    ViewData["Description"] = "Brikon Yapı kentsel dönüşüm süreci hakkında sıkça sorulan sorular ve cevapları.";
+    ViewData["BodyClass"] = "faq-page";
+}
+
+@section Styles {
+<style>
+body { background: #030608; }
+
+.faq-header {
+    background: #0f1724;
+    padding: calc(68px + 3.5rem) 3rem 3rem;
+    text-align: center;
+}
+.faq-eyebrow {
+    font-size: .58rem; font-weight: 700; letter-spacing: .3em;
+    text-transform: uppercase; color: var(--c-primary);
+    display: block; margin-bottom: .25rem;
+}
+.faq-title {
+    font-family: 'Inter', sans-serif; font-weight: 900;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    color: #fff; letter-spacing: -.03em; line-height: 1; margin: 0;
+}
+.faq-subtitle {
+    font-size: .88rem; color: rgba(255,255,255,.38); margin: .5rem auto 0; max-width: 460px;
+}
+.faq-breadcrumb {
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    font-size: .68rem; color: rgba(255,255,255,.28); margin-top: .5rem;
+}
+.faq-breadcrumb a { color: rgba(255,255,255,.38); text-decoration: none; transition: color .2s; }
+.faq-breadcrumb a:hover { color: var(--c-primary); }
+
+.faq-wrap { max-width: 860px; margin: 0 auto; padding: 3.5rem 1.5rem 5rem; }
+
+.faq-item {
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    background: #0b1119;
+    margin-bottom: .8rem;
+    overflow: hidden;
+    transition: border-color .2s;
+}
+.faq-item.is-open { border-color: rgba(0,130,180,.45); }
+
+.faq-q {
+    width: 100%; text-align: left; background: none; border: none;
+    color: #fff; font-weight: 700; font-size: 1rem; line-height: 1.45;
+    padding: 1.15rem 1.3rem; display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 1rem; cursor: pointer;
+}
+.faq-q:hover { color: var(--c-primary); }
+.faq-q-icon {
+    flex-shrink: 0; width: 22px; height: 22px; margin-top: .1rem;
+    color: var(--c-primary); transition: transform .25s;
+}
+.faq-item.is-open .faq-q-icon { transform: rotate(45deg); }
+
+.faq-a {
+    display: none;
+    padding: 0 1.3rem 1.25rem;
+    color: rgba(255,255,255,.62);
+    font-size: .94rem; line-height: 1.7; white-space: pre-line;
+}
+.faq-item.is-open .faq-a { display: block; }
+
+.faq-empty {
+    text-align: center; color: rgba(255,255,255,.4);
+    padding: 4rem 1rem; font-size: .95rem;
+}
+
+@@media (max-width: 768px) {
+    .faq-header { padding: calc(60px + 2.5rem) 1.25rem 2.5rem; }
+    .faq-wrap { padding: 2.5rem 1.1rem 3.5rem; }
+    .faq-q { font-size: .95rem; padding: 1rem 1.1rem; }
+    .faq-a { padding: 0 1.1rem 1.1rem; font-size: .9rem; }
+}
+</style>
+}
+
+<header class="faq-header">
+    <span class="faq-eyebrow">@(isEn ? "Support" : "Destek")</span>
+    <h1 class="faq-title">@(isEn ? "Frequently Asked Questions" : "Sıkça Sorulan Sorular")</h1>
+    <p class="faq-subtitle">
+        @(isEn
+            ? "Answers to the questions we hear most often about the urban transformation process."
+            : "Kentsel dönüşüm sürecinde en çok merak edilen soruların cevapları.")
+    </p>
+    <nav class="faq-breadcrumb">
+        <a href="/">@(isEn ? "Home" : "Ana Sayfa")</a>
+        <span>/</span>
+        <span>@(isEn ? "FAQ" : "Sıkça Sorulan Sorular")</span>
+    </nav>
+</header>
+
+<div class="faq-wrap">
+    @if (!Model.Any())
+    {
+        <div class="faq-empty">
+            @(isEn ? "No questions have been published yet." : "Henüz yayınlanmış bir soru bulunmuyor.")
+        </div>
+    }
+    else
+    {
+        @foreach (var item in Model)
+        {
+            <div class="faq-item">
+                <button type="button" class="faq-q" aria-expanded="false">
+                    <span>@item.Question</span>
+                    <svg class="faq-q-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                </button>
+                <div class="faq-a">@item.Answer</div>
+            </div>
+        }
+    }
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    document.querySelectorAll('.faq-q').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var item = btn.closest('.faq-item');
+            var open = item.classList.toggle('is-open');
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+    });
+})();
+</script>
+}

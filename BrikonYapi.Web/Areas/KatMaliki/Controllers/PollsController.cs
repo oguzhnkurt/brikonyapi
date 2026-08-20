@@ -87,7 +87,14 @@ namespace BrikonYapi.Web.Areas.KatMaliki.Controllers
                        && (poll.EndsAt == null || poll.EndsAt >= now);
 
             if (!open)
-                return Json(new { success = false, message = "Bu oylama kapanmıştır, oy kullanılamaz." });
+            {
+                // Henüz başlamamış bir oylama için "kapandı" demek yanıltıcı olur.
+                var notStarted = poll.Status == PollStatus.Active && poll.StartsAt != null && poll.StartsAt > now;
+                var message = notStarted
+                    ? $"Bu oylama {poll.StartsAt!.Value:dd.MM.yyyy HH:mm} tarihinde başlayacak, henüz oy kullanılamaz."
+                    : "Bu oylama kapanmıştır, oy kullanılamaz.";
+                return Json(new { success = false, message });
+            }
 
             // GÜVENLİK 3: Seçenek gerçekten bu oylamaya mı ait?
             if (!poll.Options.Any(o => o.Id == optionId))
