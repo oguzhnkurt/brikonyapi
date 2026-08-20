@@ -151,7 +151,7 @@
         <button class="hero-tab @(i==0?"active":"")" data-idx="@i">
           @if (!string.IsNullOrEmpty(p.MainImagePath))
           {
-            <img class="tab-bg-img" src="@p.MainImagePath" alt="" />
+            <img class="tab-bg-img" src="@ImageThumbHelper.Card(p.MainImagePath)" alt="" loading="lazy" decoding="async" />
           }
           <div class="tab-info">
             @if (!string.IsNullOrEmpty(tabLoc)) { <span class="tab-loc">@tabLoc</span> }
@@ -162,6 +162,23 @@
     }
   </div>
 
+</section>
+
+
+<!-- ═════════════════════════════════════════════════════
+     KAT MALİKİ PORTALI CTA
+     ═════════════════════════════════════════════════════ -->
+<section id="owner-portal-cta">
+  <div class="container owner-portal-inner">
+    <div class="owner-portal-text">
+      <span class="owner-portal-eyebrow">@(isEn ? "For Unit Owners" : "Kat Malikleri İçin")</span>
+      <h3>@(isEn ? "Track your unit's construction progress and payment plan online" : "Bağımsız bölümünüzün inşaat ilerlemesini ve ödeme planınızı online takip edin")</h3>
+    </div>
+    <a href="/KatMaliki/Account/Login" class="btn-owner-portal">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>
+      @(isEn ? "Unit Owner Login" : "Kat Maliki Girişi")
+    </a>
+  </div>
 </section>
 
 
@@ -454,7 +471,7 @@
              class="hp-card @(hasVid?"hp-has-video":"") @(autoVideo?"hp-autoplay":"") @(pass==1?"hp-pass2":"")"
              data-video="@(hasVid?p.VideoPath:"")">
             @if (!string.IsNullOrEmpty(p.MainImagePath))
-            { <img src="@p.MainImagePath" alt="@p.Name" loading="@(autoVideo?"eager":"lazy")" class="hp-img" /> }
+            { <img src="@ImageThumbHelper.Card(p.MainImagePath)" alt="@p.Name" loading="@(autoVideo?"eager":"lazy")" decoding="async" class="hp-img" /> }
             else { <div style="position:absolute;inset:0;background:linear-gradient(160deg,#1a2540,#0d1520)"></div> }
             @if (hasVid) { <video class="hp-video" muted loop playsinline preload="@(autoVideo?"auto":"none")"></video> }
             <div class="hp-grad"></div>
