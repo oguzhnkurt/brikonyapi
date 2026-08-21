@@ -1,0 +1,177 @@
+@model BrikonYapi.Web.Models.ViewModels.OwnerBulkImportResult
+@{
+    ViewData["Title"] = "Excel ile Toplu Kat Maliki Ekleme";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var hasResult = Model.Rows.Any();
+    var payload = TempData["ImportPasswords"] as string;
+}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+    <a href="/Admin/Owners" class="btn btn-sm btn-outline-secondary">
+        <iconify-icon icon="iconamoon:arrow-left-2"></iconify-icon> Geri
+    </a>
+    <h5 class="mb-0">Excel ile Toplu Kat Maliki Ekleme</h5>
+</div>
+
+@if (!hasResult)
+{
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header"><h6 class="card-title mb-0">Dosya Yükle</h6></div>
+                <div class="card-body">
+                    <form asp-area="Admin" asp-controller="Owners" asp-action="BulkImport"
+                          method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Excel dosyası (.xlsx)</label>
+                            <input type="file" name="file" class="form-control" accept=".xlsx" required />
+                        </div>
+
+                        <div class="alert alert-info small mb-3">
+                            <div class="fw-semibold mb-1">Dosya nasıl olmalı?</div>
+                            İlk satır başlık olmalı, veriler 2. satırdan başlamalı. Sütun sırası:
+                            <strong>A: Ad Soyad</strong> · <strong>B: E-posta</strong> · <strong>C: Telefon</strong>.
+                            Telefon boş bırakılabilir.
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <iconify-icon icon="iconamoon:cloud-upload-duotone" class="me-1"></iconify-icon>
+                                Yükle ve Hesapları Oluştur
+                            </button>
+                            <a href="/Admin/Owners/BulkTemplate" class="btn btn-outline-primary">
+                                <iconify-icon icon="iconamoon:file-document-duotone" class="me-1"></iconify-icon>
+                                Örnek Şablonu İndir
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header"><h6 class="card-title mb-0">Nasıl çalışır?</h6></div>
+                <div class="card-body small text-muted">
+                    <ol class="ps-3 mb-3">
+                        <li class="mb-2">Örnek şablonu indirip malik listesini doldurun.</li>
+                        <li class="mb-2">Dosyayı buraya yükleyin.</li>
+                        <li class="mb-2">Her malik için hesap açılır ve <strong>otomatik bir şifre</strong> üretilir
+                            (örn. <code>Brikon!4827</code>).</li>
+                        <li class="mb-2">İşlem bitince <strong>giriş bilgileri listesini Excel olarak</strong>
+                            indirip maliklere iletirsiniz.</li>
+                    </ol>
+                    <div class="border-top pt-2">
+                        <div class="fw-semibold text-body mb-1">Notlar</div>
+                        <ul class="ps-3 mb-0">
+                            <li>Zaten kayıtlı bir e-posta varsa o satır atlanır, diğerleri işlenir.</li>
+                            <li>Bağımsız bölüm ataması sonradan
+                                <a href="/Admin/Units">Bağımsız Bölümler</a> ekranından yapılır.</li>
+                            <li>Şifreler bir daha gösterilmez; listeyi indirmeyi unutmayın.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted small">Oluşturulan hesap</div>
+                    <div class="fs-3 fw-bold text-success">@Model.CreatedCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted small">Atlanan satır</div>
+                    <div class="fs-3 fw-bold @(Model.FailedCount > 0 ? "text-danger" : "text-muted")">@Model.FailedCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body d-flex align-items-center">
+                    @if (Model.CreatedCount > 0 && !string.IsNullOrEmpty(payload))
+                    {
+                        <form asp-area="Admin" asp-controller="Owners" asp-action="DownloadPasswords" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="payload" value="@payload" />
+                            <button type="submit" class="btn btn-primary">
+                                <iconify-icon icon="iconamoon:cloud-download-duotone" class="me-1"></iconify-icon>
+                                Giriş Bilgilerini İndir
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.CreatedCount > 0)
+    {
+        <div class="alert alert-warning small">
+            <strong>Şifreler yalnızca bu ekranda gösterilir.</strong> Sayfadan ayrılmadan önce listeyi indirin.
+            Sonradan ihtiyaç olursa Kat Malikleri ekranından "Şifre Sıfırla" ile yeni şifre üretebilirsiniz.
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header"><h6 class="card-title mb-0">Sonuç</h6></div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:70px;">Satır</th>
+                        <th>Ad Soyad</th>
+                        <th>E-posta</th>
+                        <th>Şifre</th>
+                        <th>Durum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Rows)
+                    {
+                        <tr class="@(row.Success ? "" : "table-danger")">
+                            <td class="text-muted">@row.RowNumber</td>
+                            <td>@row.FullName</td>
+                            <td>@row.Email</td>
+                            <td>
+                                @if (row.Success)
+                                {
+                                    <code>@row.Password</code>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                @if (row.Success)
+                                {
+                                    <span class="badge bg-success-subtle text-success">Oluşturuldu</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-subtle text-danger">@row.Error</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+        <a href="/Admin/Owners" class="btn btn-outline-secondary">Kat Malikleri Listesine Dön</a>
+        <a href="/Admin/Owners/BulkImport" class="btn btn-outline-primary">Yeni Dosya Yükle</a>
+    </div>
+}

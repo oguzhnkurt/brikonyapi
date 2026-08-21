@@ -1,5 +1,8 @@
 using BrikonYapi.Web.Data;
 using BrikonYapi.Web.Data.Entities;
+using BrikonYapi.Web.Models.ViewModels;
+using BrikonYapi.Web.Services;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -81,6 +84,192 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             TempData["Success"] = "Kat maliki hesabı oluşturuldu.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // ── Excel ile toplu kat maliki ekleme ────────────────────
+
+        public IActionResult BulkImport() => View(new OwnerBulkImportResult());
+
+        /// <summary>Doldurulup geri yüklenecek örnek Excel şablonunu indirir.</summary>
+        public IActionResult BulkTemplate()
+        {
+            using var wb = new XLWorkbook();
+            var ws = wb.Worksheets.Add("Kat Malikleri");
+
+            ws.Cell(1, 1).Value = "Ad Soyad";
+            ws.Cell(1, 2).Value = "E-posta";
+            ws.Cell(1, 3).Value = "Telefon";
+
+            var header = ws.Range(1, 1, 1, 3);
+            header.Style.Font.Bold = true;
+            header.Style.Fill.BackgroundColor = XLColor.FromHtml("#E6F4FB");
+
+            // Örnek satırlar — kullanıcı bunların üzerine yazar.
+            ws.Cell(2, 1).Value = "Ahmet Yılmaz";
+            ws.Cell(2, 2).Value = "ahmet.yilmaz@ornek.com";
+            ws.Cell(2, 3).Value = "0532 000 00 00";
+
+            ws.Cell(3, 1).Value = "Ayşe Demir";
+            ws.Cell(3, 2).Value = "ayse.demir@ornek.com";
+            ws.Cell(3, 3).Value = "0533 111 11 11";
+
+            ws.Columns(1, 3).AdjustToContents();
+
+            using var ms = new MemoryStream();
+            wb.SaveAs(ms);
+            return File(ms.ToArray(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "kat-malikleri-sablon.xlsx");
+        }
+
+        /// <summary>
+        /// Yüklenen Excel'deki her satır için bir kat maliki hesabı açar ve şifresini üretir.
+        /// Hatalı satırlar atlanır, diğerleri işlenmeye devam eder; sonuç ekranında satır satır raporlanır.
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        [RequestSizeLimit(10 * 1024 * 1024)]
+        public async Task<IActionResult> BulkImport(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Lütfen bir Excel dosyası seçin.";
+                return RedirectToAction(nameof(BulkImport));
+            }
+
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (ext != ".xlsx")
+            {
+                TempData["Error"] = "Sadece .xlsx uzantılı Excel dosyası yükleyebilirsiniz.";
+                return RedirectToAction(nameof(BulkImport));
+            }
+
+            var result = new OwnerBulkImportResult();
+
+            try
+            {
+                using var stream = file.OpenReadStream();
+                using var wb = new XLWorkbook(stream);
+                var ws = wb.Worksheets.First();
+
+                var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
+                // 1. satır başlık kabul edilir.
+                for (var r = 2; r <= lastRow; r++)
+                {
+                    var fullName = ws.Cell(r, 1).GetString().Trim();
+                    var email    = ws.Cell(r, 2).GetString().Trim();
+                    var phone    = ws.Cell(r, 3).GetString().Trim();
+
+                    // Tamamen boş satırları sessizce atla (Excel'in sonundaki boşluklar).
+                    if (fullName.Length == 0 && email.Length == 0 && phone.Length == 0) continue;
+
+                    var row = new OwnerImportRow
+                    {
+                        RowNumber = r,
+                        FullName  = fullName,
+                        Email     = email,
+                        Phone     = string.IsNullOrWhiteSpace(phone) ? null : phone
+                    };
+                    result.Rows.Add(row);
+
+                    if (fullName.Length == 0) { row.Error = "Ad Soyad boş."; continue; }
+                    if (email.Length == 0)    { row.Error = "E-posta boş."; continue; }
+                    if (!email.Contains('@') || email.Contains(' '))
+                    {
+                        row.Error = "E-posta geçersiz görünüyor.";
+                        continue;
+                    }
+
+                    if (await _users.FindByEmailAsync(email) != null)
+                    {
+                        row.Error = "Bu e-posta ile zaten bir kullanıcı var.";
+                        continue;
+                    }
+
+                    var password = OwnerPasswordGenerator.Generate();
+                    var user = new IdentityUser { UserName = email, Email = email, EmailConfirmed = true };
+                    var createResult = await _users.CreateAsync(user, password);
+                    if (!createResult.Succeeded)
+                    {
+                        row.Error = string.Join(" ", createResult.Errors.Select(e => e.Description));
+                        continue;
+                    }
+
+                    await _users.AddToRoleAsync(user, "KatMaliki");
+
+                    _db.Owners.Add(new Owner
+                    {
+                        FullName  = fullName,
+                        Email     = email,
+                        Phone     = row.Phone,
+                        UserId    = user.Id,
+                        IsActive  = true,
+                        CreatedAt = DateTime.Now
+                    });
+                    await _db.SaveChangesAsync();
+
+                    row.Password = password;
+                    row.Success  = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Excel dosyası okunamadı: " + ex.Message;
+                return RedirectToAction(nameof(BulkImport));
+            }
+
+            if (result.Rows.Count == 0)
+            {
+                TempData["Error"] = "Dosyada işlenecek satır bulunamadı. İlk satır başlık olmalı, veriler 2. satırdan başlamalı.";
+                return RedirectToAction(nameof(BulkImport));
+            }
+
+            // Şifre listesini indirebilmek için sonucu tek kullanımlık olarak sakla.
+            TempData["ImportPasswords"] = System.Text.Json.JsonSerializer.Serialize(
+                result.Rows.Where(x => x.Success).Select(x => new { x.FullName, x.Email, x.Password }));
+
+            return View(result);
+        }
+
+        /// <summary>Toplu ekleme sonrası üretilen şifre listesini Excel olarak indirir.</summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public IActionResult DownloadPasswords(string payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload)) return RedirectToAction(nameof(Index));
+
+            var rows = System.Text.Json.JsonSerializer.Deserialize<List<PasswordRow>>(payload) ?? new();
+
+            using var wb = new XLWorkbook();
+            var ws = wb.Worksheets.Add("Giriş Bilgileri");
+
+            ws.Cell(1, 1).Value = "Ad Soyad";
+            ws.Cell(1, 2).Value = "E-posta (kullanıcı adı)";
+            ws.Cell(1, 3).Value = "Şifre";
+
+            var header = ws.Range(1, 1, 1, 3);
+            header.Style.Font.Bold = true;
+            header.Style.Fill.BackgroundColor = XLColor.FromHtml("#E6F4FB");
+
+            for (var i = 0; i < rows.Count; i++)
+            {
+                ws.Cell(i + 2, 1).Value = rows[i].FullName;
+                ws.Cell(i + 2, 2).Value = rows[i].Email;
+                ws.Cell(i + 2, 3).Value = rows[i].Password;
+            }
+
+            ws.Columns(1, 3).AdjustToContents();
+
+            using var ms = new MemoryStream();
+            wb.SaveAs(ms);
+            return File(ms.ToArray(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"kat-maliki-giris-bilgileri-{DateTime.Now:yyyy-MM-dd}.xlsx");
+        }
+
+        private class PasswordRow
+        {
+            public string FullName { get; set; } = "";
+            public string Email    { get; set; } = "";
+            public string Password { get; set; } = "";
         }
 
         public async Task<IActionResult> Edit(int id)

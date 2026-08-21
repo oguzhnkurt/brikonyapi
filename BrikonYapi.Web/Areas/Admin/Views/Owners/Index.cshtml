@@ -11,10 +11,16 @@
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="card-title mb-0">Kat Malikleri (@Model.Count)</h5>
-        <a href="/Admin/Owners/Create" class="btn btn-primary btn-sm">
-            <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>
-            Yeni Kat Maliki
-        </a>
+        <div class="d-flex gap-2">
+            <a href="/Admin/Owners/BulkImport" class="btn btn-outline-primary btn-sm">
+                <iconify-icon icon="iconamoon:cloud-upload-duotone" class="me-1"></iconify-icon>
+                Excel ile Toplu Ekle
+            </a>
+            <a href="/Admin/Owners/Create" class="btn btn-primary btn-sm">
+                <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>
+                Yeni Kat Maliki
+            </a>
+        </div>
     </div>
     <div class="card-body p-0">
         @if (!Model.Any())

@@ -32,9 +32,17 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Başlangıç Şifresi <span class="text-danger">*</span></label>
-                        <input type="text" name="password" class="form-control" required minlength="8"
-                               placeholder="min. 8 karakter, büyük harf ve rakam içermeli" />
-                        <div class="form-text">Bu şifreyi malike güvenli bir şekilde iletin. Daha sonra "Şifre Sıfırla" ile yenileyebilirsiniz.</div>
+                        <div class="input-group">
+                            <input type="text" name="password" id="pwField" class="form-control" required minlength="8"
+                                   placeholder="min. 8 karakter, büyük harf ve rakam içermeli" />
+                            <button type="button" class="btn btn-outline-primary" id="pwGen">
+                                <iconify-icon icon="iconamoon:synchronize-duotone" class="me-1"></iconify-icon>Şifre Üret
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="pwCopy" title="Kopyala">
+                                <iconify-icon icon="iconamoon:copy-duotone"></iconify-icon>
+                            </button>
+                        </div>
+                        <div class="form-text" id="pwHint">Bu şifreyi malike güvenli bir şekilde iletin. Daha sonra "Şifre Sıfırla" ile yenileyebilirsiniz.</div>
                     </div>
 
                     <div class="mb-4">
@@ -60,3 +68,32 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+(function () {
+    var field = document.getElementById('pwField');
+    var hint  = document.getElementById('pwHint');
+    var seps  = ['!', '*', '.', '?', '-'];
+
+    // Sunucudaki OwnerPasswordGenerator ile aynı kalıp: Brikon!4827
+    document.getElementById('pwGen').addEventListener('click', function () {
+        var sep = seps[Math.floor(Math.random() * seps.length)];
+        var num = Math.floor(1000 + Math.random() * 9000);
+        field.value = 'Brikon' + sep + num;
+        field.focus();
+        field.select();
+    });
+
+    document.getElementById('pwCopy').addEventListener('click', function () {
+        if (!field.value) return;
+        field.select();
+        navigator.clipboard.writeText(field.value).then(function () {
+            var old = hint.textContent;
+            hint.textContent = 'Şifre panoya kopyalandı.';
+            setTimeout(function () { hint.textContent = old; }, 2000);
+        });
+    });
+})();
+</script>
+}

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BrikonYapi.Web.Data.Entities
 {
@@ -19,6 +20,20 @@ namespace BrikonYapi.Web.Data.Entities
 
         /// <summary>Bu aşamanın başladığı genel ilerleme eşiği (%). Kat maliki ekranında "%25+" olarak gösterilir.</summary>
         [Range(0, 100)] public int ThresholdPercentage { get; set; } = 0;
+
+        /// <summary>Bu iş adımının toplam iş programı içindeki ağırlığı (%). Genel ilerleme hesaplamasında
+        /// referans/bilgi amaçlıdır; zorunlu değildir (0 = ağırlık girilmemiş).</summary>
+        [Range(0, 100)] public int WeightPercentage { get; set; } = 0;
+
+        /// <summary>Bu iş adımının kendi ilerlemesi (%) — projenin genel ilerlemesinden (Project.OverallProgressPercentage)
+        /// bağımsız, iş adımı bazında takip için.</summary>
+        [Range(0, 100)] public int ProgressPercentage { get; set; } = 0;
+
+        public DateTime? PlannedStartDate { get; set; }
+        public DateTime? PlannedEndDate { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? EstimatedBudget { get; set; }
 
         public ProjectStageStatus Status { get; set; } = ProjectStageStatus.Pending;
 

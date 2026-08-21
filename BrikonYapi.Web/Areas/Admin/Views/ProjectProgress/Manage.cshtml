@@ -56,11 +56,11 @@
         </div>
     </div>
 
-    <!-- Aşamalar -->
+    <!-- Aşamalar / İş Adımları -->
     <div class="col-lg-7">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="card-title mb-0">İnşaat Aşamaları (@stages.Count)</h6>
+                <h6 class="card-title mb-0">İnşaat Aşamaları / İş Adımları (@stages.Count)</h6>
                 @if (!stages.Any())
                 {
                     <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="SeedDefaultStages" method="post" class="d-inline">
@@ -80,11 +80,14 @@
                         <table class="table table-sm align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width:50px;">Sıra</th>
-                                    <th>Aşama</th>
-                                    <th style="width:80px;">Eşik</th>
-                                    <th style="width:190px;">Durum</th>
-                                    <th style="width:50px;"></th>
+                                    <th style="width:40px;">Sıra</th>
+                                    <th>İş Adımı</th>
+                                    <th style="width:70px;">Ağırlık</th>
+                                    <th style="width:120px;">Tarih Aralığı</th>
+                                    <th style="width:110px;">Bütçe</th>
+                                    <th style="width:120px;">İlerleme</th>
+                                    <th style="width:170px;">Durum</th>
+                                    <th style="width:70px;"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -92,8 +95,21 @@
                                 {
                                     <tr>
                                         <td class="text-muted small">@s.OrderIndex</td>
-                                        <td class="fw-semibold">@s.Name</td>
-                                        <td class="text-muted small">%@s.ThresholdPercentage</td>
+                                        <td class="fw-semibold">
+                                            @s.Name
+                                            <div class="text-muted small fw-normal">Eşik: %@s.ThresholdPercentage</div>
+                                        </td>
+                                        <td class="text-muted small">@(s.WeightPercentage > 0 ? $"%{s.WeightPercentage}" : "—")</td>
+                                        <td class="text-muted small">
+                                            @(s.PlannedStartDate?.ToString("dd.MM.yy") ?? "—") – @(s.PlannedEndDate?.ToString("dd.MM.yy") ?? "—")
+                                        </td>
+                                        <td class="text-muted small">@(s.EstimatedBudget.HasValue ? s.EstimatedBudget.Value.ToString("N0", tr) + " ₺" : "—")</td>
+                                        <td>
+                                            <div class="progress" style="height:6px;">
+                                                <div class="progress-bar" style="width:@(s.ProgressPercentage)%;"></div>
+                                            </div>
+                                            <div class="text-muted small mt-1">%@s.ProgressPercentage</div>
+                                        </td>
                                         <td>
                                             <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="UpdateStageStatus" method="post" class="d-flex gap-1">
                                                 @Html.AntiForgeryToken()
@@ -106,8 +122,11 @@
                                             </form>
                                         </td>
                                         <td class="text-end">
-                                            <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="DeleteStage" method="post"
-                                                  onsubmit="return confirm('Bu aşama silinsin mi?')">
+                                            <button type="button" class="btn btn-sm btn-link p-0 me-1" data-bs-toggle="modal" data-bs-target="#stageEdit-@s.Id" title="Düzenle">
+                                                <iconify-icon icon="iconamoon:edit-duotone"></iconify-icon>
+                                            </button>
+                                            <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="DeleteStage" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Bu iş adımı silinsin mi?')">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="stageId" value="@s.Id" />
                                                 <button type="submit" class="btn btn-sm btn-link text-danger p-0">
@@ -123,32 +142,116 @@
                 }
                 else
                 {
-                    <div class="text-center text-muted py-4 small">Henüz aşama tanımlanmamış.</div>
+                    <div class="text-center text-muted py-4 small">Henüz iş adımı tanımlanmamış.</div>
                 }
             </div>
             <div class="card-footer">
                 <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="AddStage" method="post" class="row g-2 align-items-end">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
-                    <div class="col-5">
-                        <label class="form-label small mb-1">Aşama adı</label>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">İş adımı</label>
                         <input name="name" class="form-control form-control-sm" placeholder="Örn: Çatı" required />
                     </div>
-                    <div class="col-3">
+                    <div class="col-md-2">
                         <label class="form-label small mb-1">Sıra</label>
                         <input name="orderIndex" type="number" class="form-control form-control-sm" value="@(stages.Count + 1)" />
                     </div>
-                    <div class="col-2">
+                    <div class="col-md-2">
                         <label class="form-label small mb-1">Eşik %</label>
                         <input name="thresholdPercentage" type="number" min="0" max="100" class="form-control form-control-sm" value="0" />
                     </div>
-                    <div class="col-2">
+                    <div class="col-md-2">
+                        <label class="form-label small mb-1">Ağırlık %</label>
+                        <input name="weightPercentage" type="number" min="0" max="100" class="form-control form-control-sm" value="0" />
+                    </div>
+                    <div class="col-md-2">
                         <button type="submit" class="btn btn-sm btn-outline-primary w-100">Ekle</button>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small mb-1">Başlangıç</label>
+                        <input name="plannedStartDate" type="date" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small mb-1">Bitiş</label>
+                        <input name="plannedEndDate" type="date" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Tahmini Bütçe (₺)</label>
+                        <input name="estimatedBudget" type="number" step="0.01" min="0" class="form-control form-control-sm" placeholder="Opsiyonel" />
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    <!-- İş adımı düzenleme modalları -->
+    @foreach (var s in stages)
+    {
+        <div class="modal fade" id="stageEdit-@s.Id" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="UpdateStageDetails" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="stageId" value="@s.Id" />
+                        <div class="modal-header">
+                            <h5 class="modal-title">İş Adımını Düzenle</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold">İş adımı</label>
+                                    <input name="name" class="form-control" value="@s.Name" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Ağırlık (%)</label>
+                                    <input name="weightPercentage" type="number" min="0" max="100" class="form-control" value="@s.WeightPercentage" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Sıra</label>
+                                    <input name="orderIndex" type="number" class="form-control" value="@s.OrderIndex" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Başlangıç</label>
+                                    <input name="plannedStartDate" type="date" class="form-control"
+                                           value="@(s.PlannedStartDate?.ToString("yyyy-MM-dd"))" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Bitiş</label>
+                                    <input name="plannedEndDate" type="date" class="form-control"
+                                           value="@(s.PlannedEndDate?.ToString("yyyy-MM-dd"))" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Tahmini Bütçe (₺)</label>
+                                    <!-- GÜVENLİK/DOĞRULUK: number input'un value'su HTML spec gereği her zaman
+                                         nokta-ondalıklı (invariant) olmalı — site kültürü tr-TR (virgül ondalık)
+                                         olduğu için @s.EstimatedBudget'i doğrudan yazmak "250000,00" üretip
+                                         tarayıcının alanı geçersiz/boş göstermesine yol açardı. -->
+                                    <input name="estimatedBudget" type="number" step="0.01" min="0" class="form-control"
+                                           value="@(s.EstimatedBudget?.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Eşik (%)</label>
+                                    <input name="thresholdPercentage" type="number" min="0" max="100" class="form-control" value="@s.ThresholdPercentage" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold">İlerleme (%) — <span class="text-muted fw-normal">%100 olunca durum otomatik "Tamamlandı" olur</span></label>
+                                    <input name="progressPercentage" type="range" min="0" max="100" class="form-range" value="@s.ProgressPercentage"
+                                           oninput="this.nextElementSibling.textContent = this.value + '%'" />
+                                    <div class="text-muted small">@s.ProgressPercentage%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                            <button type="submit" class="btn btn-primary">Kaydet</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- Saha fotoğrafları -->
     <div class="col-12">

@@ -8,81 +8,164 @@
 }
 
 <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-lg-9">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Yeni Ödeme Kalemi — @unit.Project?.Name / @unit.UnitNo</h5>
+                <h5 class="card-title mb-0">Taksitli Ödeme Planı Oluştur — @unit.Project?.Name / @unit.UnitNo</h5>
+                <div class="small text-muted mt-1">Malik: @(unit.Owner?.FullName ?? "Atanmamış")</div>
             </div>
             <div class="card-body">
-                <p class="text-muted small mb-3">
-                    Hakedişe göre birden fazla taksit tanımlayacaksanız "+ Taksit Ekle" ile satır ekleyip
-                    hepsini tek seferde kaydedebilirsiniz. Tutar kaydedilirken malike (varsa) bilgilendirme gönderilir.
-                </p>
+
+                <!-- Adım göstergesi -->
+                <div class="d-flex align-items-center gap-2 mb-4 pm-wizard-steps">
+                    <div class="pm-step active" data-step-label="1">
+                        <span class="pm-step-num">1</span> Plan Bilgileri
+                    </div>
+                    <iconify-icon icon="mdi:chevron-right" class="text-muted"></iconify-icon>
+                    <div class="pm-step" data-step-label="2">
+                        <span class="pm-step-num">2</span> Taksit Tablosu
+                    </div>
+                    <iconify-icon icon="mdi:chevron-right" class="text-muted"></iconify-icon>
+                    <div class="pm-step" data-step-label="3">
+                        <span class="pm-step-num">3</span> Onay
+                    </div>
+                </div>
 
                 <form asp-area="Admin" asp-controller="PaymentSchedules" asp-action="Create" asp-route-unitId="@unit.Id" method="post" id="pmForm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="unitId" value="@unit.Id" />
 
-                    <div id="pmRows">
-                        <div class="pm-row border rounded-3 p-3 mb-3">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="fw-semibold small text-muted pm-row-label">Taksit 1</span>
-                                <button type="button" class="btn btn-sm btn-outline-danger pm-remove" hidden>
-                                    <iconify-icon icon="iconamoon:close"></iconify-icon>
-                                </button>
+                    <!-- ═══ Adım 1: Plan Bilgileri ═══ -->
+                    <div id="pmStep1" class="pm-pane">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Toplam Borç Tutarı <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₺</span>
+                                    <input type="text" id="planTotal" inputmode="numeric" class="form-control"
+                                           placeholder="1.500.000" autocomplete="off" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Taksit Sayısı <span class="text-danger">*</span></label>
+                                <input type="number" id="planCount" class="form-control" min="1" max="60" value="12" />
                             </div>
 
-                            <div class="row g-2 align-items-end">
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Tutar <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">₺</span>
-                                        <input type="text" name="amount" inputmode="numeric" class="form-control pm-amount"
-                                               placeholder="323.475" required autocomplete="off" />
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Vade Tarihi <span class="text-danger">*</span></label>
-                                    <input type="date" name="dueDate" class="form-control"
-                                           value="@DateTime.Today.AddMonths(1).ToString("yyyy-MM-dd")" required />
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Açıklama</label>
-                                    <input type="text" name="description" class="form-control" placeholder="Örn: 3. Hakediş Taksiti" maxlength="300" />
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label small fw-semibold">İnşaat Aşaması</label>
-                                    <select name="projectStageId" class="form-select pm-stage">
-                                        <option value="">Aşamaya bağlı değil (elle gir)</option>
-                                        @foreach (var st in stages)
-                                        {
-                                            <option value="@st.Id" data-percentage="@st.ThresholdPercentage">@st.Name (%@st.ThresholdPercentage)</option>
-                                        }
-                                    </select>
-                                    <div class="form-text small">Seçilirse hakediş yüzdesi otomatik doldurulur; aşama "Tamamlandı" olunca malike gösterilir.</div>
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label small fw-semibold">Hakediş %</label>
-                                    <input type="number" name="hakedisPercentage" class="form-control pm-hakedis" min="0" max="100" placeholder="20" />
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small fw-semibold">Taksit No</label>
-                                    <input type="number" name="installmentNo" class="form-control" min="0" placeholder="3" />
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold d-block">Vade Belirleme Yöntemi</label>
+                                <div class="btn-group" role="group" id="planMethodGroup">
+                                    <input type="radio" class="btn-check" name="planMethod" id="planMethodDate" value="date" checked />
+                                    <label class="btn btn-outline-primary btn-sm" for="planMethodDate">
+                                        <iconify-icon icon="mdi:calendar" class="me-1"></iconify-icon>Sabit Tarih
+                                    </label>
+                                    <input type="radio" class="btn-check" name="planMethod" id="planMethodStage" value="stage" />
+                                    <label class="btn btn-outline-primary btn-sm" for="planMethodStage">
+                                        <iconify-icon icon="mdi:office-building-outline" class="me-1"></iconify-icon>Proje Aşaması
+                                    </label>
                                 </div>
                             </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">İlk Vade Tarihi</label>
+                                <input type="date" id="planStartDate" class="form-control"
+                                       value="@DateTime.Today.AddMonths(1).ToString("yyyy-MM-dd")" />
+                            </div>
+                            <div class="col-md-6" id="planPeriodWrap">
+                                <label class="form-label small fw-semibold">Ödeme Periyodu</label>
+                                <select id="planPeriod" class="form-select">
+                                    <option value="1">Aylık</option>
+                                    <option value="2">2 Aylık</option>
+                                    <option value="3">3 Aylık</option>
+                                    <option value="6">6 Aylık</option>
+                                    <option value="12">Yıllık</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Açıklama</label>
+                                <input type="text" id="planDescription" class="form-control" maxlength="200"
+                                       placeholder="Örn: Arsa payı hakediş ödemesi (opsiyonel, taksit başlıklarının önüne eklenir)" />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" id="pmToStep2" class="btn btn-primary">
+                                Devam Et <iconify-icon icon="mdi:chevron-right" class="ms-1"></iconify-icon>
+                            </button>
                         </div>
                     </div>
 
-                    <button type="button" id="pmAddRow" class="btn btn-link btn-sm px-0 mb-3 text-decoration-none">
-                        <iconify-icon icon="mdi:plus" class="me-1"></iconify-icon>Taksit Ekle
-                    </button>
+                    <!-- ═══ Adım 2: Taksit Tablosu ═══ -->
+                    <div id="pmStep2" class="pm-pane" hidden>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="small text-muted">
+                                Taksitleri buradan düzenleyebilir, silebilir veya yeni satır ekleyebilirsiniz.
+                            </div>
+                            <button type="button" id="pmEqualSplit" class="btn btn-sm btn-outline-primary">
+                                <iconify-icon icon="mdi:division" class="me-1"></iconify-icon>Sıfırla &amp; Eşit Böl
+                            </button>
+                        </div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
-                            Kaydet
+                        <div id="pmRows"></div>
+
+                        <button type="button" id="pmAddRow" class="btn btn-link btn-sm px-0 mb-2 text-decoration-none">
+                            <iconify-icon icon="mdi:plus" class="me-1"></iconify-icon>Satır Ekle
                         </button>
-                        <a href="/Admin/PaymentSchedules?unitId=@unit.Id" class="btn btn-outline-secondary">İptal</a>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <button type="button" class="btn btn-outline-secondary pm-back" data-back="pmStep1">
+                                <iconify-icon icon="mdi:chevron-left" class="me-1"></iconify-icon>Geri
+                            </button>
+                            <button type="button" id="pmToStep3" class="btn btn-primary">
+                                Devam Et <iconify-icon icon="mdi:chevron-right" class="ms-1"></iconify-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ═══ Adım 3: Onay ═══ -->
+                    <div id="pmStep3" class="pm-pane" hidden>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <div class="border rounded-3 p-3 text-center">
+                                    <div class="text-muted small">Taksit Sayısı</div>
+                                    <div class="fs-4 fw-bold" id="pmSummaryCount">0</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded-3 p-3 text-center">
+                                    <div class="text-muted small">Toplam</div>
+                                    <div class="fs-4 fw-bold" id="pmSummaryTotal">₺0</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded-3 p-3 text-center">
+                                    <div class="text-muted small">Durum</div>
+                                    <div class="fs-4 fw-bold" id="pmSummaryBalance">—</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead class="table-light">
+                                    <tr><th>#</th><th>Başlık</th><th>Vade</th><th class="text-end">Tutar</th></tr>
+                                </thead>
+                                <tbody id="pmSummaryRows"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <button type="button" class="btn btn-outline-secondary pm-back" data-back="pmStep2">
+                                <iconify-icon icon="mdi:chevron-left" class="me-1"></iconify-icon>Geri
+                            </button>
+                            <div class="d-flex gap-2">
+                                <a href="/Admin/PaymentSchedules?unitId=@unit.Id" class="btn btn-outline-secondary">İptal</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                                    Planı Kaydet
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -90,87 +173,278 @@
     </div>
 </div>
 
+<!-- Satır şablonu (JS ile kopyalanır, forma dahil edilmez) -->
+<template id="pmRowTemplate">
+    <div class="pm-row border rounded-3 p-3 mb-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="fw-semibold small text-muted pm-row-label">Taksit 1</span>
+            <button type="button" class="btn btn-sm btn-outline-danger pm-remove">
+                <iconify-icon icon="iconamoon:close"></iconify-icon>
+            </button>
+        </div>
+        <div class="row g-2 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Tutar <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text">₺</span>
+                    <input type="text" name="amount" inputmode="numeric" class="form-control pm-amount"
+                           placeholder="323.475" required autocomplete="off" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Vade Tarihi <span class="text-danger">*</span></label>
+                <input type="date" name="dueDate" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Başlık / Açıklama</label>
+                <input type="text" name="description" class="form-control" placeholder="Örn: 3. Hakediş Taksiti" maxlength="300" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">İnşaat Aşaması</label>
+                <select name="projectStageId" class="form-select pm-stage">
+                    <option value="">Aşamaya bağlı değil (elle gir)</option>
+                    @foreach (var st in stages)
+                    {
+                        <option value="@st.Id" data-percentage="@st.ThresholdPercentage">@st.Name (%@st.ThresholdPercentage)</option>
+                    }
+                </select>
+                <div class="form-text small">Seçilirse hakediş yüzdesi otomatik doldurulur.</div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Hakediş %</label>
+                <input type="number" name="hakedisPercentage" class="form-control pm-hakedis" min="0" max="100" placeholder="20" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Taksit No</label>
+                <input type="number" name="installmentNo" class="form-control" min="0" placeholder="3" />
+            </div>
+        </div>
+    </div>
+</template>
+
+<style>
+    .pm-wizard-steps .pm-step { display:flex; align-items:center; gap:.4rem; color:#9aa2ad; font-weight:600; font-size:.9rem; }
+    .pm-wizard-steps .pm-step .pm-step-num {
+        width:24px; height:24px; border-radius:50%; background:#e9ecef; color:#6c757d;
+        display:inline-flex; align-items:center; justify-content:center; font-size:.8rem;
+    }
+    .pm-wizard-steps .pm-step.active { color:#0d6efd; }
+    .pm-wizard-steps .pm-step.active .pm-step-num { background:#0d6efd; color:#fff; }
+    .pm-wizard-steps .pm-step.done .pm-step-num { background:#198754; color:#fff; }
+</style>
+
 @section Scripts {
 <script>
 (function () {
-    var rowsWrap = document.getElementById('pmRows');
-    var addBtn   = document.getElementById('pmAddRow');
-    var form     = document.getElementById('pmForm');
+    var form      = document.getElementById('pmForm');
+    var rowsWrap  = document.getElementById('pmRows');
+    var addBtn    = document.getElementById('pmAddRow');
+    var rowTpl    = document.getElementById('pmRowTemplate');
+    var stepEls   = { 1: document.getElementById('pmStep1'), 2: document.getElementById('pmStep2'), 3: document.getElementById('pmStep3') };
+    var stepBadges = document.querySelectorAll('.pm-wizard-steps .pm-step');
 
-    // ── Tutar alanına yazarken binlik ayraç (323.475 gibi) ──────
+    // ── Yardımcılar ──────────────────────────────────────────────
+    // Türkçe biçimli tutarı (1.234.567,89) sayıya çevirir: binlik noktaları kaldırır,
+    // ondalık virgülü noktaya çevirir. Kuruş içeren otomatik-bölünmüş tutarlar için gerekli
+    // (basit "sadece rakamları al" yaklaşımı virgülden sonraki kuruşu tam sayıya katıp
+    // tutarı 100 kat büyütüyordu — bu fonksiyon o hatayı düzeltir).
+    function parseAmount(str) {
+        if (!str) return 0;
+        var cleaned = String(str).replace(/\./g, '').replace(',', '.');
+        var n = parseFloat(cleaned);
+        return isNaN(n) ? 0 : n;
+    }
+    // Sunucuya gönderilecek değeri, sitenin varsayılan kültürü olan tr-TR'nin
+    // decimal.TryParse'ının kesin olarak doğru okuyacağı biçime çevirir (virgül ondalık, binlik ayraç yok).
+    function toServerAmount(n) {
+        return n.toFixed(2).replace('.', ',');
+    }
+    function formatTL(n) {
+        return '₺' + Math.round(n).toLocaleString('tr-TR');
+    }
     function formatAmountInput(input) {
         var digits = input.value.replace(/\D/g, '');
         input.value = digits ? Number(digits).toLocaleString('tr-TR') : '';
     }
-
     function wireAmountField(input) {
         input.addEventListener('input', function () { formatAmountInput(input); });
     }
-
-    // ── Aşama seçilince hakediş % alanını otomatik doldur ───────
     function wireStageField(row) {
         var select = row.querySelector('.pm-stage');
         var hakedis = row.querySelector('.pm-hakedis');
-        select.addEventListener('change', function () {
-            var opt = select.options[select.selectedIndex];
-            var pct = opt.getAttribute('data-percentage');
-            if (pct) {
-                hakedis.value = pct;
-                hakedis.readOnly = true;
-            } else {
-                hakedis.readOnly = false;
-            }
-        });
+        select.addEventListener('change', function () { applyStageToRow(row); });
     }
-
+    function applyStageToRow(row) {
+        var select = row.querySelector('.pm-stage');
+        var hakedis = row.querySelector('.pm-hakedis');
+        var opt = select.options[select.selectedIndex];
+        var pct = opt.getAttribute('data-percentage');
+        if (pct) { hakedis.value = pct; hakedis.readOnly = true; }
+        else { hakedis.readOnly = false; }
+    }
     function renumberRows() {
         var rows = rowsWrap.querySelectorAll('.pm-row');
         rows.forEach(function (row, i) {
             row.querySelector('.pm-row-label').textContent = 'Taksit ' + (i + 1);
-            var removeBtn = row.querySelector('.pm-remove');
-            removeBtn.hidden = rows.length <= 1;
         });
     }
+    function addMonths(date, months) {
+        var d = new Date(date.getTime());
+        d.setMonth(d.getMonth() + months);
+        return d;
+    }
+    function toIsoDate(d) {
+        var mm = String(d.getMonth() + 1).padStart(2, '0');
+        var dd = String(d.getDate()).padStart(2, '0');
+        return d.getFullYear() + '-' + mm + '-' + dd;
+    }
 
-    rowsWrap.querySelectorAll('.pm-amount').forEach(wireAmountField);
-    rowsWrap.querySelectorAll('.pm-row').forEach(wireStageField);
-    renumberRows();
+    function newRow() {
+        var node = rowTpl.content.firstElementChild.cloneNode(true);
+        wireAmountField(node.querySelector('.pm-amount'));
+        wireStageField(node);
+        node.querySelector('.pm-remove').addEventListener('click', function () {
+            node.remove();
+            renumberRows();
+        });
+        return node;
+    }
 
     addBtn.addEventListener('click', function () {
-        var firstRow = rowsWrap.querySelector('.pm-row');
-        var clone = firstRow.cloneNode(true);
-        clone.querySelectorAll('input').forEach(function (inp) {
-            if (inp.type === 'date') {
-                inp.value = firstRow.querySelector('input[name="dueDate"]').value;
-            } else {
-                inp.value = '';
-                inp.readOnly = false;
-            }
-        });
-        var cloneSelect = clone.querySelector('.pm-stage');
-        if (cloneSelect) cloneSelect.selectedIndex = 0;
-        clone.querySelector('.pm-remove').addEventListener('click', function () {
-            clone.remove();
-            renumberRows();
-        });
-        wireAmountField(clone.querySelector('.pm-amount'));
-        wireStageField(clone);
-        rowsWrap.appendChild(clone);
+        var row = newRow();
+        var lastDate = rowsWrap.querySelector('.pm-row:last-child input[name="dueDate"]');
+        row.querySelector('input[name="dueDate"]').value = lastDate ? lastDate.value : toIsoDate(new Date());
+        rowsWrap.appendChild(row);
         renumberRows();
-        clone.querySelector('.pm-amount').focus();
+        row.querySelector('.pm-amount').focus();
     });
 
-    rowsWrap.querySelectorAll('.pm-remove').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            btn.closest('.pm-row').remove();
-            renumberRows();
+    // ── Adım 1 → Adım 2: taksitleri otomatik üret (kalan son taksite eklenir, fazla satır oluşmaz) ──
+    function generateRowsFromPlan() {
+        var total  = parseAmount(document.getElementById('planTotal').value);
+        var count  = parseInt(document.getElementById('planCount').value, 10) || 0;
+        var method = document.querySelector('input[name="planMethod"]:checked').value;
+        var startStr = document.getElementById('planStartDate').value;
+        var periodMonths = parseInt(document.getElementById('planPeriod').value, 10) || 1;
+        var planDesc = document.getElementById('planDescription').value.trim();
+        var startDate = startStr ? new Date(startStr + 'T00:00:00') : new Date();
+
+        rowsWrap.innerHTML = '';
+        if (count <= 0) return;
+
+        // Kuruş bazında böl: kalan son taksite eklenir — fazladan 0 TL'lik satır asla oluşmaz.
+        var totalKurus = Math.round(total * 100);
+        var baseKurus  = Math.floor(totalKurus / count);
+        var remainder  = totalKurus - (baseKurus * count);
+
+        var stageSelectSample = rowTpl.content.querySelector('.pm-stage');
+        var stageOptions = Array.prototype.slice.call(stageSelectSample.options).filter(function (o) { return o.value; });
+
+        for (var i = 0; i < count; i++) {
+            var row = newRow();
+            var amountKurus = baseKurus + (i === count - 1 ? remainder : 0);
+            row.querySelector('.pm-amount').value = (amountKurus / 100).toLocaleString('tr-TR');
+
+            var dueDate = addMonths(startDate, i * periodMonths);
+            row.querySelector('input[name="dueDate"]').value = toIsoDate(dueDate);
+
+            var title = 'Taksit ' + (i + 1) + '/' + count;
+            row.querySelector('input[name="description"]').value = planDesc ? (planDesc + ' — ' + title) : title;
+            row.querySelector('input[name="installmentNo"]').value = i + 1;
+
+            if (method === 'stage' && stageOptions.length > 0) {
+                var stageOpt = stageOptions[Math.min(i, stageOptions.length - 1)];
+                var select = row.querySelector('.pm-stage');
+                select.value = stageOpt.value;
+                applyStageToRow(row);
+            }
+
+            rowsWrap.appendChild(row);
+        }
+        renumberRows();
+    }
+
+    document.getElementById('pmEqualSplit').addEventListener('click', function () {
+        if (!confirm('Mevcut taksit tablosu silinip plan bilgilerine göre yeniden oluşturulacak. Devam edilsin mi?')) return;
+        generateRowsFromPlan();
+    });
+
+    // ── Vade yöntemi: Proje Aşaması seçilince periyot alanı gizlensin ──
+    document.getElementById('planMethodGroup').addEventListener('change', function () {
+        var isStage = document.getElementById('planMethodStage').checked;
+        document.getElementById('planPeriodWrap').style.display = isStage ? 'none' : '';
+    });
+
+    // ── Adım geçişleri ───────────────────────────────────────────
+    function showStep(n) {
+        Object.keys(stepEls).forEach(function (k) { stepEls[k].hidden = (Number(k) !== n); });
+        stepBadges.forEach(function (b) {
+            var lbl = Number(b.getAttribute('data-step-label'));
+            b.classList.toggle('active', lbl === n);
+            b.classList.toggle('done', lbl < n);
         });
+        if (n === 3) buildSummary();
+    }
+
+    document.getElementById('pmToStep2').addEventListener('click', function () {
+        var total = parseAmount(document.getElementById('planTotal').value);
+        var count = parseInt(document.getElementById('planCount').value, 10) || 0;
+        if (total <= 0) { alert('Lütfen toplam borç tutarını girin.'); return; }
+        if (count <= 0) { alert('Lütfen geçerli bir taksit sayısı girin.'); return; }
+        if (rowsWrap.children.length === 0) generateRowsFromPlan();
+        showStep(2);
     });
 
-    // Gönderilmeden hemen önce binlik ayraçları temizle (sunucu düz sayı bekler).
+    document.getElementById('pmToStep3').addEventListener('click', function () {
+        if (rowsWrap.querySelectorAll('.pm-row').length === 0) { alert('En az bir taksit satırı olmalı.'); return; }
+        showStep(3);
+    });
+
+    document.querySelectorAll('.pm-back').forEach(function (btn) {
+        btn.addEventListener('click', function () { showStep(Number(btn.dataset.back.replace('pmStep', ''))); });
+    });
+
+    function buildSummary() {
+        var rows = rowsWrap.querySelectorAll('.pm-row');
+        var tbody = document.getElementById('pmSummaryRows');
+        tbody.innerHTML = '';
+        var sum = 0;
+        rows.forEach(function (row, i) {
+            var amt = parseAmount(row.querySelector('.pm-amount').value);
+            sum += amt;
+            var due = row.querySelector('input[name="dueDate"]').value;
+            var desc = row.querySelector('input[name="description"]').value || ('Taksit ' + (i + 1));
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td class="text-muted">' + (i + 1) + '</td><td>' + desc + '</td><td>' + due + '</td><td class="text-end">' + formatTL(amt) + '</td>';
+            tbody.appendChild(tr);
+        });
+        document.getElementById('pmSummaryCount').textContent = rows.length;
+        document.getElementById('pmSummaryTotal').textContent = formatTL(sum);
+
+        var planTotal = parseAmount(document.getElementById('planTotal').value);
+        var balanceEl = document.getElementById('pmSummaryBalance');
+        if (planTotal > 0 && Math.round(sum) === Math.round(planTotal)) {
+            balanceEl.textContent = 'Dengeli';
+            balanceEl.className = 'fs-4 fw-bold text-success';
+        } else if (planTotal > 0) {
+            balanceEl.textContent = 'Fark: ' + formatTL(Math.abs(sum - planTotal));
+            balanceEl.className = 'fs-4 fw-bold text-warning';
+        } else {
+            balanceEl.textContent = '—';
+            balanceEl.className = 'fs-4 fw-bold text-muted';
+        }
+    }
+
+    // Toplam tutar alanına binlik ayraç
+    document.getElementById('planTotal').addEventListener('input', function () { formatAmountInput(this); });
+
+    // Gönderilmeden hemen önce tutarları sunucunun (tr-TR) doğru okuyacağı biçime çevir.
+    // NOT: burada \D ile "sadece rakamları al" yapmak YANLIŞTIR — kuruş içeren otomatik
+    // bölünmüş tutarlarda (ör. 416.804,12) virgülden sonrasını da tam sayıya katıp tutarı
+    // 100 kat büyütür. parseAmount + toServerAmount ile doğru şekilde çevriliyor.
     form.addEventListener('submit', function () {
         form.querySelectorAll('.pm-amount').forEach(function (inp) {
-            inp.value = inp.value.replace(/\D/g, '');
+            inp.value = toServerAmount(parseAmount(inp.value));
         });
     });
 })();

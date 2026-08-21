@@ -106,7 +106,10 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
         // ── Aşamalar ─────────────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddStage(int id, string name, int orderIndex, int thresholdPercentage)
+        public async Task<IActionResult> AddStage(
+            int id, string name, int orderIndex, int thresholdPercentage,
+            int weightPercentage = 0, DateTime? plannedStartDate = null, DateTime? plannedEndDate = null,
+            decimal? estimatedBudget = null)
         {
             if (!await _db.Projects.AnyAsync(p => p.Id == id)) return NotFound();
 
@@ -122,13 +125,54 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 Name = name.Trim(),
                 OrderIndex = orderIndex,
                 ThresholdPercentage = Math.Clamp(thresholdPercentage, 0, 100),
+                WeightPercentage = Math.Clamp(weightPercentage, 0, 100),
+                PlannedStartDate = plannedStartDate,
+                PlannedEndDate = plannedEndDate,
+                EstimatedBudget = estimatedBudget,
                 Status = ProjectStageStatus.Pending,
                 CreatedAt = DateTime.Now
             });
 
             await _db.SaveChangesAsync();
-            TempData["Success"] = "Aşama eklendi.";
+            TempData["Success"] = "İş adımı eklendi.";
             return RedirectToAction(nameof(Manage), new { id });
+        }
+
+        /// <summary>Bir iş adımının tüm alanlarını (SantiyePro tarzı "İş Adımı Düzenle" formundan) günceller.</summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStageDetails(
+            int stageId, string name, int orderIndex, int thresholdPercentage, int weightPercentage,
+            DateTime? plannedStartDate, DateTime? plannedEndDate, decimal? estimatedBudget, int progressPercentage)
+        {
+            var stage = await _db.ProjectStages.FirstOrDefaultAsync(s => s.Id == stageId);
+            if (stage == null) return NotFound();
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                TempData["Error"] = "Aşama adı zorunludur.";
+                return RedirectToAction(nameof(Manage), new { id = stage.ProjectId });
+            }
+
+            stage.Name = name.Trim();
+            stage.OrderIndex = orderIndex;
+            stage.ThresholdPercentage = Math.Clamp(thresholdPercentage, 0, 100);
+            stage.WeightPercentage = Math.Clamp(weightPercentage, 0, 100);
+            stage.PlannedStartDate = plannedStartDate;
+            stage.PlannedEndDate = plannedEndDate;
+            stage.EstimatedBudget = estimatedBudget;
+            stage.ProgressPercentage = Math.Clamp(progressPercentage, 0, 100);
+            stage.UpdatedAt = DateTime.Now;
+
+            // İlerleme %100 olduysa ve durum hâlâ tamamlanmadıysa otomatik "Tamamlandı" işaretle.
+            if (stage.ProgressPercentage >= 100 && stage.Status != ProjectStageStatus.Completed)
+            {
+                stage.Status = ProjectStageStatus.Completed;
+                stage.CompletedAt = DateTime.Now;
+            }
+
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "İş adımı güncellendi.";
+            return RedirectToAction(nameof(Manage), new { id = stage.ProjectId });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
