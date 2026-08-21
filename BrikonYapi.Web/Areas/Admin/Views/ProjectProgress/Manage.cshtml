@@ -155,7 +155,10 @@
         </div>
     </div>
 
-    <!-- Yeni İş Adımı — sağdan kayan panel -->
+</div>
+
+<!-- Yeni İş Adımı — sağdan kayan panel (row'un dışında; Bootstrap'ın ".row > *" kuralı
+     position:relative dayattığı için offcanvas'ın position:fixed'ini eziyordu) -->
     <div class="offcanvas offcanvas-end pp-stage-panel" tabindex="-1" id="stageAddPanel">
         <div class="offcanvas-header border-bottom">
             <h5 class="offcanvas-title">
@@ -288,6 +291,7 @@
         </div>
     }
 
+    <div class="row g-3">
     <!-- Saha fotoğrafları -->
     <div class="col-12">
         <div class="card">
