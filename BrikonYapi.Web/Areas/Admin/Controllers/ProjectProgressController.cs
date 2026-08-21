@@ -109,7 +109,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         public async Task<IActionResult> AddStage(
             int id, string name, int orderIndex,
             int weightPercentage = 0, DateTime? plannedStartDate = null, DateTime? plannedEndDate = null,
-            decimal? estimatedBudget = null)
+            decimal? estimatedBudget = null, int progressPercentage = 0)
         {
             if (!await _db.Projects.AnyAsync(p => p.Id == id)) return NotFound();
 
@@ -118,6 +118,8 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 TempData["Error"] = "Aşama adı zorunludur.";
                 return RedirectToAction(nameof(Manage), new { id });
             }
+
+            var clampedProgress = Math.Clamp(progressPercentage, 0, 100);
 
             _db.ProjectStages.Add(new ProjectStage
             {
@@ -128,7 +130,9 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 PlannedStartDate = plannedStartDate,
                 PlannedEndDate = plannedEndDate,
                 EstimatedBudget = estimatedBudget,
-                Status = ProjectStageStatus.Pending,
+                ProgressPercentage = clampedProgress,
+                Status = clampedProgress >= 100 ? ProjectStageStatus.Completed : ProjectStageStatus.Pending,
+                CompletedAt = clampedProgress >= 100 ? DateTime.Now : null,
                 CreatedAt = DateTime.Now
             });
 
