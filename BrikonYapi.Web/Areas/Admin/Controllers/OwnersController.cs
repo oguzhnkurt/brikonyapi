@@ -22,17 +22,27 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             _users = users;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? projectId)
         {
-            var owners = await _db.Owners
+            var query = _db.Owners
                 .Include(o => o.Units).ThenInclude(u => u.Project)
+                .AsQueryable();
+
+            if (projectId.HasValue)
+                query = query.Where(o => o.Units.Any(u => u.ProjectId == projectId.Value));
+
+            var owners = await query
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
-            ViewBag.AllProjects = await _db.Projects
+            var allProjects = await _db.Projects
                 .Where(p => p.IsActive)
                 .OrderBy(p => p.Name)
                 .ToListAsync();
+
+            ViewBag.AllProjects = allProjects;
+            ViewBag.ProjectFilter = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(allProjects, "Id", "Name", projectId);
+            ViewBag.SelectedProjectId = projectId;
 
             // Temsil Heyeti: hangi malik hangi proje(ler)de üye — yıldız rozeti ve modal için.
             ViewBag.CommitteeAccess = await _db.OwnerProjectAccesses

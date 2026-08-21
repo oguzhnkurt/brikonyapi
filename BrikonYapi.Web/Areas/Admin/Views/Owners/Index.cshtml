@@ -1,4 +1,5 @@
 @using BrikonYapi.Web.Data.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
 @model List<Owner>
 @{
     ViewData["Title"] = "Kat Malikleri";
@@ -6,12 +7,29 @@
 
     var allProjects = (List<Project>)(ViewBag.AllProjects ?? new List<Project>());
     var committeeAccess = (List<OwnerProjectAccess>)(ViewBag.CommitteeAccess ?? new List<OwnerProjectAccess>());
+    var projectFilter = (SelectList)ViewBag.ProjectFilter;
+    int? selectedProjectId = ViewBag.SelectedProjectId;
 }
 
 <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
         <h5 class="card-title mb-0">Kat Malikleri (@Model.Count)</h5>
-        <div class="d-flex gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <form method="get" class="d-flex align-items-center gap-2">
+                <select name="projectId" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width:220px">
+                    <option value="">Tüm Projeler</option>
+                    @foreach (var item in projectFilter)
+                    {
+                        <option value="@item.Value" selected="@(item.Selected)">@item.Text</option>
+                    }
+                </select>
+                @if (selectedProjectId.HasValue)
+                {
+                    <a href="/Admin/Owners" class="btn btn-sm btn-outline-secondary" title="Filtreyi temizle">
+                        <iconify-icon icon="iconamoon:close"></iconify-icon>
+                    </a>
+                }
+            </form>
             <a href="/Admin/Owners/BulkImport" class="btn btn-outline-primary btn-sm">
                 <iconify-icon icon="iconamoon:cloud-upload-duotone" class="me-1"></iconify-icon>
                 Excel ile Toplu Ekle
