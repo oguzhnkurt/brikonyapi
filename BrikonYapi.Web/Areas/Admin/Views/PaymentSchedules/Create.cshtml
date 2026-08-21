@@ -205,10 +205,9 @@
                     <option value="">Aşamaya bağlı değil (elle gir)</option>
                     @foreach (var st in stages)
                     {
-                        <option value="@st.Id" data-percentage="@st.ThresholdPercentage">@st.Name (%@st.ThresholdPercentage)</option>
+                        <option value="@st.Id">@st.Name</option>
                     }
                 </select>
-                <div class="form-text small">Seçilirse hakediş yüzdesi otomatik doldurulur.</div>
             </div>
             <div class="col-md-2">
                 <label class="form-label small fw-semibold">Hakediş %</label>
@@ -269,19 +268,6 @@
     function wireAmountField(input) {
         input.addEventListener('input', function () { formatAmountInput(input); });
     }
-    function wireStageField(row) {
-        var select = row.querySelector('.pm-stage');
-        var hakedis = row.querySelector('.pm-hakedis');
-        select.addEventListener('change', function () { applyStageToRow(row); });
-    }
-    function applyStageToRow(row) {
-        var select = row.querySelector('.pm-stage');
-        var hakedis = row.querySelector('.pm-hakedis');
-        var opt = select.options[select.selectedIndex];
-        var pct = opt.getAttribute('data-percentage');
-        if (pct) { hakedis.value = pct; hakedis.readOnly = true; }
-        else { hakedis.readOnly = false; }
-    }
     function renumberRows() {
         var rows = rowsWrap.querySelectorAll('.pm-row');
         rows.forEach(function (row, i) {
@@ -302,7 +288,6 @@
     function newRow() {
         var node = rowTpl.content.firstElementChild.cloneNode(true);
         wireAmountField(node.querySelector('.pm-amount'));
-        wireStageField(node);
         node.querySelector('.pm-remove').addEventListener('click', function () {
             node.remove();
             renumberRows();
@@ -356,7 +341,6 @@
                 var stageOpt = stageOptions[Math.min(i, stageOptions.length - 1)];
                 var select = row.querySelector('.pm-stage');
                 select.value = stageOpt.value;
-                applyStageToRow(row);
             }
 
             rowsWrap.appendChild(row);

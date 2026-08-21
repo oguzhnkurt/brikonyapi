@@ -18,7 +18,7 @@ namespace BrikonYapi.Web.Data.Entities
         /// <summary>Listede gösterim sırası (1'den başlar).</summary>
         public int OrderIndex { get; set; } = 0;
 
-        /// <summary>Bu aşamanın başladığı genel ilerleme eşiği (%). Kat maliki ekranında "%25+" olarak gösterilir.</summary>
+        /// <summary>Kullanılmıyor (kaldırıldı) — geriye dönük DB uyumluluğu için sütun korunuyor.</summary>
         [Range(0, 100)] public int ThresholdPercentage { get; set; } = 0;
 
         /// <summary>Bu iş adımının toplam iş programı içindeki ağırlığı (%). Genel ilerleme hesaplamasında

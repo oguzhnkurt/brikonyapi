@@ -44,10 +44,10 @@
                             <option value="">Aşamaya bağlı değil (elle gir)</option>
                             @foreach (var st in stages)
                             {
-                                <option value="@st.Id" data-percentage="@st.ThresholdPercentage">@st.Name (%@st.ThresholdPercentage)</option>
+                                <option value="@st.Id">@st.Name</option>
                             }
                         </select>
-                        <div class="form-text small">Seçilirse hakediş yüzdesi otomatik doldurulur; aşama "Tamamlandı" olunca malike gösterilir.</div>
+                        <div class="form-text small">Seçilirse aşama "Tamamlandı" olunca malike gösterilir.</div>
                     </div>
 
                     <div class="row g-2 mb-3">
@@ -89,8 +89,6 @@
     var display = document.getElementById('pmAmount');
     var hidden  = document.getElementById('pmAmountHidden');
     var form    = document.getElementById('pmEditForm');
-    var stageSelect = document.getElementById('pmStageSelect');
-    var hakedisInput = document.getElementById('pmHakedisInput');
 
     display.addEventListener('input', function () {
         var digits = display.value.replace(/\D/g, '');
@@ -101,18 +99,6 @@
         hidden.value = display.value.replace(/\D/g, '');
     });
 
-    function syncHakedisFromStage() {
-        var opt = stageSelect.options[stageSelect.selectedIndex];
-        var pct = opt.getAttribute('data-percentage');
-        if (pct) {
-            hakedisInput.value = pct;
-            hakedisInput.readOnly = true;
-        } else {
-            hakedisInput.readOnly = false;
-        }
-    }
-    stageSelect.addEventListener('change', syncHakedisFromStage);
-    syncHakedisFromStage();
 })();
 </script>
 }

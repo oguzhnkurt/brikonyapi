@@ -66,9 +66,9 @@ else
                             }
                             @if (s.ProjectStage != null)
                             {
-                                <span class="badge bg-info-subtle text-info ms-1">@s.ProjectStage.Name (%@s.ProjectStage.ThresholdPercentage)</span>
+                                <span class="badge bg-info-subtle text-info ms-1">@s.ProjectStage.Name</span>
                             }
-                            else if (s.HakedisPercentage.HasValue)
+                            @if (s.HakedisPercentage.HasValue)
                             {
                                 <span class="badge bg-info-subtle text-info ms-1">Hakediş %@s.HakedisPercentage</span>
                             }

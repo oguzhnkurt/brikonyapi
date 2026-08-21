@@ -76,7 +76,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 return View(new PaymentSchedule { UnitId = unitId, DueDate = DateTime.Today.AddMonths(1) });
             }
 
-            // Seçilen aşamaların eşik yüzdesini önceden çekelim ki her satırda tekrar sorgu atmayalım.
+            // Seçilen aşamaların geçerliliğini önceden çekelim ki her satırda tekrar sorgu atmayalım.
             var stageIds = projectStageId.Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
             var stages = stageIds.Count > 0
                 ? await _db.ProjectStages.Where(s => stageIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id)
@@ -96,8 +96,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                     Amount = amount[i],
                     DueDate = dueDate[i],
                     Description = i < description.Count ? description[i] : null,
-                    // Bir aşamaya bağlıysa yüzde o aşamanın eşiğinden otomatik gelir; değilse elle girilen değer kullanılır.
-                    HakedisPercentage = stage?.ThresholdPercentage ?? (i < hakedisPercentage.Count ? hakedisPercentage[i] : null),
+                    HakedisPercentage = i < hakedisPercentage.Count ? hakedisPercentage[i] : null,
                     ProjectStageId = stage?.Id,
                     InstallmentNo = i < installmentNo.Count ? (installmentNo[i] ?? 0) : 0,
                     CreatedAt = DateTime.Now
@@ -148,7 +147,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 return View(schedule);
             }
 
-            // Bir aşama seçildiyse yüzde o aşamanın eşiğinden otomatik gelir; seçilmediyse elle girilen değer korunur.
+            // Seçilen aşamanın geçerli olduğunu doğrula (yüzde artık elle girilen değerden gelir).
             ProjectStage? stage = schedule.ProjectStageId.HasValue
                 ? await _db.ProjectStages.FirstOrDefaultAsync(s => s.Id == schedule.ProjectStageId.Value)
                 : null;
@@ -158,7 +157,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             existing.Description = schedule.Description;
             existing.Status = schedule.Status;
             existing.ProjectStageId = stage?.Id;
-            existing.HakedisPercentage = stage?.ThresholdPercentage ?? schedule.HakedisPercentage;
+            existing.HakedisPercentage = schedule.HakedisPercentage;
             existing.InstallmentNo = schedule.InstallmentNo;
             existing.UpdatedAt = DateTime.Now;
 

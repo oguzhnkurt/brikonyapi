@@ -25,8 +25,7 @@ namespace BrikonYapi.Web.Data.Entities
         /// <summary>Taksit sırası (Taksit 1, Taksit 2 ...). 0 ise vade tarihine göre sıralanır.</summary>
         public int InstallmentNo { get; set; } = 0;
 
-        /// <summary>Bu taksidin karşılık geldiği hakediş yüzdesi (ör. %20). Taksit detayında gösterilir.
-        /// Bir ProjectStage'e bağlıysa o aşamanın ThresholdPercentage'ından otomatik doldurulur.</summary>
+        /// <summary>Bu taksidin karşılık geldiği hakediş yüzdesi (ör. %20). Elle girilir, taksit detayında gösterilir.</summary>
         public int? HakedisPercentage { get; set; }
 
         /// <summary>Bu taksidin tetikleyicisi olan inşaat aşaması (opsiyonel). Bağlıysa, admin bu aşamayı

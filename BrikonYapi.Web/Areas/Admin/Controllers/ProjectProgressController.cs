@@ -107,7 +107,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         // ── Aşamalar ─────────────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> AddStage(
-            int id, string name, int orderIndex, int thresholdPercentage,
+            int id, string name, int orderIndex,
             int weightPercentage = 0, DateTime? plannedStartDate = null, DateTime? plannedEndDate = null,
             decimal? estimatedBudget = null)
         {
@@ -124,7 +124,6 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 ProjectId = id,
                 Name = name.Trim(),
                 OrderIndex = orderIndex,
-                ThresholdPercentage = Math.Clamp(thresholdPercentage, 0, 100),
                 WeightPercentage = Math.Clamp(weightPercentage, 0, 100),
                 PlannedStartDate = plannedStartDate,
                 PlannedEndDate = plannedEndDate,
@@ -141,7 +140,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         /// <summary>Bir iş adımının tüm alanlarını (SantiyePro tarzı "İş Adımı Düzenle" formundan) günceller.</summary>
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStageDetails(
-            int stageId, string name, int orderIndex, int thresholdPercentage, int weightPercentage,
+            int stageId, string name, int orderIndex, int weightPercentage,
             DateTime? plannedStartDate, DateTime? plannedEndDate, decimal? estimatedBudget, int progressPercentage)
         {
             var stage = await _db.ProjectStages.FirstOrDefaultAsync(s => s.Id == stageId);
@@ -155,7 +154,6 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             stage.Name = name.Trim();
             stage.OrderIndex = orderIndex;
-            stage.ThresholdPercentage = Math.Clamp(thresholdPercentage, 0, 100);
             stage.WeightPercentage = Math.Clamp(weightPercentage, 0, 100);
             stage.PlannedStartDate = plannedStartDate;
             stage.PlannedEndDate = plannedEndDate;
@@ -242,21 +240,20 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Manage), new { id });
             }
 
-            var defaults = new (string Name, int Threshold)[]
+            var defaults = new[]
             {
-                ("Planlama", 0), ("Kazı", 5), ("Temel", 15), ("Karkas", 25),
-                ("Dış Cephe", 55), ("İç Mekan", 70), ("Bitirme", 85), ("Teslim", 100)
+                "Planlama", "Kazı", "Temel", "Karkas",
+                "Dış Cephe", "İç Mekan", "Bitirme", "Teslim"
             };
 
             var i = 1;
-            foreach (var (name, threshold) in defaults)
+            foreach (var name in defaults)
             {
                 _db.ProjectStages.Add(new ProjectStage
                 {
                     ProjectId = id,
                     Name = name,
                     OrderIndex = i++,
-                    ThresholdPercentage = threshold,
                     Status = ProjectStageStatus.Pending,
                     CreatedAt = DateTime.Now
                 });
