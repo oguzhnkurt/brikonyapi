@@ -74,11 +74,9 @@
         }
     </div>
 
-    @{
-        if (!string.IsNullOrEmpty(p.SafeVirtualTourUrl))
-        {
-            tourItems.Add((p.Project.Name, p.SafeVirtualTourUrl, p.Project.MainImagePath));
-        }
+    @if (!string.IsNullOrEmpty(p.SafeVirtualTourUrl))
+    {
+        tourItems.Add((p.Project.Name, p.SafeVirtualTourUrl, p.Project.MainImagePath));
     }
 
     <!-- İnşaat aşamaları -->
