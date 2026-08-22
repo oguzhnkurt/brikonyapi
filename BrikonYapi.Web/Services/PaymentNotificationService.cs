@@ -27,7 +27,8 @@ namespace BrikonYapi.Web.Services
             _logger = logger;
         }
 
-        private static string Money(decimal amount) => amount.ToString("N0", new System.Globalization.CultureInfo("tr-TR")) + " ₺";
+        private static string Money(PaymentSchedule schedule) =>
+            schedule.CurrencySymbol + schedule.Amount.ToString("N0", new System.Globalization.CultureInfo("tr-TR"));
 
         private async Task<OwnerNotificationPreference> GetPreferenceAsync(int ownerId)
         {
@@ -90,14 +91,14 @@ namespace BrikonYapi.Web.Services
         public Task NotifyNewScheduleAsync(Owner owner, PaymentSchedule schedule)
         {
             var desc = string.IsNullOrWhiteSpace(schedule.Description) ? "Yeni ödeme kalemi" : schedule.Description;
-            var message = $"{desc} için {Money(schedule.Amount)} tutarında yeni bir ödeme kalemi tanımlandı. Vade: {schedule.DueDate:dd.MM.yyyy}.";
+            var message = $"{desc} için {Money(schedule)} tutarında yeni bir ödeme kalemi tanımlandı. Vade: {schedule.DueDate:dd.MM.yyyy}.";
             return NotifyOwnerAsync(owner, schedule, "Yeni Ödeme Kalemi — Brikon Yapı", message);
         }
 
         public Task NotifyReminderAsync(Owner owner, PaymentSchedule schedule)
         {
             var desc = string.IsNullOrWhiteSpace(schedule.Description) ? "Taksit" : schedule.Description;
-            var message = $"{desc} taksitinizin vadesi {schedule.DueDate:dd.MM.yyyy} tarihinde doluyor. Tutar: {Money(schedule.Amount)}.";
+            var message = $"{desc} taksitinizin vadesi {schedule.DueDate:dd.MM.yyyy} tarihinde doluyor. Tutar: {Money(schedule)}.";
             return NotifyOwnerAsync(owner, schedule, "Ödeme Hatırlatması — Brikon Yapı", message);
         }
 
@@ -106,21 +107,21 @@ namespace BrikonYapi.Web.Services
         public Task NotifyStageReachedAsync(Owner owner, PaymentSchedule schedule, ProjectStage stage)
         {
             var desc = string.IsNullOrWhiteSpace(schedule.Description) ? "Hakediş taksitiniz" : schedule.Description;
-            var message = $"\"{stage.Name}\" aşaması tamamlandı. {desc} ({Money(schedule.Amount)}) ödemeye hazır.";
+            var message = $"\"{stage.Name}\" aşaması tamamlandı. {desc} ({Money(schedule)}) ödemeye hazır.";
             return NotifyOwnerAsync(owner, schedule, "İlerleme Tamamlandı — Brikon Yapı", message);
         }
 
         public Task NotifyOverdueAsync(Owner owner, PaymentSchedule schedule)
         {
             var desc = string.IsNullOrWhiteSpace(schedule.Description) ? "Taksit" : schedule.Description;
-            var message = $"{desc} taksitinizin vadesi geçti ({schedule.DueDate:dd.MM.yyyy}). Tutar: {Money(schedule.Amount)}. Lütfen en kısa sürede ödeme yapın.";
+            var message = $"{desc} taksitinizin vadesi geçti ({schedule.DueDate:dd.MM.yyyy}). Tutar: {Money(schedule)}. Lütfen en kısa sürede ödeme yapın.";
             return NotifyOwnerAsync(owner, schedule, "Gecikmiş Ödeme — Brikon Yapı", message);
         }
 
         public Task NotifyTransactionApprovedAsync(Owner owner, PaymentSchedule schedule)
         {
             var desc = string.IsNullOrWhiteSpace(schedule.Description) ? "Taksit" : schedule.Description;
-            var message = $"{desc} ({Money(schedule.Amount)}) ödemeniz onaylandı. Teşekkür ederiz.";
+            var message = $"{desc} ({Money(schedule)}) ödemeniz onaylandı. Teşekkür ederiz.";
             return NotifyOwnerAsync(owner, schedule, "Ödemeniz Onaylandı — Brikon Yapı", message);
         }
 
@@ -143,7 +144,7 @@ namespace BrikonYapi.Web.Services
                     <h3>Yeni Dekont Bildirimi</h3>
                     <p><strong>{System.Web.HttpUtility.HtmlEncode(owner.FullName)}</strong>,
                     <strong>{System.Web.HttpUtility.HtmlEncode(schedule.Description ?? "taksit")}</strong>
-                    ({Money(schedule.Amount)}) için bir havale/EFT dekontu yükledi.</p>
+                    ({Money(schedule)}) için bir havale/EFT dekontu yükledi.</p>
                     <p style="margin-top:16px;font-size:.85rem;color:#888;">
                         Admin Panel → Ödeme Planları üzerinden onaylayabilir veya reddedebilirsiniz.
                     </p>

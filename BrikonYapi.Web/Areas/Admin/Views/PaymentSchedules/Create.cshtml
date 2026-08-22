@@ -41,10 +41,15 @@
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold">Toplam Borç Tutarı <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <span class="input-group-text">₺</span>
+                                    <select id="planCurrency" name="currency" class="form-select" style="max-width:90px; flex:0 0 auto;">
+                                        <option value="TRY" selected>₺ TL</option>
+                                        <option value="USD">$ USD</option>
+                                        <option value="EUR">€ EUR</option>
+                                    </select>
                                     <input type="text" id="planTotal" inputmode="numeric" class="form-control"
                                            placeholder="1.500.000" autocomplete="off" />
                                 </div>
+                                <div class="form-text small">Malik doğrudan seçilen para biriminde öder (TL karşılığı hesaplanmaz).</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold">Taksit Sayısı <span class="text-danger">*</span></label>
@@ -186,7 +191,7 @@
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">Tutar <span class="text-danger">*</span></label>
                 <div class="input-group">
-                    <span class="input-group-text">₺</span>
+                    <span class="input-group-text pm-row-currency-symbol">₺</span>
                     <input type="text" name="amount" inputmode="numeric" class="form-control pm-amount"
                            placeholder="323.475" required autocomplete="off" />
                 </div>
@@ -258,8 +263,17 @@
     function toServerAmount(n) {
         return n.toFixed(2).replace('.', ',');
     }
+    var currencySymbols = { TRY: '₺', USD: '$', EUR: '€' };
+    function getCurrencySymbol() {
+        var sel = document.getElementById('planCurrency');
+        return currencySymbols[sel.value] || '₺';
+    }
     function formatTL(n) {
-        return '₺' + Math.round(n).toLocaleString('tr-TR');
+        return getCurrencySymbol() + Math.round(n).toLocaleString('tr-TR');
+    }
+    function updateRowCurrencySymbols() {
+        var symbol = getCurrencySymbol();
+        rowsWrap.querySelectorAll('.pm-row-currency-symbol').forEach(function (el) { el.textContent = symbol; });
     }
     function formatAmountInput(input) {
         var digits = input.value.replace(/\D/g, '');
@@ -301,8 +315,12 @@
         row.querySelector('input[name="dueDate"]').value = lastDate ? lastDate.value : toIsoDate(new Date());
         rowsWrap.appendChild(row);
         renumberRows();
+        updateRowCurrencySymbols();
         row.querySelector('.pm-amount').focus();
     });
+
+    // Para birimi değiştiğinde hem toplam borç alanının hem de mevcut taksit satırlarının sembolü güncellenir.
+    document.getElementById('planCurrency').addEventListener('change', updateRowCurrencySymbols);
 
     // ── Adım 1 → Adım 2: taksitleri otomatik üret (kalan son taksite eklenir, fazla satır oluşmaz) ──
     function generateRowsFromPlan() {
@@ -346,6 +364,7 @@
             rowsWrap.appendChild(row);
         }
         renumberRows();
+        updateRowCurrencySymbols();
     }
 
     document.getElementById('pmEqualSplit').addEventListener('click', function () {

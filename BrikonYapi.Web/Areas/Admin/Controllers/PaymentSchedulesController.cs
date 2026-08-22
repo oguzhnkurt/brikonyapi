@@ -63,7 +63,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         public async Task<IActionResult> Create(
             int unitId, List<decimal> amount, List<DateTime> dueDate,
             List<string?> description, List<int?> hakedisPercentage, List<int?> installmentNo,
-            List<int?> projectStageId)
+            List<int?> projectStageId, PaymentCurrency currency = PaymentCurrency.TRY)
         {
             var unit = await _db.Units.Include(u => u.Project).Include(u => u.Owner).FirstOrDefaultAsync(u => u.Id == unitId);
             if (unit == null) return NotFound();
@@ -94,6 +94,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 {
                     UnitId = unitId,
                     Amount = amount[i],
+                    Currency = currency,
                     DueDate = dueDate[i],
                     Description = i < description.Count ? description[i] : null,
                     HakedisPercentage = i < hakedisPercentage.Count ? hakedisPercentage[i] : null,
@@ -153,6 +154,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 : null;
 
             existing.Amount = schedule.Amount;
+            existing.Currency = schedule.Currency;
             existing.DueDate = schedule.DueDate;
             existing.Description = schedule.Description;
             existing.Status = schedule.Status;

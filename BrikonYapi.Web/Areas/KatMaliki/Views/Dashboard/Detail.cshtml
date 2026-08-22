@@ -4,7 +4,8 @@
     ViewData["Title"] = "Taksit Detayı";
     var tr = new System.Globalization.CultureInfo("tr-TR");
     var unit = ViewBag.Unit as Unit;
-    var amountUsd = await Fx.FormatUsdEquivalentAsync(Model.Amount);
+    // Sadece TL taksitlerde bilgi amaçlı dolar karşılığı gösterilir; USD/EUR taksitler zaten doğrudan o para biriminde.
+    var amountUsd = Model.Currency == PaymentCurrency.TRY ? await Fx.FormatUsdEquivalentAsync(Model.Amount) : null;
 
     var isPaid = Model.Status == PaymentScheduleStatus.Paid;
     var isLate = Model.Status == PaymentScheduleStatus.Overdue
@@ -33,7 +34,7 @@
             @(isPaid ? "Ödendi" : isLate ? "Gecikti" : "Bekliyor")
         </span>
     </div>
-    <div class="km-det-amount">₺@Model.Amount.ToString("N0", tr)</div>
+    <div class="km-det-amount">@Model.CurrencySymbol@Model.Amount.ToString("N0", tr)</div>
     @if (amountUsd != null)
     {
         <div class="km-det-amount-fx">@amountUsd</div>

@@ -41,14 +41,25 @@ namespace BrikonYapi.Web.Areas.KatMaliki.Controllers
                 .ToList();
 
             var allSchedules = owner.Units.SelectMany(u => u.PaymentSchedules).ToList();
+
+            // Taksitler farklı para birimlerinde olabilir (TL/USD/EUR) — toplamlar karışmasın diye
+            // para birimine göre ayrı ayrı hesaplanır.
+            var paymentTotals = allSchedules
+                .GroupBy(s => s.Currency)
+                .Select(g => new CurrencyPaymentTotal
+                {
+                    Currency = g.Key,
+                    Paid = g.Where(s => s.Status == PaymentScheduleStatus.Paid).Sum(s => s.Amount),
+                    Remaining = g.Where(s => s.Status == PaymentScheduleStatus.Pending || s.Status == PaymentScheduleStatus.Overdue).Sum(s => s.Amount)
+                })
+                .OrderBy(t => t.Currency)
+                .ToList();
+
             var model = new ProgressPageViewModel
             {
                 Owner = owner,
                 HasAnySchedule = allSchedules.Count > 0,
-                PaidTotal = allSchedules.Where(s => s.Status == PaymentScheduleStatus.Paid).Sum(s => s.Amount),
-                RemainingTotal = allSchedules
-                    .Where(s => s.Status == PaymentScheduleStatus.Pending || s.Status == PaymentScheduleStatus.Overdue)
-                    .Sum(s => s.Amount)
+                PaymentTotals = paymentTotals
             };
 
             model.RecentNews = await _db.Announcements

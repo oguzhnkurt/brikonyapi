@@ -80,8 +80,8 @@
 
     @if (isFirstProject && Model.HasAnySchedule)
     {
-        <!-- Ödeme özeti -->
-        @if (Model.RemainingTotal <= 0 && Model.PaidTotal > 0)
+        <!-- Ödeme özeti (para birimine göre ayrı — bkz. Admin taksit sihirbazı) -->
+        @if (Model.PaymentTotals.All(t => t.Remaining <= 0) && Model.PaymentTotals.Any(t => t.Paid > 0))
         {
             <div class="km-home-banner mb-3">
                 <iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon>
@@ -89,18 +89,21 @@
             </div>
         }
 
-        <div class="km-home-pay-cards mb-3">
-            <div class="km-home-pay-card">
-                <span class="km-home-pay-icon is-paid"><iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon></span>
-                <span class="km-home-pay-label">Ödenen</span>
-                <span class="km-home-pay-value is-paid">₺@Model.PaidTotal.ToString("N0", tr)</span>
+        @foreach (var pt in Model.PaymentTotals)
+        {
+            <div class="km-home-pay-cards mb-3">
+                <div class="km-home-pay-card">
+                    <span class="km-home-pay-icon is-paid"><iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon></span>
+                    <span class="km-home-pay-label">Ödenen @(Model.PaymentTotals.Count > 1 ? $"({pt.Currency})" : "")</span>
+                    <span class="km-home-pay-value is-paid">@pt.Symbol@pt.Paid.ToString("N0", tr)</span>
+                </div>
+                <div class="km-home-pay-card">
+                    <span class="km-home-pay-icon is-remaining"><iconify-icon icon="iconamoon:credit-card-duotone"></iconify-icon></span>
+                    <span class="km-home-pay-label">Kalan @(Model.PaymentTotals.Count > 1 ? $"({pt.Currency})" : "")</span>
+                    <span class="km-home-pay-value">@pt.Symbol@pt.Remaining.ToString("N0", tr)</span>
+                </div>
             </div>
-            <div class="km-home-pay-card">
-                <span class="km-home-pay-icon is-remaining"><iconify-icon icon="iconamoon:credit-card-duotone"></iconify-icon></span>
-                <span class="km-home-pay-label">Kalan</span>
-                <span class="km-home-pay-value">₺@Model.RemainingTotal.ToString("N0", tr)</span>
-            </div>
-        </div>
+        }
 
         <a href="/KatMaliki/Dashboard" class="km-home-link mb-4">
             Tüm ödemeleri gör <iconify-icon icon="iconamoon:arrow-right-2"></iconify-icon>

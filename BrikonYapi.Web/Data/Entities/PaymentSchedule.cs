@@ -5,6 +5,11 @@ namespace BrikonYapi.Web.Data.Entities
 {
     public enum PaymentScheduleStatus { Pending = 0, Paid = 1, Overdue = 2, Cancelled = 3 }
 
+    /// <summary>Bir taksidin/planın tahsil edildiği para birimi. Bazı projelerde ödeme dolar veya euro
+    /// kuru üzerinden alınır — bu durumda Amount doğrudan o para biriminde saklanır, TL karşılığı
+    /// hesaplanmaz (malik doğrudan dolar/euro öder).</summary>
+    public enum PaymentCurrency { TRY = 0, USD = 1, EUR = 2 }
+
     /// <summary>Hakedişe göre bir bağımsız bölüm için tanımlanan tek bir ödeme kalemi/taksiti.</summary>
     public class PaymentSchedule
     {
@@ -15,6 +20,19 @@ namespace BrikonYapi.Web.Data.Entities
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
+
+        /// <summary>Bu taksidin para birimi. Plan bazında tek bir para birimi seçilir (bkz. Admin
+        /// taksit sihirbazı) — aynı plandaki tüm taksitler aynı para biriminde olur.</summary>
+        public PaymentCurrency Currency { get; set; } = PaymentCurrency.TRY;
+
+        /// <summary>Görüntüleme için para birimi sembolü (₺/$/€). Veritabanına yazılmaz.</summary>
+        [NotMapped]
+        public string CurrencySymbol => Currency switch
+        {
+            PaymentCurrency.USD => "$",
+            PaymentCurrency.EUR => "€",
+            _ => "₺"
+        };
 
         [Required] public DateTime DueDate { get; set; }
 

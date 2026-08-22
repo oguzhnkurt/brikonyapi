@@ -21,11 +21,16 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Tutar <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <span class="input-group-text">₺</span>
+                                <select asp-for="Currency" class="form-select" style="max-width:90px; flex:0 0 auto;">
+                                    <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.TRY">₺ TL</option>
+                                    <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.USD">$ USD</option>
+                                    <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.EUR">€ EUR</option>
+                                </select>
                                 <input type="text" id="pmAmount" inputmode="numeric" class="form-control"
                                        value="@Model.Amount.ToString("N0", new System.Globalization.CultureInfo("tr-TR"))" required autocomplete="off" />
                                 <input type="hidden" asp-for="Amount" id="pmAmountHidden" />
                             </div>
+                            <div class="form-text small">Malik doğrudan seçilen para biriminde öder (TL karşılığı hesaplanmaz).</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Vade Tarihi <span class="text-danger">*</span></label>

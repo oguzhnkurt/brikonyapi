@@ -10,17 +10,24 @@
         .ThenBy(x => x.Schedule.DueDate)
         .ToList();
 
-    var paidTotal = allSchedules
-        .Where(x => x.Schedule.Status == PaymentScheduleStatus.Paid)
-        .Sum(x => x.Schedule.Amount);
-
-    var remainingTotal = allSchedules
-        .Where(x => x.Schedule.Status == PaymentScheduleStatus.Pending || x.Schedule.Status == PaymentScheduleStatus.Overdue)
-        .Sum(x => x.Schedule.Amount);
-
-    // Sadece bilgi amaçlı dolar karşılığı — resmi tutar ve tahsilat her zaman TL'dir.
-    var paidUsd = await Fx.FormatUsdEquivalentAsync(paidTotal);
-    var remainingUsd = await Fx.FormatUsdEquivalentAsync(remainingTotal);
+    // Taksitler farklı para birimlerinde (TL/USD/EUR) olabilir — toplamlar karışmasın diye
+    // para birimine göre ayrı ayrı hesaplanır (bkz. Admin taksit sihirbazı: para birimi plan bazında seçilir).
+    string SymbolOf(PaymentCurrency c) => c switch { PaymentCurrency.USD => "$", PaymentCurrency.EUR => "€", _ => "₺" };
+    var currencyTotals = new[] { PaymentCurrency.TRY, PaymentCurrency.USD, PaymentCurrency.EUR }
+        .Select(c => new
+        {
+            Currency = c,
+            Symbol = SymbolOf(c),
+            Paid = allSchedules.Where(x => x.Schedule.Currency == c && x.Schedule.Status == PaymentScheduleStatus.Paid).Sum(x => x.Schedule.Amount),
+            Remaining = allSchedules.Where(x => x.Schedule.Currency == c && (x.Schedule.Status == PaymentScheduleStatus.Pending || x.Schedule.Status == PaymentScheduleStatus.Overdue)).Sum(x => x.Schedule.Amount),
+            HasAny = allSchedules.Any(x => x.Schedule.Currency == c)
+        })
+        .Where(g => g.HasAny)
+        .ToList();
+    if (currencyTotals.Count == 0)
+    {
+        currencyTotals.Add(new { Currency = PaymentCurrency.TRY, Symbol = SymbolOf(PaymentCurrency.TRY), Paid = 0m, Remaining = 0m, HasAny = true });
+    }
 
     // Filtre çipleri için kategori belirleme
     string FilterOf(PaymentSchedule s)
@@ -55,24 +62,36 @@
 
 <div class="km-pay-hero mb-3">
     <div class="km-pay-hero-title">Ödeme Planım</div>
-    <div class="km-pay-stats">
-        <div class="km-pay-stat">
-            <div class="km-pay-stat-label">Ödenen</div>
-            <div class="km-pay-stat-value">₺@paidTotal.ToString("N0", tr)</div>
-            @if (paidUsd != null)
-            {
-                <div class="km-pay-stat-fx">@paidUsd</div>
-            }
+    @for (var ctIdx = 0; ctIdx < currencyTotals.Count; ctIdx++)
+    {
+        var g = currencyTotals[ctIdx];
+        <div class="km-pay-stats @(ctIdx > 0 ? "mt-2" : "")">
+            <div class="km-pay-stat">
+                <div class="km-pay-stat-label">Ödenen @(currencyTotals.Count > 1 ? $"({g.Currency})" : "")</div>
+                <div class="km-pay-stat-value">@g.Symbol@g.Paid.ToString("N0", tr)</div>
+                @if (g.Currency == PaymentCurrency.TRY)
+                {
+                    var paidUsd = await Fx.FormatUsdEquivalentAsync(g.Paid);
+                    if (paidUsd != null)
+                    {
+                        <div class="km-pay-stat-fx">@paidUsd</div>
+                    }
+                }
+            </div>
+            <div class="km-pay-stat">
+                <div class="km-pay-stat-label">Kalan @(currencyTotals.Count > 1 ? $"({g.Currency})" : "")</div>
+                <div class="km-pay-stat-value">@g.Symbol@g.Remaining.ToString("N0", tr)</div>
+                @if (g.Currency == PaymentCurrency.TRY)
+                {
+                    var remainingUsd = await Fx.FormatUsdEquivalentAsync(g.Remaining);
+                    if (remainingUsd != null)
+                    {
+                        <div class="km-pay-stat-fx">@remainingUsd</div>
+                    }
+                }
+            </div>
         </div>
-        <div class="km-pay-stat">
-            <div class="km-pay-stat-label">Kalan</div>
-            <div class="km-pay-stat-value">₺@remainingTotal.ToString("N0", tr)</div>
-            @if (remainingUsd != null)
-            {
-                <div class="km-pay-stat-fx">@remainingUsd</div>
-            }
-        </div>
-    </div>
+    }
 </div>
 
 @if (!allSchedules.Any())
@@ -158,7 +177,7 @@ else
                         <span class="km-pay-due">Vade: @s.DueDate.ToString("dd MMM yyyy", tr)</span>
                     </span>
                     <span class="km-pay-right">
-                        <span class="km-pay-amount">₺@s.Amount.ToString("N0", tr)</span>
+                        <span class="km-pay-amount">@s.CurrencySymbol@s.Amount.ToString("N0", tr)</span>
                         <iconify-icon icon="iconamoon:arrow-right-2" class="km-pay-chev"></iconify-icon>
                     </span>
                 </a>
@@ -180,15 +199,20 @@ else
                 @for (var m = 1; m <= 12; m++)
                 {
                     var monthSchedules = allSchedules.Where(x => x.Schedule.DueDate.Year == y && x.Schedule.DueDate.Month == m).ToList();
-                    var sum = monthSchedules.Sum(x => x.Schedule.Amount);
                     var count = monthSchedules.Count;
+                    // Aynı ay içinde farklı para birimleri olabilir (ör. bir taksit TL, bir diğeri USD) —
+                    // toplamlar karışmasın diye her para birimi ayrı gösterilir.
+                    var monthSums = monthSchedules
+                        .GroupBy(x => x.Schedule.Currency)
+                        .Select(grp => SymbolOf(grp.Key) + grp.Sum(x => x.Schedule.Amount).ToString("N0", tr))
+                        .ToList();
                     var isToday = y == todayYear && m == todayMonth;
 
                     <div class="km-cal-cell @(isToday ? "is-today" : "") @(count > 0 ? "has-pay" : "")" data-year="@y" data-month="@m">
                         <div class="km-cal-month">@monthNamesTr[m - 1]</div>
                         @if (count > 0)
                         {
-                            <div class="km-cal-amount">₺@sum.ToString("N0", tr)</div>
+                            <div class="km-cal-amount">@string.Join(" · ", monthSums)</div>
                             <div class="km-cal-count"><span class="km-cal-dot"></span>@count ödeme</div>
                         }
                         else

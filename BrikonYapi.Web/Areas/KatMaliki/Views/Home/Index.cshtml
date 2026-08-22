@@ -61,7 +61,7 @@ else
             <div class="km-unit-card-bottom">
                 @if (nextPending != null)
                 {
-                    <span>Yaklaşan ödeme: <strong>@nextPending.Amount.ToString("N0") TL</strong> — @nextPending.DueDate.ToString("dd.MM.yyyy")</span>
+                    <span>Yaklaşan ödeme: <strong>@nextPending.CurrencySymbol@nextPending.Amount.ToString("N0")</strong> — @nextPending.DueDate.ToString("dd.MM.yyyy")</span>
                 }
                 else
                 {

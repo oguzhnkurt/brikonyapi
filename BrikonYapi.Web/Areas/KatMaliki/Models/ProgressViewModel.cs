@@ -37,14 +37,23 @@ namespace BrikonYapi.Web.Areas.KatMaliki.Models
             ?? Stages.LastOrDefault(s => s.Status == ProjectStageStatus.Completed);
     }
 
+    /// <summary>Bir para birimi için ödenen/kalan toplamı. Taksitler TL/USD/EUR karışık olabildiğinden
+    /// (bkz. Admin taksit sihirbazı) toplamlar para birimine göre ayrı tutulur, birbirine katılmaz.</summary>
+    public class CurrencyPaymentTotal
+    {
+        public PaymentCurrency Currency { get; set; }
+        public decimal Paid { get; set; }
+        public decimal Remaining { get; set; }
+        public string Symbol => Currency switch { PaymentCurrency.USD => "$", PaymentCurrency.EUR => "€", _ => "₺" };
+    }
+
     public class ProgressPageViewModel
     {
         public Owner Owner { get; set; } = null!;
         public List<ProjectProgressViewModel> Projects { get; set; } = new();
 
         // ── Ana sayfa alt bölümü: ödeme özeti + haberler ─────────
-        public decimal PaidTotal { get; set; }
-        public decimal RemainingTotal { get; set; }
+        public List<CurrencyPaymentTotal> PaymentTotals { get; set; } = new();
         public bool HasAnySchedule { get; set; }
         public List<Announcement> RecentNews { get; set; } = new();
     }

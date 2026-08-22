@@ -51,11 +51,15 @@ else
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                     <div>
                         <div class="fw-semibold">
-                            ₺@s.Amount.ToString("N0", tr) — @(string.IsNullOrWhiteSpace(s.Description) ? "Ödeme" : s.Description)
-                            @{ var usdEq = await Fx.FormatUsdEquivalentAsync(s.Amount); }
-                            @if (usdEq != null)
+                            @s.CurrencySymbol@s.Amount.ToString("N0", tr) — @(string.IsNullOrWhiteSpace(s.Description) ? "Ödeme" : s.Description)
+                            @if (s.Currency == PaymentCurrency.TRY)
                             {
-                                <span class="text-muted small">(@usdEq)</span>
+                                // Sadece TL taksitlerde bilgi amaçlı dolar karşılığı gösterilir; USD/EUR taksitler zaten doğrudan o para biriminde.
+                                var usdEq = await Fx.FormatUsdEquivalentAsync(s.Amount);
+                                if (usdEq != null)
+                                {
+                                    <span class="text-muted small">(@usdEq)</span>
+                                }
                             }
                         </div>
                         <div class="text-muted small">
@@ -116,7 +120,7 @@ else
                                 {
                                     <tr>
                                         <td>@(t.Method == PaymentMethod.BankTransfer ? "Havale/EFT" : "Kredi Kartı")</td>
-                                        <td>₺@t.Amount.ToString("N0", tr)</td>
+                                        <td>@s.CurrencySymbol@t.Amount.ToString("N0", tr)</td>
                                         <td>
                                             @if (!string.IsNullOrEmpty(t.ReceiptFilePath))
                                             {
