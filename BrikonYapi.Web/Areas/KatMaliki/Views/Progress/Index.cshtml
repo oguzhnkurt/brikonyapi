@@ -59,13 +59,6 @@
         <div class="km-prog-bar mt-3">
             <div class="km-prog-bar-fill" style="width:@(p.OverallProgress)%"></div>
         </div>
-        @if (p.CurrentStage != null)
-        {
-            <div class="km-prog-current mt-3">
-                <iconify-icon icon="iconamoon:certificate-badge-duotone"></iconify-icon>
-                Mevcut aşama: <strong>@p.CurrentStage.Name</strong>
-            </div>
-        }
     </div>
 
     <!-- 360° sanal tur -->
