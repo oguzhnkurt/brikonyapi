@@ -14,6 +14,12 @@
     </div>
 }
 
+@{
+    // 360° sanal tur kartları artık projeler döngüsünün içinde değil, Ödenen/Kalan
+    // ödeme özetinin altında gösteriliyor; bu yüzden döngü içinde toplanıp orada basılıyor.
+    var tourItems = new List<(string Title, string Url, string? Image)>();
+}
+
 @for (var projectIndex = 0; projectIndex < Model.Projects.Count; projectIndex++)
 {
     var p = Model.Projects[projectIndex];
@@ -68,21 +74,11 @@
         }
     </div>
 
-    <!-- 360° sanal tur -->
-    @if (!string.IsNullOrEmpty(p.SafeVirtualTourUrl))
-    {
-        <h6 class="km-section-title">Projeyi Gezin</h6>
-        <button type="button" class="km-tour-card mb-4"
-                data-tour-url="@p.SafeVirtualTourUrl"
-                data-tour-title="@p.Project.Name">
-            <div class="km-tour-bg" style="@(!string.IsNullOrEmpty(p.Project.MainImagePath) ? $"background-image:url('{p.Project.MainImagePath}')" : "")"></div>
-            <span class="km-tour-badge">
-                <iconify-icon icon="iconamoon:3d-duotone"></iconify-icon> 360° Sanal Tur
-            </span>
-            <span class="km-tour-cta">
-                <iconify-icon icon="iconamoon:player-play-duotone"></iconify-icon> Sanal turu başlat
-            </span>
-        </button>
+    @{
+        if (!string.IsNullOrEmpty(p.SafeVirtualTourUrl))
+        {
+            tourItems.Add((p.Project.Name, p.SafeVirtualTourUrl, p.Project.MainImagePath));
+        }
     }
 
     <!-- İnşaat aşamaları -->
@@ -184,6 +180,26 @@
     <a href="/KatMaliki/Dashboard" class="km-home-link mb-4">
         Tüm ödemeleri gör <iconify-icon icon="iconamoon:arrow-right-2"></iconify-icon>
     </a>
+}
+
+<!-- 360° sanal tur -->
+@if (tourItems.Any())
+{
+    <h6 class="km-section-title">Projeyi Gezin</h6>
+    @foreach (var t in tourItems)
+    {
+        <button type="button" class="km-tour-card mb-4"
+                data-tour-url="@t.Url"
+                data-tour-title="@t.Title">
+            <div class="km-tour-bg" style="@(!string.IsNullOrEmpty(t.Image) ? $"background-image:url('{t.Image}')" : "")"></div>
+            <span class="km-tour-badge">
+                <iconify-icon icon="iconamoon:3d-duotone"></iconify-icon> 360° Sanal Tur
+            </span>
+            <span class="km-tour-cta">
+                <iconify-icon icon="iconamoon:player-play-duotone"></iconify-icon> Sanal turu başlat
+            </span>
+        </button>
+    }
 }
 
 @if (Model.RecentNews.Any())
