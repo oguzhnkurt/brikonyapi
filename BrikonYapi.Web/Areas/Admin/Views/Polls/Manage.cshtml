@@ -205,8 +205,11 @@ else if (expired)
                 <form asp-area="Admin" asp-controller="Polls" asp-action="AddOption" method="post" class="d-flex gap-2">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
-                    <input name="text" class="form-control form-control-sm" placeholder="Yeni seçenek metni" required />
-                    <button type="submit" class="btn btn-sm btn-outline-primary">Ekle</button>
+                    <input name="text" class="form-control" placeholder="Yeni seçenek metni" required />
+                    <button type="submit" class="btn bk-btn-save text-nowrap">
+                        <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>
+                        Seçenek Ekle
+                    </button>
                 </form>
             </div>
         </div>
