@@ -268,12 +268,15 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(Manage), new { id });
         }
 
-        /// <summary>Admin'in yandan açılan panelde yazdığı iş adımı listesini TÜM aktif projelere uygular.
-        /// Bir projede aynı isimli (büyük/küçük harf duyarsız) bir adım zaten varsa o satır atlanır,
-        /// böylece panel tekrar tekrar kullanılabilir.</summary>
+        /// <summary>Yandan açılan "Standart Aşama Listesini Düzenle" panelinde hazırlanan iş adımı listesini
+        /// SADECE bu projeye ekler (çoklu / özelleştirilebilir "Standart aşamaları ekle"). Bu projede aynı
+        /// isimli (büyük/küçük harf duyarsız) bir adım zaten varsa o satır atlanır, panel tekrar tekrar
+        /// kullanılabilir.</summary>
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> BulkAddStagesToAllProjects(string stepsText, int returnProjectId)
+        public async Task<IActionResult> BulkAddStages(int id, string stepsText)
         {
+            if (!await _db.Projects.AnyAsync(p => p.Id == id)) return NotFound();
+
             var lines = (stepsText ?? "")
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries)
                 .Select(l => l.Trim())
@@ -283,39 +286,36 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             if (!lines.Any())
             {
-                TempData["Error"] = "En az bir iş adımı girin (her satıra bir tane).";
-                return RedirectToAction(nameof(Manage), new { id = returnProjectId });
+                TempData["Error"] = "En az bir iş adımı girin.";
+                return RedirectToAction(nameof(Manage), new { id });
             }
 
-            var projects = await _db.Projects.Where(p => p.IsActive).ToListAsync();
-            var totalAdded = 0;
+            var existingStages = await _db.ProjectStages.Where(s => s.ProjectId == id).ToListAsync();
+            var existingNames = existingStages.Select(s => s.Name.Trim().ToLowerInvariant()).ToHashSet();
+            var nextOrder = existingStages.Any() ? existingStages.Max(s => s.OrderIndex) + 1 : 1;
+            var added = 0;
 
-            foreach (var project in projects)
+            foreach (var line in lines)
             {
-                var existingStages = await _db.ProjectStages.Where(s => s.ProjectId == project.Id).ToListAsync();
-                var existingNames = existingStages.Select(s => s.Name.Trim().ToLowerInvariant()).ToHashSet();
-                var nextOrder = existingStages.Any() ? existingStages.Max(s => s.OrderIndex) + 1 : 1;
+                if (existingNames.Contains(line.ToLowerInvariant())) continue;
 
-                foreach (var line in lines)
+                _db.ProjectStages.Add(new ProjectStage
                 {
-                    if (existingNames.Contains(line.ToLowerInvariant())) continue;
-
-                    _db.ProjectStages.Add(new ProjectStage
-                    {
-                        ProjectId = project.Id,
-                        Name = line,
-                        OrderIndex = nextOrder++,
-                        Status = ProjectStageStatus.Pending,
-                        CreatedAt = DateTime.Now
-                    });
-                    existingNames.Add(line.ToLowerInvariant());
-                    totalAdded++;
-                }
+                    ProjectId = id,
+                    Name = line,
+                    OrderIndex = nextOrder++,
+                    Status = ProjectStageStatus.Pending,
+                    CreatedAt = DateTime.Now
+                });
+                existingNames.Add(line.ToLowerInvariant());
+                added++;
             }
 
             await _db.SaveChangesAsync();
-            TempData["Success"] = $"{lines.Count} iş adımı şablonu {projects.Count} projeye uygulandı — toplam {totalAdded} yeni kayıt eklendi (aynı isimli mevcut adımlar atlandı).";
-            return RedirectToAction(nameof(Manage), new { id = returnProjectId });
+            TempData["Success"] = added > 0
+                ? $"{added} iş adımı eklendi."
+                : "Girilen iş adımlarının tamamı zaten mevcut, yeni kayıt eklenmedi.";
+            return RedirectToAction(nameof(Manage), new { id });
         }
 
         // ── Saha fotoğrafları ────────────────────────────────────

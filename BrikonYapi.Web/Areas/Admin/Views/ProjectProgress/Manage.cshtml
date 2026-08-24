@@ -75,7 +75,7 @@
                         </form>
                     }
                     <button type="button" class="btn btn-sm btn-outline-primary pp-seed-edit-btn" data-bs-toggle="offcanvas" data-bs-target="#stageBulkPanel"
-                            title="Standart aşama listesini düzenle (tüm projelere uygulanır)">
+                            title="Standart aşama listesini düzenle">
                         <iconify-icon icon="iconamoon:edit-duotone"></iconify-icon>
                     </button>
                     <button type="button" class="btn btn-sm btn-primary ms-1" data-bs-toggle="offcanvas" data-bs-target="#stageAddPanel">
@@ -225,7 +225,7 @@
         </div>
     </div>
 
-    <!-- İş Adımı Şablonu — Tüm Projelere Uygula (sağdan kayan) -->
+    <!-- Standart Aşama Listesini Düzenle (sağdan kayan) -->
     <div class="offcanvas offcanvas-end pp-stage-panel" tabindex="-1" id="stageBulkPanel">
         <div class="offcanvas-header border-bottom">
             <h5 class="offcanvas-title">
@@ -237,13 +237,13 @@
         <div class="offcanvas-body">
             <div class="text-muted small mb-3">
                 Aşağıdaki liste standart iş programını gösterir — satır ekleyip çıkararak düzenleyin.
-                Kaydet'e bastığınızda bu liste <strong>tüm aktif projelere</strong> aynı sırayla uygulanır.
-                Bir projede aynı isimli bir adım zaten varsa o satır atlanır, mevcut kayıtlar bozulmaz —
+                Kaydet'e bastığınızda bu liste <strong>bu projeye</strong> aynı sırayla eklenir.
+                Aynı isimli bir adım zaten varsa o satır atlanır, mevcut kayıtlar bozulmaz —
                 paneli istediğiniz kadar tekrar kullanabilirsiniz.
             </div>
-            <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="BulkAddStagesToAllProjects" method="post" id="bulkStepsForm">
+            <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="BulkAddStages" method="post" id="bulkStepsForm">
                 @Html.AntiForgeryToken()
-                <input type="hidden" name="returnProjectId" value="@Model.Id" />
+                <input type="hidden" name="id" value="@Model.Id" />
                 <input type="hidden" name="stepsText" id="bulkStepsText" />
 
                 <label class="form-label fw-semibold small">İş Adımları <span class="text-danger">*</span></label>
@@ -274,7 +274,7 @@
                 <div class="d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">İptal</button>
                     <button type="submit" class="btn btn-primary">
-                        <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>Tüm Projelere Uygula
+                        <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>Kaydet
                     </button>
                 </div>
             </form>
