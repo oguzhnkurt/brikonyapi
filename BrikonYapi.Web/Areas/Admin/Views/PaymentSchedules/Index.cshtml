@@ -1,6 +1,5 @@
 @model List<BrikonYapi.Web.Data.Entities.PaymentSchedule>
 @using BrikonYapi.Web.Data.Entities
-@inject BrikonYapi.Web.Services.ExchangeRateService Fx
 @{
     var unit = (Unit)ViewBag.Unit;
     var tr = new System.Globalization.CultureInfo("tr-TR");
@@ -52,15 +51,6 @@ else
                     <div>
                         <div class="fw-semibold">
                             @s.CurrencySymbol@s.Amount.ToString("N0", tr) — @(string.IsNullOrWhiteSpace(s.Description) ? "Ödeme" : s.Description)
-                            @if (s.Currency == PaymentCurrency.TRY)
-                            {
-                                // Sadece TL taksitlerde bilgi amaçlı dolar karşılığı gösterilir; USD/EUR taksitler zaten doğrudan o para biriminde.
-                                var usdEq = await Fx.FormatUsdEquivalentAsync(s.Amount);
-                                if (usdEq != null)
-                                {
-                                    <span class="text-muted small">(@usdEq)</span>
-                                }
-                            }
                         </div>
                         <div class="text-muted small">
                             Vade: @s.DueDate.ToString("dd.MM.yyyy")
