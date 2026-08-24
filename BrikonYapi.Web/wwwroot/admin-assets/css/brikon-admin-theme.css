@@ -89,6 +89,16 @@
 /* Bağlantılar */
 a { --bs-link-color-rgb: 0, 130, 180; --bs-link-hover-color-rgb: 0, 106, 145; }
 
+/* Üst bar: Reback şablonu içerideki .container-xxl'i max-width:1320px ile ortalıyor
+   (margin:0 auto). Geniş ekranlarda bu, sayfa başlığını sol kenardan (menü ikonundan)
+   uzağa, sağa doğru kaydırıyormuş gibi bir görünüm yaratıyordu. Konteyneri tam genişlik
+   ve sola yaslı yaparak başlık her zaman menü ikonunun hemen yanında kalsın. */
+.topbar .container-xxl {
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
 /* ── Ortak "hero" form bileşenleri: Ödeme Kalemi Düzenle sayfasında tanıtılan
    marka renkli başlık + gruplu alan paneli düzenini, başka formlarda da
    tekrar kullanmak için genel sınıflar olarak burada tanımlıyoruz. ── */

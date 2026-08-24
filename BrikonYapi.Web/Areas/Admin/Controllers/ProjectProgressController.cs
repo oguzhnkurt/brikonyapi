@@ -268,6 +268,56 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(Manage), new { id });
         }
 
+        /// <summary>Admin'in yandan açılan panelde yazdığı iş adımı listesini TÜM aktif projelere uygular.
+        /// Bir projede aynı isimli (büyük/küçük harf duyarsız) bir adım zaten varsa o satır atlanır,
+        /// böylece panel tekrar tekrar kullanılabilir.</summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkAddStagesToAllProjects(string stepsText, int returnProjectId)
+        {
+            var lines = (stepsText ?? "")
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                .Select(l => l.Trim())
+                .Where(l => l.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (!lines.Any())
+            {
+                TempData["Error"] = "En az bir iş adımı girin (her satıra bir tane).";
+                return RedirectToAction(nameof(Manage), new { id = returnProjectId });
+            }
+
+            var projects = await _db.Projects.Where(p => p.IsActive).ToListAsync();
+            var totalAdded = 0;
+
+            foreach (var project in projects)
+            {
+                var existingStages = await _db.ProjectStages.Where(s => s.ProjectId == project.Id).ToListAsync();
+                var existingNames = existingStages.Select(s => s.Name.Trim().ToLowerInvariant()).ToHashSet();
+                var nextOrder = existingStages.Any() ? existingStages.Max(s => s.OrderIndex) + 1 : 1;
+
+                foreach (var line in lines)
+                {
+                    if (existingNames.Contains(line.ToLowerInvariant())) continue;
+
+                    _db.ProjectStages.Add(new ProjectStage
+                    {
+                        ProjectId = project.Id,
+                        Name = line,
+                        OrderIndex = nextOrder++,
+                        Status = ProjectStageStatus.Pending,
+                        CreatedAt = DateTime.Now
+                    });
+                    existingNames.Add(line.ToLowerInvariant());
+                    totalAdded++;
+                }
+            }
+
+            await _db.SaveChangesAsync();
+            TempData["Success"] = $"{lines.Count} iş adımı şablonu {projects.Count} projeye uygulandı — toplam {totalAdded} yeni kayıt eklendi (aynı isimli mevcut adımlar atlandı).";
+            return RedirectToAction(nameof(Manage), new { id = returnProjectId });
+        }
+
         // ── Saha fotoğrafları ────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(12 * 1024 * 1024)]
