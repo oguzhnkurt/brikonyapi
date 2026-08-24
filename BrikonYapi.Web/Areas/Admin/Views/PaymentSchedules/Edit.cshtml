@@ -21,7 +21,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Tutar <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <select asp-for="Currency" class="form-select" style="max-width:90px; flex:0 0 auto;">
+                                <select asp-for="Currency" class="form-select pm-currency-select">
                                     <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.TRY">₺ TL</option>
                                     <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.USD">$ USD</option>
                                     <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.EUR">€ EUR</option>
@@ -87,6 +87,17 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Tema'nın .form-select'i geniş sağ dolgu (chevron için ~3rem) kullanır; dar (90px) bir
+       kutuda bu, seçili metni ("₺ TL" vb.) tamamen görünmez kılıyordu. Dolguyu daraltıp kutuyu
+       biraz genişleterek metnin görünür kalmasını sağlıyoruz. */
+    .pm-currency-select {
+        max-width: 108px; flex: 0 0 auto;
+        padding: .375rem 1.75rem .375rem .5rem !important;
+        background-position: right .5rem center !important;
+    }
+</style>
 
 @section Scripts {
 <script>

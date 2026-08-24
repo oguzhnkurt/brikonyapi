@@ -41,7 +41,7 @@
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold">Toplam Borç Tutarı <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <select id="planCurrency" name="currency" class="form-select" style="max-width:90px; flex:0 0 auto;">
+                                    <select id="planCurrency" name="currency" class="form-select pm-currency-select">
                                         <option value="TRY" selected>₺ TL</option>
                                         <option value="USD">$ USD</option>
                                         <option value="EUR">€ EUR</option>
@@ -235,6 +235,15 @@
     .pm-wizard-steps .pm-step.active { color:#0d6efd; }
     .pm-wizard-steps .pm-step.active .pm-step-num { background:#0d6efd; color:#fff; }
     .pm-wizard-steps .pm-step.done .pm-step-num { background:#198754; color:#fff; }
+    /* Tema'nın .form-select'i geniş sağ dolgu (chevron için ~3rem) kullanır; dar (90px) bir
+       kutuda bu, seçili metni ("₺ TL" vb.) tamamen görünmez kılıyordu (kullanıcı geri bildirimi:
+       "seçim tepki vermiyor" — aslında seçiliyordu ama görünmüyordu). Dolguyu daraltıp kutuyu
+       biraz genişleterek metnin görünür kalmasını sağlıyoruz. */
+    .pm-currency-select {
+        max-width: 108px; flex: 0 0 auto;
+        padding: .375rem 1.75rem .375rem .5rem !important;
+        background-position: right .5rem center !important;
+    }
 </style>
 
 @section Scripts {
