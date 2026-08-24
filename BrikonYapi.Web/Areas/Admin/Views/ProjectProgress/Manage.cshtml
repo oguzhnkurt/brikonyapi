@@ -241,24 +241,36 @@
                 Bir projede aynı isimli bir adım zaten varsa o satır atlanır, mevcut kayıtlar bozulmaz —
                 paneli istediğiniz kadar tekrar kullanabilirsiniz.
             </div>
-            <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="BulkAddStagesToAllProjects" method="post">
+            <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="BulkAddStagesToAllProjects" method="post" id="bulkStepsForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="returnProjectId" value="@Model.Id" />
-                <div class="mb-2">
-                    <label class="form-label fw-semibold small">İş Adımları (her satıra bir tane) <span class="text-danger">*</span></label>
-                    <textarea name="stepsText" id="bulkStepsText" class="form-control" rows="10" required>Planlama
-Kazı
-Temel
-Karkas
-Dış Cephe
-İç Mekan
-Bitirme
-Teslim</textarea>
+                <input type="hidden" name="stepsText" id="bulkStepsText" />
+
+                <label class="form-label fw-semibold small">İş Adımları <span class="text-danger">*</span></label>
+                <div id="bulkStepsList" class="pp-bulk-steps-list mb-2">
+                    @{ var defaultStageNames = new[] { "Planlama", "Kazı", "Temel", "Karkas", "Dış Cephe", "İç Mekan", "Bitirme", "Teslim" }; }
+                    @for (var i = 0; i < defaultStageNames.Length; i++)
+                    {
+                        <div class="pp-bulk-step-row">
+                            <span class="pp-bulk-step-num">@(i + 1)</span>
+                            <input type="text" class="form-control form-control-sm pp-bulk-step-input" value="@defaultStageNames[i]" placeholder="İş adımı adı" />
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 pp-bulk-step-remove" title="Kaldır">
+                                <iconify-icon icon="iconamoon:trash-duotone"></iconify-icon>
+                            </button>
+                        </div>
+                    }
                 </div>
-                <button type="button" class="btn btn-sm btn-link p-0 mb-3" id="bulkFillDefaults">
-                    <iconify-icon icon="iconamoon:restore-duotone" class="me-1"></iconify-icon>
-                    Varsayılana sıfırla
-                </button>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="bulkAddStepRow">
+                        <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>Adım Ekle
+                    </button>
+                    <button type="button" class="btn btn-sm btn-link p-0" id="bulkFillDefaults">
+                        <iconify-icon icon="iconamoon:restore-duotone" class="me-1"></iconify-icon>
+                        Varsayılana sıfırla
+                    </button>
+                </div>
+
                 <div class="d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">İptal</button>
                     <button type="submit" class="btn btn-primary">
@@ -426,18 +438,89 @@ Teslim</textarea>
     .pp-seed-form .btn { border-top-right-radius: 0; border-bottom-right-radius: 0; }
     .pp-seed-form + .pp-seed-edit-btn { border-top-left-radius: 0; border-bottom-left-radius: 0; }
     .pp-seed-edit-btn { padding-left: .55rem; padding-right: .55rem; }
+
+    /* "Standart Aşama Listesini Düzenle" paneli: düz textarea yerine numaralı, tek tek
+       eklenip çıkarılabilen satır listesi — daha profesyonel/okunur bir düzenleme deneyimi. */
+    .pp-bulk-steps-list { max-height: 340px; overflow-y: auto; padding-right: 2px; }
+    .pp-bulk-step-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+    .pp-bulk-step-num {
+        flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
+        background: rgba(0, 130, 180, .1); color: #0082B4; font-size: .7rem; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .pp-bulk-step-input { flex: 1 1 auto; }
+    .pp-bulk-step-remove { flex: 0 0 auto; font-size: 1rem; opacity: .6; transition: opacity .15s ease; }
+    .pp-bulk-step-remove:hover { opacity: 1; }
 </style>
 }
 
 @section Scripts {
 <script>
     (function () {
-        // "Tüm Projelere Uygula" panelinde standart 8 aşamayı tek tıkla textarea'ya doldurur.
-        var bulkFillBtn = document.getElementById('bulkFillDefaults');
-        var bulkTextarea = document.getElementById('bulkStepsText');
-        if (bulkFillBtn && bulkTextarea) {
-            bulkFillBtn.addEventListener('click', function () {
-                bulkTextarea.value = ['Planlama', 'Kazı', 'Temel', 'Karkas', 'Dış Cephe', 'İç Mekan', 'Bitirme', 'Teslim'].join('\n');
+        // "Standart Aşama Listesini Düzenle" paneli: numaralı, eklenip çıkarılabilen satır listesi.
+        var bulkList = document.getElementById('bulkStepsList');
+        var bulkAddBtn = document.getElementById('bulkAddStepRow');
+        var bulkResetBtn = document.getElementById('bulkFillDefaults');
+        var bulkForm = document.getElementById('bulkStepsForm');
+        var bulkHidden = document.getElementById('bulkStepsText');
+        var bulkDefaults = ['Planlama', 'Kazı', 'Temel', 'Karkas', 'Dış Cephe', 'İç Mekan', 'Bitirme', 'Teslim'];
+
+        function bulkRenumber() {
+            if (!bulkList) return;
+            bulkList.querySelectorAll('.pp-bulk-step-row').forEach(function (row, idx) {
+                var num = row.querySelector('.pp-bulk-step-num');
+                if (num) num.textContent = idx + 1;
+            });
+        }
+
+        function bulkAddRow(value) {
+            if (!bulkList) return;
+            var row = document.createElement('div');
+            row.className = 'pp-bulk-step-row';
+            row.innerHTML =
+                '<span class="pp-bulk-step-num"></span>' +
+                '<input type="text" class="form-control form-control-sm pp-bulk-step-input" placeholder="İş adımı adı" />' +
+                '<button type="button" class="btn btn-sm btn-link text-danger p-0 pp-bulk-step-remove" title="Kaldır">' +
+                '<iconify-icon icon="iconamoon:trash-duotone"></iconify-icon></button>';
+            row.querySelector('.pp-bulk-step-input').value = value || '';
+            bulkList.appendChild(row);
+            bulkRenumber();
+            row.querySelector('.pp-bulk-step-input').focus();
+        }
+
+        if (bulkAddBtn) {
+            bulkAddBtn.addEventListener('click', function () { bulkAddRow(''); });
+        }
+
+        if (bulkList) {
+            bulkList.addEventListener('click', function (e) {
+                var btn = e.target.closest('.pp-bulk-step-remove');
+                if (!btn) return;
+                var row = btn.closest('.pp-bulk-step-row');
+                if (row) row.remove();
+                bulkRenumber();
+            });
+        }
+
+        if (bulkResetBtn) {
+            bulkResetBtn.addEventListener('click', function () {
+                bulkList.innerHTML = '';
+                bulkDefaults.forEach(function (name) { bulkAddRow(name); });
+            });
+        }
+
+        if (bulkForm && bulkHidden && bulkList) {
+            bulkForm.addEventListener('submit', function (e) {
+                var values = Array.prototype.map.call(
+                    bulkList.querySelectorAll('.pp-bulk-step-input'),
+                    function (input) { return input.value.trim(); }
+                ).filter(function (v) { return v.length > 0; });
+                if (!values.length) {
+                    e.preventDefault();
+                    alert('En az bir iş adımı girin.');
+                    return;
+                }
+                bulkHidden.value = values.join('\n');
             });
         }
 
