@@ -111,7 +111,23 @@
                             </button>
                         </div>
 
-                        <div id="pmRows"></div>
+                        <div class="table-responsive pm-table-wrap">
+                            <table class="table table-sm align-middle mb-2 pm-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="small text-muted" style="width:32px;">#</th>
+                                        <th class="small">Başlık</th>
+                                        <th class="small" style="width:150px;">Vade Tarihi</th>
+                                        <th class="small" style="width:160px;">Tutar</th>
+                                        <th class="small" style="width:190px;">İnşaat Aşaması</th>
+                                        <th class="small text-center" style="width:80px;">Hakediş %</th>
+                                        <th class="small text-center" style="width:80px;">Taksit No</th>
+                                        <th style="width:36px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pmRows"></tbody>
+                            </table>
+                        </div>
 
                         <button type="button" id="pmAddRow" class="btn btn-link btn-sm px-0 mb-2 text-decoration-none">
                             <iconify-icon icon="mdi:plus" class="me-1"></iconify-icon>Satır Ekle
@@ -180,50 +196,42 @@
 
 <!-- Satır şablonu (JS ile kopyalanır, forma dahil edilmez) -->
 <template id="pmRowTemplate">
-    <div class="pm-row border rounded-3 p-3 mb-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="fw-semibold small text-muted pm-row-label">Taksit 1</span>
+    <tr class="pm-row">
+        <td class="small text-muted pm-row-label">1</td>
+        <td>
+            <input type="text" name="description" class="form-control form-control-sm" placeholder="Örn: 3. Hakediş Taksiti" maxlength="300" />
+        </td>
+        <td>
+            <input type="date" name="dueDate" class="form-control form-control-sm" required />
+        </td>
+        <td>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text pm-row-currency-symbol">₺</span>
+                <input type="text" name="amount" inputmode="numeric" class="form-control pm-amount"
+                       placeholder="323.475" required autocomplete="off" />
+            </div>
+        </td>
+        <td>
+            <select name="projectStageId" class="form-select form-select-sm pm-stage">
+                <option value="">Aşamaya bağlı değil (elle gir)</option>
+                @foreach (var st in stages)
+                {
+                    <option value="@st.Id">@st.Name</option>
+                }
+            </select>
+        </td>
+        <td>
+            <input type="number" name="hakedisPercentage" class="form-control form-control-sm pm-hakedis text-center" min="0" max="100" placeholder="20" />
+        </td>
+        <td>
+            <input type="number" name="installmentNo" class="form-control form-control-sm text-center" min="0" placeholder="3" />
+        </td>
+        <td class="text-end">
             <button type="button" class="btn btn-sm btn-outline-danger pm-remove">
                 <iconify-icon icon="iconamoon:close"></iconify-icon>
             </button>
-        </div>
-        <div class="row g-2 align-items-end">
-            <div class="col-md-6">
-                <label class="form-label small fw-semibold">Tutar <span class="text-danger">*</span></label>
-                <div class="input-group">
-                    <span class="input-group-text pm-row-currency-symbol">₺</span>
-                    <input type="text" name="amount" inputmode="numeric" class="form-control pm-amount"
-                           placeholder="323.475" required autocomplete="off" />
-                </div>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label small fw-semibold">Vade Tarihi <span class="text-danger">*</span></label>
-                <input type="date" name="dueDate" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-                <label class="form-label small fw-semibold">Başlık / Açıklama</label>
-                <input type="text" name="description" class="form-control" placeholder="Örn: 3. Hakediş Taksiti" maxlength="300" />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label small fw-semibold">İnşaat Aşaması</label>
-                <select name="projectStageId" class="form-select pm-stage">
-                    <option value="">Aşamaya bağlı değil (elle gir)</option>
-                    @foreach (var st in stages)
-                    {
-                        <option value="@st.Id">@st.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-semibold">Hakediş %</label>
-                <input type="number" name="hakedisPercentage" class="form-control pm-hakedis" min="0" max="100" placeholder="20" />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label small fw-semibold">Taksit No</label>
-                <input type="number" name="installmentNo" class="form-control" min="0" placeholder="3" />
-            </div>
-        </div>
-    </div>
+        </td>
+    </tr>
 </template>
 
 <style>
@@ -243,6 +251,14 @@
         max-width: 108px; flex: 0 0 auto;
         padding: .375rem 1.75rem .375rem .5rem !important;
         background-position: right .5rem center !important;
+    }
+    /* Taksit tablosu: her satır tek satırlık kompakt bir tablo satırı — eskiden her taksit
+       ayrı bir kart olduğu için 12 taksit ekranı çok uzatıyordu. */
+    .pm-table th { font-weight: 600; color: #6c757d; white-space: nowrap; }
+    .pm-table td { vertical-align: middle; padding-top: .35rem; padding-bottom: .35rem; }
+    .pm-table tbody tr:hover { background: #f8f9fa; }
+    .pm-table .form-control-sm, .pm-table .form-select-sm, .pm-table .input-group-sm .input-group-text {
+        font-size: .8125rem;
     }
 </style>
 
@@ -294,7 +310,7 @@
     function renumberRows() {
         var rows = rowsWrap.querySelectorAll('.pm-row');
         rows.forEach(function (row, i) {
-            row.querySelector('.pm-row-label').textContent = 'Taksit ' + (i + 1);
+            row.querySelector('.pm-row-label').textContent = String(i + 1);
         });
     }
     function addMonths(date, months) {
