@@ -8,79 +8,93 @@
 }
 
 <div class="row justify-content-center">
-    <div class="col-lg-7">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Ödeme Kalemi Düzenle — @unit.Project?.Name / @unit.UnitNo</h5>
+    <div class="col-lg-8">
+        <div class="card pm-edit-card border-0">
+            <div class="pm-edit-header">
+                <div class="pm-edit-header-icon">
+                    <iconify-icon icon="mdi:file-document-edit-outline"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="mb-0">Ödeme Kalemi Düzenle</h5>
+                    <div class="pm-edit-subtitle">@unit.Project?.Name / @unit.UnitNo</div>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body pm-edit-body">
                 <form asp-area="Admin" asp-controller="PaymentSchedules" asp-action="Edit" asp-route-id="@Model.Id" method="post" id="pmEditForm">
                     @Html.AntiForgeryToken()
 
-                    <div class="row g-2 align-items-end mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Tutar <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <select asp-for="Currency" class="form-select pm-currency-select">
-                                    <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.TRY">₺ TL</option>
-                                    <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.USD">$ USD</option>
-                                    <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.EUR">€ EUR</option>
-                                </select>
-                                <input type="text" id="pmAmount" inputmode="numeric" class="form-control"
-                                       value="@Model.Amount.ToString("N0", new System.Globalization.CultureInfo("tr-TR"))" required autocomplete="off" />
-                                <input type="hidden" asp-for="Amount" id="pmAmountHidden" />
+                    <div class="pm-field-group mb-3">
+                        <div class="pm-group-title">Tutar &amp; Vade</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="pm-label">Tutar <span class="text-danger">*</span></label>
+                                <div class="input-group pm-amount-group">
+                                    <select asp-for="Currency" class="form-select pm-currency-select">
+                                        <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.TRY">₺ TL</option>
+                                        <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.USD">$ USD</option>
+                                        <option value="@BrikonYapi.Web.Data.Entities.PaymentCurrency.EUR">€ EUR</option>
+                                    </select>
+                                    <input type="text" id="pmAmount" inputmode="numeric" class="form-control pm-input pm-amount-input"
+                                           value="@Model.Amount.ToString("N0", new System.Globalization.CultureInfo("tr-TR"))" required autocomplete="off" />
+                                    <input type="hidden" asp-for="Amount" id="pmAmountHidden" />
+                                </div>
+                                <div class="form-text small pm-hint">Malik doğrudan seçilen para biriminde öder (TL karşılığı hesaplanmaz).</div>
                             </div>
-                            <div class="form-text small">Malik doğrudan seçilen para biriminde öder (TL karşılığı hesaplanmaz).</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Vade Tarihi <span class="text-danger">*</span></label>
-                            <input asp-for="DueDate" type="date" class="form-control" value="@Model.DueDate.ToString("yyyy-MM-dd")" required />
+                            <div class="col-md-6">
+                                <label class="pm-label">Vade Tarihi <span class="text-danger">*</span></label>
+                                <input asp-for="DueDate" type="date" class="form-control pm-input" value="@Model.DueDate.ToString("yyyy-MM-dd")" required />
+                                <div class="form-text small pm-hint pm-hint-spacer">&nbsp;</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Açıklama</label>
-                        <input asp-for="Description" class="form-control" placeholder="Örn: 3. Hakediş Taksiti" />
-                    </div>
+                    <div class="pm-field-group mb-3">
+                        <div class="pm-group-title">Detaylar</div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">İnşaat Aşaması</label>
-                        <select asp-for="ProjectStageId" id="pmStageSelect" class="form-select">
-                            <option value="">Aşamaya bağlı değil (elle gir)</option>
-                            @foreach (var st in stages)
-                            {
-                                <option value="@st.Id">@st.Name</option>
-                            }
-                        </select>
-                        <div class="form-text small">Seçilirse aşama "Tamamlandı" olunca malike gösterilir.</div>
-                    </div>
+                        <div class="mb-3">
+                            <label class="pm-label">Açıklama</label>
+                            <input asp-for="Description" class="form-control pm-input" placeholder="Örn: 3. Hakediş Taksiti" />
+                        </div>
 
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Hakediş %</label>
-                            <input asp-for="HakedisPercentage" id="pmHakedisInput" type="number" min="0" max="100" class="form-control" placeholder="20" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Taksit No</label>
-                            <input asp-for="InstallmentNo" type="number" min="0" class="form-control" placeholder="3" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Durum</label>
-                            <select asp-for="Status" class="form-select">
-                                <option value="0">Bekliyor</option>
-                                <option value="1">Ödendi</option>
-                                <option value="2">Gecikti</option>
-                                <option value="3">İptal</option>
+                        <div class="mb-3">
+                            <label class="pm-label">İnşaat Aşaması</label>
+                            <select asp-for="ProjectStageId" id="pmStageSelect" class="form-select pm-input">
+                                <option value="">Aşamaya bağlı değil (elle gir)</option>
+                                @foreach (var st in stages)
+                                {
+                                    <option value="@st.Id">@st.Name</option>
+                                }
                             </select>
+                            <div class="form-text small pm-hint">Seçilirse aşama "Tamamlandı" olunca malike gösterilir.</div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="pm-label">Hakediş %</label>
+                                <input asp-for="HakedisPercentage" id="pmHakedisInput" type="number" min="0" max="100" class="form-control pm-input" placeholder="20" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="pm-label">Taksit No</label>
+                                <input asp-for="InstallmentNo" type="number" min="0" class="form-control pm-input" placeholder="3" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="pm-label">Durum</label>
+                                <select asp-for="Status" class="form-select pm-input">
+                                    <option value="0">Bekliyor</option>
+                                    <option value="1">Ödendi</option>
+                                    <option value="2">Gecikti</option>
+                                    <option value="3">İptal</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                    <div class="d-flex gap-2 pm-actions">
+                        <button type="submit" class="btn pm-btn-save">
                             <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
                             Kaydet
                         </button>
-                        <a href="/Admin/PaymentSchedules?unitId=@unit.Id" class="btn btn-outline-secondary">İptal</a>
+                        <a href="/Admin/PaymentSchedules?unitId=@unit.Id" class="btn pm-btn-cancel">İptal</a>
                     </div>
                 </form>
             </div>
@@ -89,13 +103,127 @@
 </div>
 
 <style>
+    /* Brikon Yapı marka renkleri: #0082B4 (birincil), #00A0E3 (ikincil/gradient), #2B2A29 (koyu metin) */
+
+    .pm-edit-card {
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 28px rgba(0, 130, 180, .12);
+    }
+
+    .pm-edit-header {
+        display: flex;
+        align-items: center;
+        gap: .9rem;
+        padding: 1.5rem 1.75rem;
+        background: linear-gradient(135deg, #0082B4 0%, #00A0E3 100%);
+        color: #fff;
+    }
+    .pm-edit-header h5 { color: #fff; font-weight: 700; }
+    .pm-edit-subtitle { color: rgba(255,255,255,.85); font-size: .85rem; margin-top: .15rem; }
+    .pm-edit-header-icon {
+        width: 46px; height: 46px; flex: 0 0 auto;
+        border-radius: 12px;
+        background: rgba(255,255,255,.18);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; color: #fff;
+    }
+
+    .pm-edit-body { padding: 1.75rem; background: #fff; }
+
+    /* Alan gruplarını hafif gri panellerde toplamak, önceki sürümdeki hizasızlığı
+       (Tutar altındaki yardım metni Vade Tarihi ile eşit yükseklikte değildi) ortadan kaldırır. */
+    .pm-field-group {
+        background: #f8fafb;
+        border: 1px solid #e8eaec;
+        border-radius: 12px;
+        padding: 1.1rem 1.25rem .95rem;
+    }
+    .pm-group-title {
+        font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+        color: #0082B4; margin-bottom: .9rem;
+        padding-left: .6rem; position: relative;
+    }
+    .pm-group-title::before {
+        content: ""; position: absolute; left: 0; top: .1rem; bottom: .1rem;
+        width: 3px; border-radius: 2px;
+        background: linear-gradient(180deg, #0082B4, #00A0E3);
+    }
+
+    .pm-label {
+        display: block; font-size: .82rem; font-weight: 600; color: #2B2A29;
+        margin-bottom: .35rem;
+    }
+    .pm-hint { color: #9ca3af; }
+    .pm-hint-spacer { visibility: hidden; }
+
+    /* Ortak input/select görünümü */
+    .pm-input.form-control,
+    .pm-input.form-select,
+    .pm-amount-input.form-control {
+        border: 1px solid #e1e5e9;
+        border-radius: 10px;
+        padding: .55rem .85rem;
+        font-size: .925rem;
+        color: #2B2A29;
+        background-color: #fff;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .pm-input.form-control:focus,
+    .pm-input.form-select:focus,
+    .pm-amount-input.form-control:focus {
+        border-color: #0082B4;
+        box-shadow: 0 0 0 .2rem rgba(0, 130, 180, .15);
+    }
+    .pm-input.form-select,
+    .pm-currency-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%230082B4' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    }
+
+    /* Tutar alanı: para birimi seçici + tutar kutusu tek parça gibi görünsün */
+    .pm-amount-group { border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.02); }
+    .pm-amount-group .pm-currency-select {
+        border-radius: 10px 0 0 10px !important;
+        border-right: none;
+    }
+    .pm-amount-group .pm-amount-input {
+        border-radius: 0 10px 10px 0 !important;
+        border-left: none;
+    }
+    .pm-amount-group .pm-currency-select:focus + .pm-amount-input,
+    .pm-amount-group .pm-amount-input:focus {
+        z-index: 3;
+    }
+
     /* Tema'nın .form-select'i geniş sağ dolgu (chevron için ~3rem) kullanır; dar (90px) bir
        kutuda bu, seçili metni ("₺ TL" vb.) tamamen görünmez kılıyordu. Dolguyu daraltıp kutuyu
        biraz genişleterek metnin görünür kalmasını sağlıyoruz. */
     .pm-currency-select {
-        max-width: 108px; flex: 0 0 auto;
-        padding: .375rem 1.75rem .375rem .5rem !important;
-        background-position: right .5rem center !important;
+        max-width: 112px; flex: 0 0 auto;
+        padding: .55rem 1.75rem .55rem .75rem !important;
+        background-position: right .55rem center !important;
+        font-weight: 600;
+    }
+
+    .pm-actions { margin-top: .5rem; }
+    .pm-btn-save {
+        background: linear-gradient(135deg, #0082B4 0%, #00A0E3 100%);
+        color: #fff; border: none; border-radius: 10px;
+        padding: .65rem 1.5rem; font-weight: 600;
+        box-shadow: 0 4px 14px rgba(0, 130, 180, .35);
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .pm-btn-save:hover {
+        color: #fff; transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(0, 130, 180, .45);
+    }
+    .pm-btn-cancel {
+        background: #fff; border: 1px solid #e1e5e9; color: #2B2A29;
+        border-radius: 10px; padding: .65rem 1.5rem; font-weight: 600;
+        transition: background .15s ease, border-color .15s ease;
+    }
+    .pm-btn-cancel:hover {
+        background: #f5f6f7; border-color: #c9ced3; color: #2B2A29;
     }
 </style>
 
