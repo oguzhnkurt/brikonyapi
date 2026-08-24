@@ -415,7 +415,10 @@ Teslim</textarea>
     .pp-stage-name { font-weight:700; text-transform:uppercase; letter-spacing:.02em; font-size:.92rem; }
     .pp-stage-sub { font-size:.76rem; color:#8a939c; font-weight:500; margin-top:.1rem; }
     .pp-stage-table thead th { font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:#8a939c; font-weight:700; }
-    .pp-stage-panel { width:420px; max-width:92vw; }
+    /* NOT: Reback şablonunda .offcanvas.offcanvas-end{width:var(--bs-offcanvas-width)} iki sınıflı
+       (daha yüksek özgüllük) bir kural olduğu için doğrudan width:420px yazmak kaybediyordu ve panel
+       Bootstrap'ın varsayılan 280px'inde açılıyordu. Bunun yerine aynı CSS değişkenini eziyoruz. */
+    .pp-stage-panel { --bs-offcanvas-width: 420px; max-width:92vw; }
     .pp-stage-panel .offcanvas-title { font-weight:700; }
 
     /* "Standart aşamaları ekle" + yanındaki düzenle (kalem) ikonu tek bir buton grubu gibi bitişik görünsün. */
