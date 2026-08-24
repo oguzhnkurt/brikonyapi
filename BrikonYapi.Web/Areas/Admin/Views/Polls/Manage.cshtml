@@ -98,11 +98,11 @@ else if (expired)
                         <input type="hidden" name="id" value="@Model.Id" />
 
                         <label class="form-label small mb-1">Başlangıç</label>
-                        <input type="datetime-local" name="startsAt" class="form-control form-control-sm mb-2"
+                        <input type="datetime-local" name="startsAt" id="pollStartsAt" class="form-control form-control-sm mb-2"
                                value="@(Model.StartsAt?.ToString("yyyy-MM-ddTHH:mm"))" />
 
                         <label class="form-label small mb-1">Bitiş</label>
-                        <input type="datetime-local" name="endsAt" class="form-control form-control-sm mb-2"
+                        <input type="datetime-local" name="endsAt" id="pollEndsAt" class="form-control form-control-sm mb-2"
                                value="@(Model.EndsAt?.ToString("yyyy-MM-ddTHH:mm"))" />
 
                         <div class="form-text small mb-2">Boş bırakılan alan sınır tanımaz.</div>
@@ -211,4 +211,29 @@ else if (expired)
             </div>
         </div>
     </div>
+
+@section Scripts {
+<script>
+    // Bitiş, başlangıçtan önceki bir tarihe ayarlanamasın — sunucudaki (SetSchedule) kontrolle
+    // aynı kural, burada anında (submit'e gerek kalmadan) uyarı olarak gösteriliyor.
+    (function () {
+        var startInput = document.getElementById('pollStartsAt');
+        var endInput = document.getElementById('pollEndsAt');
+        if (!startInput || !endInput) return;
+
+        function syncMin() {
+            endInput.min = startInput.value || '';
+            if (startInput.value && endInput.value && endInput.value <= startInput.value) {
+                endInput.setCustomValidity('Bitiş tarihi başlangıçtan sonra olmalıdır.');
+            } else {
+                endInput.setCustomValidity('');
+            }
+        }
+
+        startInput.addEventListener('change', syncMin);
+        endInput.addEventListener('change', syncMin);
+        syncMin();
+    })();
+</script>
+}
 </div>

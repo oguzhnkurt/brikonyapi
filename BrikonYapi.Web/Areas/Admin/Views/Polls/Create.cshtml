@@ -120,5 +120,26 @@
         list.appendChild(input);
         input.focus();
     });
+
+    // Bitiş, başlangıçtan önceki bir tarihe ayarlanamasın — sunucudaki kontrolle aynı kural,
+    // burada anında (submit'e gerek kalmadan) uyarı olarak gösteriliyor.
+    (function () {
+        var startInput = document.getElementById('StartsAt');
+        var endInput = document.getElementById('EndsAt');
+        if (!startInput || !endInput) return;
+
+        function syncMin() {
+            endInput.min = startInput.value || '';
+            if (startInput.value && endInput.value && endInput.value <= startInput.value) {
+                endInput.setCustomValidity('Bitiş tarihi başlangıçtan sonra olmalıdır.');
+            } else {
+                endInput.setCustomValidity('');
+            }
+        }
+
+        startInput.addEventListener('change', syncMin);
+        endInput.addEventListener('change', syncMin);
+        syncMin();
+    })();
 </script>
 }

@@ -55,6 +55,16 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 return View(poll);
             }
 
+            // GÜVENLİK/DOĞRULUK: SetSchedule'daki aynı kural burada da uygulanmazsa, oluşturma
+            // formundan bitişi başlangıçtan önceki bir tarihe ayarlamak mümkün oluyor ve oylama
+            // hiçbir zaman "Aktif" olmayan mantıksal olarak tutarsız bir durumda kalıyordu.
+            if (poll.StartsAt.HasValue && poll.EndsAt.HasValue && poll.EndsAt.Value <= poll.StartsAt.Value)
+            {
+                TempData["Error"] = "Bitiş tarihi başlangıçtan sonra olmalıdır.";
+                await FillProjectsAsync();
+                return View(poll);
+            }
+
             poll.CreatedAt = DateTime.Now;
             for (var i = 0; i < texts.Count; i++)
                 poll.Options.Add(new PollOption { Text = texts[i], OrderIndex = i + 1 });
