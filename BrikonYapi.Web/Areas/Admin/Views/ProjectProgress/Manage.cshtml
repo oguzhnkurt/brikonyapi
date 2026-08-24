@@ -440,8 +440,13 @@
     .pp-seed-edit-btn { padding-left: .55rem; padding-right: .55rem; }
 
     /* "Standart Aşama Listesini Düzenle" paneli: düz textarea yerine numaralı, tek tek
-       eklenip çıkarılabilen satır listesi — daha profesyonel/okunur bir düzenleme deneyimi. */
-    .pp-bulk-steps-list { max-height: 340px; overflow-y: auto; padding-right: 2px; }
+       eklenip çıkarılabilen satır listesi — daha profesyonel/okunur bir düzenleme deneyimi.
+       NOT: burada ayrı bir max-height/overflow vermiyoruz — offcanvas-body zaten kendi
+       overflow-y:auto'suna sahip (bkz. Bootstrap .offcanvas-body kuralı); iç içe iki ayrı
+       kaydırma alanı olunca "Adım Ekle" sonrası odaklanan input'u görünür kılmak için tarayıcı
+       küçük iç kutuyu erken ve sarsıntılı kaydırıyordu. Tek kaydırma alanı (panelin kendisi)
+       daha uzun olduğundan bu sorun kalmıyor. */
+    .pp-bulk-steps-list { padding-right: 2px; }
     .pp-bulk-step-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
     .pp-bulk-step-num {
         flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
