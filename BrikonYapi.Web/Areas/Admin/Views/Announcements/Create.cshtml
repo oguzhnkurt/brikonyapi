@@ -6,83 +6,98 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-7">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Yeni Duyuru / Haber</h5>
-                <div class="text-muted small mt-1">
-                    Kat maliki portalındaki "Haberler" ekranında ve (işaretlerseniz) ana sayfadaki
-                    "Duyurular" bölümünde gösterilir.
+        <div class="card bk-form-card border-0">
+            <div class="bk-form-hero">
+                <div class="bk-form-hero-icon">
+                    <iconify-icon icon="mdi:bullhorn-outline"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="mb-0">Yeni Duyuru / Haber</h5>
+                    <div class="bk-form-hero-subtitle">
+                        Kat maliki portalındaki "Haberler" ekranında ve (işaretlerseniz) ana sayfadaki
+                        "Duyurular" bölümünde gösterilir.
+                    </div>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body bk-form-body">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger d-none"></div>
 
                 <form asp-area="Admin" asp-controller="Announcements" asp-action="Create" method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Başlık <span class="text-danger">*</span></label>
-                        <input asp-for="Title" class="form-control" placeholder="Örn: Dış cephe imalatları başladı" required />
-                        <span asp-validation-for="Title" class="text-danger small"></span>
-                    </div>
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">İçerik</div>
 
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Kategori</label>
-                            <input asp-for="Tag" class="form-control" placeholder="Haber, Bilgi, Uyarı, Kentsel Dönüşüm..." />
-                            <div class="form-text">Kart üzerinde renkli rozet olarak gösterilir.</div>
+                        <div class="mb-3">
+                            <label class="bk-label">Başlık <span class="text-danger">*</span></label>
+                            <input asp-for="Title" class="form-control" placeholder="Örn: Dış cephe imalatları başladı" required />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Kaynak</label>
-                            <input asp-for="Source" class="form-control" placeholder="Brikon Yapı" />
-                            <div class="form-text">Boş bırakılırsa "Brikon Yapı" yazar.</div>
-                        </div>
-                    </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Kapak görseli</label>
-                        <input type="file" name="cover" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
-                        <div class="form-text">JPG, PNG veya WEBP — en fazla 10 MB. Boş bırakılırsa kart yalnızca metin gösterir.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Kısa özet</label>
-                        <input asp-for="Summary" class="form-control" maxlength="300"
-                               placeholder="Kart üzerinde görünecek 1-2 cümlelik özet" />
-                        <div class="form-text">Boş bırakılırsa metnin ilk bölümü kullanılır.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Metin <span class="text-danger">*</span></label>
-                        <textarea asp-for="Body" class="form-control" rows="8" required
-                                  placeholder="Haber/duyuru metnini yazın... Paragraf aralarına boş satır bırakabilirsiniz."></textarea>
-                        <span asp-validation-for="Body" class="text-danger small"></span>
-                    </div>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Sıra</label>
-                            <input asp-for="OrderIndex" type="number" class="form-control" value="0" />
-                            <div class="form-text">Büyük sayı önce gösterilir.</div>
-                        </div>
-                        <div class="col-md-8 d-flex flex-column justify-content-center gap-2">
-                            <div class="form-check form-switch">
-                                <input asp-for="IsActive" class="form-check-input" type="checkbox" checked />
-                                <label asp-for="IsActive" class="form-check-label">Yayında</label>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="bk-label">Kategori</label>
+                                <input asp-for="Tag" class="form-control" placeholder="Haber, Bilgi, Uyarı, Kentsel Dönüşüm..." />
+                                <div class="form-text bk-hint">Kart üzerinde renkli rozet olarak gösterilir.</div>
                             </div>
-                            <div class="form-check form-switch">
-                                <input asp-for="ShowOnHome" class="form-check-input" type="checkbox" checked />
-                                <label asp-for="ShowOnHome" class="form-check-label">Ana sayfadaki "Duyurular" bölümünde de göster</label>
+                            <div class="col-md-6">
+                                <label class="bk-label">Kaynak</label>
+                                <input asp-for="Source" class="form-control" placeholder="Brikon Yapı" />
+                                <div class="form-text bk-hint">Boş bırakılırsa "Brikon Yapı" yazar.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="bk-label">Kısa özet</label>
+                            <input asp-for="Summary" class="form-control" maxlength="300"
+                                   placeholder="Kart üzerinde görünecek 1-2 cümlelik özet" />
+                            <div class="form-text bk-hint">Boş bırakılırsa metnin ilk bölümü kullanılır.</div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="bk-label">Metin <span class="text-danger">*</span></label>
+                            <textarea asp-for="Body" class="form-control" rows="8" required
+                                      placeholder="Haber/duyuru metnini yazın... Paragraf aralarına boş satır bırakabilirsiniz."></textarea>
+                            <span asp-validation-for="Body" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Görsel</div>
+                        <div class="mb-0">
+                            <label class="bk-label">Kapak görseli</label>
+                            <input type="file" name="cover" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                            <div class="form-text bk-hint">JPG, PNG veya WEBP — en fazla 10 MB. Boş bırakılırsa kart yalnızca metin gösterir.</div>
+                        </div>
+                    </div>
+
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Yayın Ayarları</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="bk-label">Sıra</label>
+                                <input asp-for="OrderIndex" type="number" class="form-control" value="0" />
+                                <div class="form-text bk-hint">Büyük sayı önce gösterilir.</div>
+                            </div>
+                            <div class="col-md-8 d-flex flex-column justify-content-center gap-2">
+                                <div class="form-check form-switch">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox" checked />
+                                    <label asp-for="IsActive" class="form-check-label">Yayında</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input asp-for="ShowOnHome" class="form-check-input" type="checkbox" checked />
+                                    <label asp-for="ShowOnHome" class="form-check-label">Ana sayfadaki "Duyurular" bölümünde de göster</label>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn bk-btn-save">
                             <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
                             Oluştur
                         </button>
-                        <a href="/Admin/Announcements" class="btn btn-outline-secondary">İptal</a>
+                        <a href="/Admin/Announcements" class="btn bk-btn-cancel">İptal</a>
                     </div>
                 </form>
             </div>

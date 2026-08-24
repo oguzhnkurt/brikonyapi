@@ -1,0 +1,149 @@
+/* ==========================================================================
+   Brikon Yapı — Admin panel marka teması
+   Reback şablonunun genel mavisini (#1c84ee) marka renklerimizle değiştirir:
+   #0082B4 (birincil) · #00A0E3 (ikincil/gradient) · #2B2A29 (koyu metin)
+   Bu dosya app.min.css'ten SONRA yüklenir, böylece normal özgüllükle (specificity)
+   üzerine yazar — !important sadece şablonun kendi !important kullandığı yerlerde gerekli.
+   ========================================================================== */
+
+:root, [data-bs-theme=light] {
+    --bs-primary: #0082B4;
+    --bs-primary-rgb: 0, 130, 180;
+    --bs-input-focus-border-color: #0082B4;
+    --bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%230082B4' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+/* Buton: dolgu rengi bileşen bazlı custom property'lerde tanımlı, root'tan miras almıyor */
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #0082B4;
+    --bs-btn-border-color: #0082B4;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #006a91;
+    --bs-btn-hover-border-color: #006689;
+    --bs-btn-focus-shadow-rgb: 0, 130, 180;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #005c7d;
+    --bs-btn-active-border-color: #00566f;
+    --bs-btn-disabled-bg: #0082B4;
+    --bs-btn-disabled-border-color: #0082B4;
+    background-image: linear-gradient(135deg, #0082B4 0%, #00A0E3 100%);
+    border: none;
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+    background-image: linear-gradient(135deg, #006a91 0%, #0089c3 100%);
+}
+
+.btn-outline-primary {
+    --bs-btn-color: #0082B4;
+    --bs-btn-border-color: #0082B4;
+    --bs-btn-hover-bg: #0082B4;
+    --bs-btn-hover-border-color: #0082B4;
+    --bs-btn-active-bg: #006a91;
+    --bs-btn-active-border-color: #006a91;
+}
+
+.form-check-input:checked {
+    background-color: #0082B4;
+    border-color: #0082B4;
+}
+.form-check-input:focus {
+    border-color: #0082B4;
+    box-shadow: 0 0 0 .15rem rgba(0, 130, 180, .25);
+}
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 .15rem rgba(0, 130, 180, .15);
+}
+
+/* Sol menü: aktif/hover vurgusu marka rengine, açık mavi bir zemin tonuyla */
+.wrapper .main-nav .navbar-nav .nav-item .nav-link.active,
+.wrapper .main-nav .navbar-nav .nav-item .nav-link.show,
+.wrapper .main-nav .navbar-nav .nav-item .nav-link:hover {
+    background-color: rgba(0, 130, 180, .08);
+}
+.wrapper .main-nav .navbar-nav .nav-item .nav-link.active {
+    color: #0082B4;
+}
+
+/* Sayfalama: aktif sayfa marka rengiyle */
+.page-item.active .page-link {
+    background-color: #0082B4;
+    border-color: #0082B4;
+}
+.page-link {
+    color: #0082B4;
+}
+.page-link:hover {
+    color: #006a91;
+}
+
+/* Sekmeler (nav-tabs / nav-pills) */
+.nav-pills .nav-link.active {
+    background-color: #0082B4;
+}
+.nav-tabs .nav-link.active {
+    color: #0082B4;
+    border-bottom: 2px solid #0082B4;
+}
+
+/* Bağlantılar */
+a { --bs-link-color-rgb: 0, 130, 180; --bs-link-hover-color-rgb: 0, 106, 145; }
+
+/* ── Ortak "hero" form bileşenleri: Ödeme Kalemi Düzenle sayfasında tanıtılan
+   marka renkli başlık + gruplu alan paneli düzenini, başka formlarda da
+   tekrar kullanmak için genel sınıflar olarak burada tanımlıyoruz. ── */
+.bk-form-card { border-radius: 16px; overflow: hidden; box-shadow: 0 8px 28px rgba(0, 130, 180, .12); }
+.bk-form-hero {
+    display: flex; align-items: center; gap: .9rem;
+    padding: 1.5rem 1.75rem;
+    background: linear-gradient(135deg, #0082B4 0%, #00A0E3 100%);
+    color: #fff;
+}
+.bk-form-hero h5 { color: #fff; font-weight: 700; margin-bottom: 0; }
+.bk-form-hero-subtitle { color: rgba(255,255,255,.85); font-size: .85rem; margin-top: .15rem; }
+.bk-form-hero-icon {
+    width: 46px; height: 46px; flex: 0 0 auto;
+    border-radius: 12px; background: rgba(255,255,255,.18);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; color: #fff;
+}
+.bk-form-body { padding: 1.75rem; background: #fff; }
+
+.bk-field-group { background: #f8fafb; border: 1px solid #e8eaec; border-radius: 12px; padding: 1.1rem 1.25rem .95rem; }
+.bk-group-title {
+    font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: #0082B4; margin-bottom: .9rem; padding-left: .6rem; position: relative;
+}
+.bk-group-title::before {
+    content: ""; position: absolute; left: 0; top: .1rem; bottom: .1rem;
+    width: 3px; border-radius: 2px; background: linear-gradient(180deg, #0082B4, #00A0E3);
+}
+.bk-label { display: block; font-size: .82rem; font-weight: 600; color: #2B2A29; margin-bottom: .35rem; }
+.bk-hint { color: #9ca3af; }
+
+.bk-btn-save {
+    background: linear-gradient(135deg, #0082B4 0%, #00A0E3 100%);
+    color: #fff; border: none; border-radius: 10px;
+    padding: .65rem 1.5rem; font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0, 130, 180, .35);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.bk-btn-save:hover { color: #fff; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 130, 180, .45); }
+.bk-btn-cancel {
+    background: #fff; border: 1px solid #e1e5e9; color: #2B2A29;
+    border-radius: 10px; padding: .65rem 1.5rem; font-weight: 600;
+    transition: background .15s ease, border-color .15s ease;
+}
+.bk-btn-cancel:hover { background: #f5f6f7; border-color: #c9ced3; color: #2B2A29; }
+
+/* Liste sayfaları için: sayfa üstü özet şeridi ve marka vurgulu kart satırları */
+.bk-page-header {
+    background: linear-gradient(135deg, rgba(0,130,180,.07), rgba(0,160,227,.03));
+    border: 1px solid #e3eef2; border-radius: 12px; padding: 1rem 1.25rem;
+}
+.bk-accent-card { position: relative; border: none; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.05); overflow: hidden; }
+.bk-accent-card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: linear-gradient(180deg, #0082B4, #00A0E3);
+}
+.bk-accent-card > .card-body { padding-left: 1.5rem; }

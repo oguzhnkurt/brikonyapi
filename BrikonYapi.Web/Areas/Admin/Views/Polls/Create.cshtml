@@ -7,86 +7,101 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-7">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Yeni Oylama</h5>
-                <div class="text-muted small mt-1">
-                    Bir malik bu oylamada yalnızca <strong>bir kez</strong> oy kullanabilir; bu kural veritabanı
-                    seviyesinde garanti altındadır.
+        <div class="card bk-form-card border-0">
+            <div class="bk-form-hero">
+                <div class="bk-form-hero-icon">
+                    <iconify-icon icon="mdi:poll"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="mb-0">Yeni Oylama</h5>
+                    <div class="bk-form-hero-subtitle">
+                        Bir malik bu oylamada yalnızca bir kez oy kullanabilir; bu kural veritabanı seviyesinde garanti altındadır.
+                    </div>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body bk-form-body">
                 <form asp-area="Admin" asp-controller="Polls" asp-action="Create" method="post">
                     @Html.AntiForgeryToken()
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Başlık <span class="text-danger">*</span></label>
-                        <input asp-for="Title" class="form-control" placeholder="Örn: Dış cephe rengi seçimi" required />
-                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Genel Bilgiler</div>
+
+                        <div class="mb-3">
+                            <label class="bk-label">Başlık <span class="text-danger">*</span></label>
+                            <input asp-for="Title" class="form-control" placeholder="Örn: Dış cephe rengi seçimi" required />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="bk-label">Açıklama</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"
+                                      placeholder="Oylamanın amacını kısaca açıklayın"></textarea>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="bk-label">Kapsam</label>
+                                <select asp-for="ProjectId" class="form-select">
+                                    <option value="">Tüm projelerdeki malikler</option>
+                                    @foreach (var p in projects)
+                                    {
+                                        <option value="@p.Id">@p.Name</option>
+                                    }
+                                </select>
+                                <div class="form-text bk-hint">Proje seçerseniz yalnızca o projedeki malikler görür ve oy verebilir.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="bk-label">Kategori</label>
+                                <input asp-for="Category" class="form-control" placeholder="Dış Cephe, İç Mekan, Peyzaj, Diğer..." />
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Açıklama</label>
-                        <textarea asp-for="Description" class="form-control" rows="3"
-                                  placeholder="Oylamanın amacını kısaca açıklayın"></textarea>
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Zamanlama</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="bk-label">Başlangıç</label>
+                                <input asp-for="StartsAt" type="datetime-local" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="bk-label">Bitiş</label>
+                                <input asp-for="EndsAt" type="datetime-local" class="form-control" />
+                                <div class="form-text bk-hint">Boş bırakılırsa siz kapatana kadar açık kalır.</div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Kapsam</label>
-                            <select asp-for="ProjectId" class="form-select">
-                                <option value="">Tüm projelerdeki malikler</option>
-                                @foreach (var p in projects)
-                                {
-                                    <option value="@p.Id">@p.Name</option>
-                                }
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Seçenekler &amp; Durum</div>
+
+                        <div class="mb-3">
+                            <label class="bk-label">Seçenekler <span class="text-danger">*</span></label>
+                            <div id="optionList" class="d-flex flex-column gap-2">
+                                <input name="optionTexts" class="form-control" placeholder="1. seçenek" required />
+                                <input name="optionTexts" class="form-control" placeholder="2. seçenek" required />
+                            </div>
+                            <button type="button" id="addOption" class="btn btn-sm btn-outline-secondary mt-2">
+                                <iconify-icon icon="iconamoon:plus-circle-duotone"></iconify-icon> Seçenek ekle
+                            </button>
+                            <div class="form-text bk-hint">En az iki seçenek gerekir. Görselleri sonraki ekranda yükleyebilirsiniz.</div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="bk-label">Durum</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="0">Aktif (maliklere hemen açılsın)</option>
+                                <option value="2">Taslak (henüz gösterilmesin)</option>
                             </select>
-                            <div class="form-text">Proje seçerseniz yalnızca o projedeki malikler görür ve oy verebilir.</div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Kategori</label>
-                            <input asp-for="Category" class="form-control" placeholder="Dış Cephe, İç Mekan, Peyzaj, Diğer..." />
-                        </div>
-                    </div>
-
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Başlangıç</label>
-                            <input asp-for="StartsAt" type="datetime-local" class="form-control" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Bitiş</label>
-                            <input asp-for="EndsAt" type="datetime-local" class="form-control" />
-                            <div class="form-text">Boş bırakılırsa siz kapatana kadar açık kalır.</div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Seçenekler <span class="text-danger">*</span></label>
-                        <div id="optionList" class="d-flex flex-column gap-2">
-                            <input name="optionTexts" class="form-control" placeholder="1. seçenek" required />
-                            <input name="optionTexts" class="form-control" placeholder="2. seçenek" required />
-                        </div>
-                        <button type="button" id="addOption" class="btn btn-sm btn-outline-secondary mt-2">
-                            <iconify-icon icon="iconamoon:plus-circle-duotone"></iconify-icon> Seçenek ekle
-                        </button>
-                        <div class="form-text">En az iki seçenek gerekir. Görselleri sonraki ekranda yükleyebilirsiniz.</div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">Durum</label>
-                        <select asp-for="Status" class="form-select">
-                            <option value="0">Aktif (maliklere hemen açılsın)</option>
-                            <option value="2">Taslak (henüz gösterilmesin)</option>
-                        </select>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn bk-btn-save">
                             <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
                             Oluştur
                         </button>
-                        <a href="/Admin/Polls" class="btn btn-outline-secondary">İptal</a>
+                        <a href="/Admin/Polls" class="btn bk-btn-cancel">İptal</a>
                     </div>
                 </form>
             </div>

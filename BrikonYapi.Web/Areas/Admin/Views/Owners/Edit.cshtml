@@ -11,32 +11,41 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Kat Maliki Düzenle</h5>
+        <div class="card bk-form-card border-0">
+            <div class="bk-form-hero">
+                <div class="bk-form-hero-icon">
+                    <iconify-icon icon="mdi:account-outline"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="mb-0">Kat Maliki Düzenle</h5>
+                    <div class="bk-form-hero-subtitle">@Model.FullName</div>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body bk-form-body">
                 <form asp-area="Admin" asp-controller="Owners" asp-action="Edit" asp-route-id="@Model.Id" method="post">
                     @Html.AntiForgeryToken()
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Ad Soyad <span class="text-danger">*</span></label>
-                        <input asp-for="FullName" class="form-control" required />
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Hesap Bilgileri</div>
+                        <div class="mb-3">
+                            <label class="bk-label">Ad Soyad <span class="text-danger">*</span></label>
+                            <input asp-for="FullName" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="bk-label">Telefon</label>
+                            <input asp-for="Phone" class="form-control" />
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="bk-label">E-posta</label>
+                            <input type="email" class="form-control" value="@Model.Email" disabled />
+                            <div class="form-text bk-hint">E-posta (kullanıcı adı) değiştirilemez.</div>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Telefon</label>
-                        <input asp-for="Phone" class="form-control" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">E-posta</label>
-                        <input type="email" class="form-control" value="@Model.Email" disabled />
-                        <div class="form-text">E-posta (kullanıcı adı) değiştirilemez.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Bağımsız Bölümler</label>
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Bağımsız Bölümler</div>
                         <div>
                             @if (Model.Units.Any())
                             {
@@ -60,24 +69,26 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn bk-btn-save">
                             <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
                             Kaydet
                         </button>
-                        <a href="/Admin/Owners" class="btn btn-outline-secondary">İptal</a>
+                        <a href="/Admin/Owners" class="btn bk-btn-cancel">İptal</a>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div class="card mt-3">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <iconify-icon icon="iconamoon:shield-yes-duotone" class="me-2"></iconify-icon>
-                    Proje ve Sohbet Erişimi
-                </h5>
+        <div class="card bk-form-card border-0 mt-3">
+            <div class="bk-form-hero">
+                <div class="bk-form-hero-icon">
+                    <iconify-icon icon="mdi:shield-check-outline"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="mb-0">Proje ve Sohbet Erişimi</h5>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body bk-form-body">
                 <p class="text-muted small mb-3">
                     Bu malikin hangi projelerin <strong>oylamalarını görüp oy kullanabileceğini</strong> ve hangi
                     proje <strong>sohbetine katılabileceğini</strong> burada tek tek belirlersiniz. Bağımsız bölüm
@@ -132,7 +143,7 @@
                             </table>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn bk-btn-save">
                             <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
                             Erişimi Kaydet
                         </button>
@@ -141,14 +152,16 @@
             </div>
         </div>
 
-        <div class="card mt-3">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <iconify-icon icon="iconamoon:building-1-duotone" class="me-2"></iconify-icon>
-                    Bağımsız Bölüm Detayları
-                </h5>
+        <div class="card bk-form-card border-0 mt-3">
+            <div class="bk-form-hero">
+                <div class="bk-form-hero-icon">
+                    <iconify-icon icon="mdi:home-city-outline"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="mb-0">Bağımsız Bölüm Detayları</h5>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body bk-form-body">
                 <p class="text-muted small mb-3">
                     Kat, oda düzeni ve metrekare bilgisi Kat Maliki Ana Sayfa'sındaki bölüm kartında gösterilir
                     (ör. "3. Kat · 3+1 · 145 m²"). Bölümün kendisini (proje, numara, blok, malik ataması) değiştirmek
@@ -165,7 +178,7 @@
                 {
                     @foreach (var u in Model.Units)
                     {
-                        <form asp-area="Admin" asp-controller="Owners" asp-action="SaveUnitDetails" method="post" class="border rounded p-3 mb-2">
+                        <form asp-area="Admin" asp-controller="Owners" asp-action="SaveUnitDetails" method="post" class="bk-field-group mb-3">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="ownerId" value="@Model.Id" />
                             <input type="hidden" name="unitId" value="@u.Id" />
@@ -174,19 +187,19 @@
 
                             <div class="row g-2 align-items-end">
                                 <div class="col-3">
-                                    <label class="form-label small mb-1">Kat</label>
+                                    <label class="bk-label small mb-1">Kat</label>
                                     <input type="number" name="floorNo" value="@u.FloorNo" class="form-control form-control-sm" placeholder="3" />
                                 </div>
                                 <div class="col-4">
-                                    <label class="form-label small mb-1">Oda Düzeni</label>
+                                    <label class="bk-label small mb-1">Oda Düzeni</label>
                                     <input type="text" name="roomLayout" value="@u.RoomLayout" class="form-control form-control-sm" placeholder="3+1" maxlength="20" />
                                 </div>
                                 <div class="col-3">
-                                    <label class="form-label small mb-1">m²</label>
+                                    <label class="bk-label small mb-1">m²</label>
                                     <input type="number" name="areaM2" value="@u.AreaM2" class="form-control form-control-sm" placeholder="145" />
                                 </div>
                                 <div class="col-2">
-                                    <button type="submit" class="btn btn-sm btn-primary w-100">Kaydet</button>
+                                    <button type="submit" class="btn btn-sm bk-btn-save w-100">Kaydet</button>
                                 </div>
                             </div>
                         </form>

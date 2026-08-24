@@ -6,42 +6,52 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Referans Düzenle — @Model.Name</h5>
+        <div class="card bk-form-card border-0">
+            <div class="bk-form-hero">
+                <div class="bk-form-hero-icon">
+                    <iconify-icon icon="mdi:star-outline"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="mb-0">Referans Düzenle</h5>
+                    <div class="bk-form-hero-subtitle">@Model.Name</div>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body bk-form-body">
                 <form asp-area="Admin" asp-controller="References" asp-action="Edit"
                       method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input asp-for="Id" type="hidden" />
 
-                    @if (!string.IsNullOrEmpty(Model.LogoPath))
-                    {
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Mevcut Logo</label>
-                            <div class="p-3 bg-light rounded d-inline-block">
-                                <img src="@Model.LogoPath" alt="@Model.Name"
-                                     style="height:60px;max-width:160px;object-fit:contain;" />
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Genel Bilgiler</div>
+
+                        @if (!string.IsNullOrEmpty(Model.LogoPath))
+                        {
+                            <div class="mb-3">
+                                <label class="bk-label">Mevcut Logo</label>
+                                <div class="p-3 bg-light rounded d-inline-block">
+                                    <img src="@Model.LogoPath" alt="@Model.Name"
+                                         style="height:60px;max-width:160px;object-fit:contain;" />
+                                </div>
+                                <div class="form-text bk-hint">Yeni logo yüklenirse mevcut logo silinir.</div>
                             </div>
-                            <div class="form-text">Yeni logo yüklenirse mevcut logo silinir.</div>
+                        }
+
+                        <div class="mb-3">
+                            <label class="bk-label">Referans Adı <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
                         </div>
-                    }
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Referans Adı <span class="text-danger">*</span></label>
-                        <input asp-for="Name" class="form-control" />
-                        <span asp-validation-for="Name" class="text-danger small"></span>
-                    </div>
+                        <div class="mb-3">
+                            <label class="bk-label">Yeni Logo (boş bırakılırsa değişmez)</label>
+                            <input type="file" name="logo" class="form-control" accept="image/png,image/jpeg,image/webp" />
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Yeni Logo (boş bırakılırsa değişmez)</label>
-                        <input type="file" name="logo" class="form-control" accept="image/png,image/jpeg,image/webp" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Sıra Numarası</label>
-                        <input asp-for="OrderIndex" type="number" class="form-control" />
+                        <div class="mb-0">
+                            <label class="bk-label">Sıra Numarası</label>
+                            <input asp-for="OrderIndex" type="number" class="form-control" />
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -52,11 +62,11 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn bk-btn-save">
                             <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
                             Güncelle
                         </button>
-                        <a href="/Admin/References" class="btn btn-outline-secondary">İptal</a>
+                        <a href="/Admin/References" class="btn bk-btn-cancel">İptal</a>
                     </div>
                 </form>
             </div>

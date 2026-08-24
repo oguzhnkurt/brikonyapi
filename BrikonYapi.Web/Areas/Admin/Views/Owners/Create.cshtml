@@ -6,43 +6,54 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Yeni Kat Maliki Hesabı</h5>
+        <div class="card bk-form-card border-0">
+            <div class="bk-form-hero">
+                <div class="bk-form-hero-icon">
+                    <iconify-icon icon="mdi:account-outline"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="mb-0">Yeni Kat Maliki Hesabı</h5>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body bk-form-body">
                 <form asp-area="Admin" asp-controller="Owners" asp-action="Create" method="post">
                     @Html.AntiForgeryToken()
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Ad Soyad <span class="text-danger">*</span></label>
-                        <input asp-for="FullName" class="form-control" placeholder="Örn: Ahmet Yılmaz" required />
-                        <span asp-validation-for="FullName" class="text-danger small"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Telefon</label>
-                        <input asp-for="Phone" class="form-control" placeholder="0532 000 00 00" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">E-posta (giriş için kullanılacak) <span class="text-danger">*</span></label>
-                        <input type="email" name="email" class="form-control" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Başlangıç Şifresi <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <input type="text" name="password" id="pwField" class="form-control" required minlength="8"
-                                   placeholder="min. 8 karakter, büyük harf ve rakam içermeli" />
-                            <button type="button" class="btn btn-outline-primary" id="pwGen">
-                                <iconify-icon icon="iconamoon:synchronize-duotone" class="me-1"></iconify-icon>Şifre Üret
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary" id="pwCopy" title="Kopyala">
-                                <iconify-icon icon="iconamoon:copy-duotone"></iconify-icon>
-                            </button>
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Hesap Bilgileri</div>
+                        <div class="mb-3">
+                            <label class="bk-label">Ad Soyad <span class="text-danger">*</span></label>
+                            <input asp-for="FullName" class="form-control" placeholder="Örn: Ahmet Yılmaz" required />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
                         </div>
-                        <div class="form-text" id="pwHint">Bu şifreyi malike güvenli bir şekilde iletin. Daha sonra "Şifre Sıfırla" ile yenileyebilirsiniz.</div>
+
+                        <div class="mb-0">
+                            <label class="bk-label">Telefon</label>
+                            <input asp-for="Phone" class="form-control" placeholder="0532 000 00 00" />
+                        </div>
+                    </div>
+
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Giriş Bilgileri</div>
+                        <div class="mb-3">
+                            <label class="bk-label">E-posta (giriş için kullanılacak) <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" required />
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="bk-label">Başlangıç Şifresi <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="text" name="password" id="pwField" class="form-control" required minlength="8"
+                                       placeholder="min. 8 karakter, büyük harf ve rakam içermeli" />
+                                <button type="button" class="btn btn-outline-primary" id="pwGen">
+                                    <iconify-icon icon="iconamoon:synchronize-duotone" class="me-1"></iconify-icon>Şifre Üret
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="pwCopy" title="Kopyala">
+                                    <iconify-icon icon="iconamoon:copy-duotone"></iconify-icon>
+                                </button>
+                            </div>
+                            <div class="form-text bk-hint" id="pwHint">Bu şifreyi malike güvenli bir şekilde iletin. Daha sonra "Şifre Sıfırla" ile yenileyebilirsiniz.</div>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -57,11 +68,11 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn bk-btn-save">
                             <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
                             Oluştur
                         </button>
-                        <a href="/Admin/Owners" class="btn btn-outline-secondary">İptal</a>
+                        <a href="/Admin/Owners" class="btn bk-btn-cancel">İptal</a>
                     </div>
                 </form>
             </div>

@@ -31,41 +31,44 @@
             @Html.AntiForgeryToken()
 
             <!-- Temel Bilgiler -->
-            <div class="card mb-3">
-                <div class="card-header"><h6 class="card-title mb-0">Temel Bilgiler</h6></div>
-                <div class="card-body">
+            <div class="card bk-form-card border-0 mb-3">
+                <div class="bk-form-hero">
+                    <div class="bk-form-hero-icon"><iconify-icon icon="mdi:information-outline"></iconify-icon></div>
+                    <div><h5 class="mb-0">Temel Bilgiler</h5></div>
+                </div>
+                <div class="card-body bk-form-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Proje Adı <span class="text-danger">*</span></label>
+                            <label class="bk-label">Proje Adı <span class="text-danger">*</span></label>
                             <input asp-for="Name" class="form-control" required />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Lokasyon</label>
+                            <label class="bk-label">Lokasyon</label>
                             <input asp-for="Location" class="form-control" placeholder="İstanbul, Kadıköy" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">İlçe</label>
+                            <label class="bk-label">İlçe</label>
                             <input asp-for="District" class="form-control" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Şehir</label>
+                            <label class="bk-label">Şehir</label>
                             <input asp-for="City" class="form-control" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Durum</label>
+                            <label class="bk-label">Durum</label>
                             <select asp-for="Status" class="form-select">
                                 <option value="0">Devam Ediyor</option>
                                 <option value="1">Tamamlandı</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Kategori</label>
+                            <label class="bk-label">Kategori</label>
                             <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select">
                                 <option value="">— Seçiniz —</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Sıra (küçük = önce)</label>
+                            <label class="bk-label">Sıra (küçük = önce)</label>
                             <input asp-for="OrderIndex" type="number" class="form-control" />
                         </div>
                     </div>
@@ -73,43 +76,46 @@
             </div>
 
             <!-- Proje Detayları -->
-            <div class="card mb-3">
-                <div class="card-header"><h6 class="card-title mb-0">Proje Detayları</h6></div>
-                <div class="card-body">
+            <div class="card bk-form-card border-0 mb-3">
+                <div class="bk-form-hero">
+                    <div class="bk-form-hero-icon"><iconify-icon icon="mdi:office-building-outline"></iconify-icon></div>
+                    <div><h5 class="mb-0">Proje Detayları</h5></div>
+                </div>
+                <div class="card-body bk-form-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Toplam Alan (m²)</label>
+                            <label class="bk-label">Toplam Alan (m²)</label>
                             <input asp-for="TotalArea" type="number" class="form-control" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Daire Sayısı</label>
+                            <label class="bk-label">Daire Sayısı</label>
                             <input asp-for="UnitCount" type="number" class="form-control" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Kat Sayısı</label>
+                            <label class="bk-label">Kat Sayısı</label>
                             <input asp-for="FloorCount" type="number" class="form-control" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Blok Sayısı</label>
+                            <label class="bk-label">Blok Sayısı</label>
                             <input asp-for="BlockCount" type="number" class="form-control" />
                         </div>
                         <div class="col-12">
-                            <label class="form-label">
+                            <label class="bk-label">
                                 Kart Etiketi
                                 <small class="text-muted ms-1">— Proje kartının sağ üstünde gösterilir (örn: "42 Villa", "TOKİ", "Anahtar Teslim"). Boş bırakılırsa etiket görünmez.</small>
                             </label>
                             <input asp-for="CardTag" type="text" class="form-control" placeholder="örn: 42 Daire" maxlength="80" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Başlangıç Tarihi</label>
+                            <label class="bk-label">Başlangıç Tarihi</label>
                             <input asp-for="StartDate" type="date" class="form-control" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Bitiş / Teslim Tarihi</label>
+                            <label class="bk-label">Bitiş / Teslim Tarihi</label>
                             <input asp-for="EndDate" type="date" class="form-control" />
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Konum (Harita)</label>
+                            <label class="bk-label">Konum (Harita)</label>
                             <div class="d-flex gap-2 mb-2">
                                 <input asp-for="Latitude" type="number" step="any" class="form-control" placeholder="Enlem" id="inputLat" />
                                 <input asp-for="Longitude" type="number" step="any" class="form-control" placeholder="Boylam" id="inputLng" />
@@ -127,11 +133,11 @@
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Kısa Açıklama</label>
+                            <label class="bk-label">Kısa Açıklama</label>
                             <input asp-for="ShortDescription" class="form-control" placeholder="Proje listesinde görünecek kısa açıklama" />
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Detay Açıklama</label>
+                            <label class="bk-label">Detay Açıklama</label>
                             <textarea asp-for="Description" class="form-control" rows="5" placeholder="Proje detay sayfasında görünecek tam açıklama"></textarea>
                         </div>
                     </div>
@@ -139,20 +145,23 @@
             </div>
 
             <!-- Medya -->
-            <div class="card mb-3">
-                <div class="card-header"><h6 class="card-title mb-0">Medya</h6></div>
-                <div class="card-body">
+            <div class="card bk-form-card border-0 mb-3">
+                <div class="bk-form-hero">
+                    <div class="bk-form-hero-icon"><iconify-icon icon="mdi:image-multiple-outline"></iconify-icon></div>
+                    <div><h5 class="mb-0">Medya</h5></div>
+                </div>
+                <div class="card-body bk-form-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Ana Görsel</label>
+                            <label class="bk-label">Ana Görsel</label>
                             <input type="file" name="mainImage" class="form-control" accept="image/*" />
-                            <div class="form-text">
+                            <div class="form-text bk-hint">
                                 <strong>Önerilen: 1600 × 1000 px (16:10 oran)</strong><br>
                                 Proje kartında ve kayan bantta bu oranda gösterilir. Dikey fotoğraf yüklemekten kaçının.
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Proje Videosu</label>
+                            <label class="bk-label">Proje Videosu</label>
                             <div id="video-preview-box" class="border rounded d-flex align-items-center justify-content-center bg-light" style="height:80px;cursor:pointer;" onclick="document.getElementById('projectVideoInput').click()">
                                 <div id="video-empty-box" class="text-center text-muted" style="font-size:.82rem;">
                                     <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" class="d-block mx-auto mb-1"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
@@ -167,7 +176,7 @@
                             </div>
                             <input type="file" id="projectVideoInput" class="d-none" accept="video/mp4,video/quicktime,video/*" />
                             <input type="hidden" id="tempVideoPath" name="tempVideoPath" />
-                            <div class="form-text">
+                            <div class="form-text bk-hint">
                                 Video yüklenirse açılış ekranında arka planda oynatılır.<br>
                                 <strong>Maks. 500 MB</strong> · MP4, MOV · Yükleme parça parça yapılır, sayfayı kapatmayın.
                             </div>
@@ -177,19 +186,25 @@
             </div>
 
             <!-- Galeri -->
-            <div class="card mb-3">
-                <div class="card-header"><h6 class="card-title mb-0">Galeri Görselleri</h6></div>
-                <div class="card-body">
-                    <label class="form-label">Görsel Ekle (çoklu seçim)</label>
+            <div class="card bk-form-card border-0 mb-3">
+                <div class="bk-form-hero">
+                    <div class="bk-form-hero-icon"><iconify-icon icon="mdi:view-gallery-outline"></iconify-icon></div>
+                    <div><h5 class="mb-0">Galeri Görselleri</h5></div>
+                </div>
+                <div class="card-body bk-form-body">
+                    <label class="bk-label">Görsel Ekle (çoklu seçim)</label>
                     <input type="file" name="galleryImages" class="form-control" accept="image/*" multiple />
                 </div>
             </div>
 
 
             <!-- Yayın Ayarları -->
-            <div class="card mb-3">
-                <div class="card-header"><h6 class="card-title mb-0">Yayın Ayarları</h6></div>
-                <div class="card-body">
+            <div class="card bk-form-card border-0 mb-3">
+                <div class="bk-form-hero">
+                    <div class="bk-form-hero-icon"><iconify-icon icon="mdi:cog-outline"></iconify-icon></div>
+                    <div><h5 class="mb-0">Yayın Ayarları</h5></div>
+                </div>
+                <div class="card-body bk-form-body">
                     <div class="d-flex gap-4">
                         <div class="form-check form-switch">
                             <input asp-for="IsActive" class="form-check-input" type="checkbox" checked />
@@ -214,11 +229,11 @@
             </div>
 
             <div class="d-flex gap-2 mb-4">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn bk-btn-save">
                     <iconify-icon icon="iconamoon:check-duotone" class="me-1"></iconify-icon>
                     Projeyi Kaydet
                 </button>
-                <a href="/Admin/Projects" class="btn btn-outline-secondary">İptal</a>
+                <a href="/Admin/Projects" class="btn bk-btn-cancel">İptal</a>
             </div>
 
         </form>

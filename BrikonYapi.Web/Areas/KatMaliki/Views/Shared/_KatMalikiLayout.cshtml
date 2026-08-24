@@ -77,6 +77,15 @@
         .badge { font-size: .85rem; padding: .5em .85em; border-radius: 6px; }
 
         .form-control, .form-select { font-size: 1rem; padding: .7rem .9rem; min-height: 48px; border-radius: 8px; }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--c-primary);
+            box-shadow: 0 0 0 .15rem rgba(0, 130, 180, .15);
+        }
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%230082B4' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        }
+        .form-check-input:checked { background-color: var(--c-primary); border-color: var(--c-primary); }
+        .form-check-input:focus { border-color: var(--c-primary); box-shadow: 0 0 0 .15rem rgba(0, 130, 180, .25); }
         .form-label { font-size: .95rem; font-weight: 600; }
 
         .alert { font-size: 1rem; border-radius: 10px; }
