@@ -62,10 +62,10 @@
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="card-title mb-0">İnşaat Aşamaları / İş Adımları (@stages.Count)</h6>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-1 align-items-center">
                     @if (!stages.Any())
                     {
-                        <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="SeedDefaultStages" method="post" class="d-inline">
+                        <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="SeedDefaultStages" method="post" class="d-inline pp-seed-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@Model.Id" />
                             <button type="submit" class="btn btn-sm btn-outline-primary">
@@ -74,11 +74,11 @@
                             </button>
                         </form>
                     }
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="offcanvas" data-bs-target="#stageBulkPanel">
-                        <iconify-icon icon="mdi:content-duplicate"></iconify-icon>
-                        Tüm Projelere Uygula
+                    <button type="button" class="btn btn-sm btn-outline-primary pp-seed-edit-btn" data-bs-toggle="offcanvas" data-bs-target="#stageBulkPanel"
+                            title="Standart aşama listesini düzenle (tüm projelere uygulanır)">
+                        <iconify-icon icon="iconamoon:edit-duotone"></iconify-icon>
                     </button>
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="offcanvas" data-bs-target="#stageAddPanel">
+                    <button type="button" class="btn btn-sm btn-primary ms-1" data-bs-toggle="offcanvas" data-bs-target="#stageAddPanel">
                         <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>İş Adımı Ekle
                     </button>
                 </div>
@@ -229,28 +229,35 @@
     <div class="offcanvas offcanvas-end pp-stage-panel" tabindex="-1" id="stageBulkPanel">
         <div class="offcanvas-header border-bottom">
             <h5 class="offcanvas-title">
-                <iconify-icon icon="mdi:content-duplicate" class="me-1 text-primary"></iconify-icon>
-                İş Adımı Şablonu — Tüm Projelere Uygula
+                <iconify-icon icon="iconamoon:edit-duotone" class="me-1 text-primary"></iconify-icon>
+                Standart Aşama Listesini Düzenle
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
         </div>
         <div class="offcanvas-body">
             <div class="text-muted small mb-3">
-                Her satıra bir iş adımı adı yazın. Kaydet'e bastığınızda bu liste <strong>tüm aktif projelere</strong>
-                aynı sırayla eklenir. Bir projede aynı isimli bir adım zaten varsa o satır atlanır — panel
-                istediğiniz kadar tekrar kullanılabilir, mevcut kayıtlar bozulmaz veya kopyalanmaz.
+                Aşağıdaki liste standart iş programını gösterir — satır ekleyip çıkararak düzenleyin.
+                Kaydet'e bastığınızda bu liste <strong>tüm aktif projelere</strong> aynı sırayla uygulanır.
+                Bir projede aynı isimli bir adım zaten varsa o satır atlanır, mevcut kayıtlar bozulmaz —
+                paneli istediğiniz kadar tekrar kullanabilirsiniz.
             </div>
             <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="BulkAddStagesToAllProjects" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="returnProjectId" value="@Model.Id" />
                 <div class="mb-2">
                     <label class="form-label fw-semibold small">İş Adımları (her satıra bir tane) <span class="text-danger">*</span></label>
-                    <textarea name="stepsText" id="bulkStepsText" class="form-control" rows="10" required
-                              placeholder="Planlama&#10;Kazı&#10;Temel&#10;Karkas&#10;Dış Cephe&#10;İç Mekan&#10;Bitirme&#10;Teslim"></textarea>
+                    <textarea name="stepsText" id="bulkStepsText" class="form-control" rows="10" required>Planlama
+Kazı
+Temel
+Karkas
+Dış Cephe
+İç Mekan
+Bitirme
+Teslim</textarea>
                 </div>
                 <button type="button" class="btn btn-sm btn-link p-0 mb-3" id="bulkFillDefaults">
-                    <iconify-icon icon="iconamoon:lightning-1-duotone" class="me-1"></iconify-icon>
-                    Standart 8 aşamayı doldur
+                    <iconify-icon icon="iconamoon:restore-duotone" class="me-1"></iconify-icon>
+                    Varsayılana sıfırla
                 </button>
                 <div class="d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">İptal</button>
@@ -410,6 +417,12 @@
     .pp-stage-table thead th { font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:#8a939c; font-weight:700; }
     .pp-stage-panel { width:420px; max-width:92vw; }
     .pp-stage-panel .offcanvas-title { font-weight:700; }
+
+    /* "Standart aşamaları ekle" + yanındaki düzenle (kalem) ikonu tek bir buton grubu gibi bitişik görünsün. */
+    .pp-seed-form { margin-right: -1px; }
+    .pp-seed-form .btn { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+    .pp-seed-form + .pp-seed-edit-btn { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+    .pp-seed-edit-btn { padding-left: .55rem; padding-right: .55rem; }
 </style>
 }
 
