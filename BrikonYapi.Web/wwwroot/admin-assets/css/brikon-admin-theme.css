@@ -94,18 +94,18 @@ a { --bs-link-color-rgb: 0, 130, 180; --bs-link-hover-color-rgb: 0, 106, 145; }
    tekrar kullanmak için genel sınıflar olarak burada tanımlıyoruz. ── */
 .bk-form-card { border-radius: 16px; overflow: hidden; box-shadow: 0 8px 28px rgba(0, 130, 180, .12); }
 .bk-form-hero {
-    display: flex; align-items: center; gap: .9rem;
-    padding: 1.5rem 1.75rem;
+    display: flex; align-items: center; gap: .75rem;
+    padding: 1.05rem 1.5rem;
     background: linear-gradient(135deg, #0082B4 0%, #00A0E3 100%);
     color: #fff;
 }
-.bk-form-hero h5 { color: #fff; font-weight: 700; margin-bottom: 0; }
-.bk-form-hero-subtitle { color: rgba(255,255,255,.85); font-size: .85rem; margin-top: .15rem; }
+.bk-form-hero h5 { color: #fff; font-weight: 600; font-size: .95rem; margin-bottom: 0; letter-spacing: .01em; }
+.bk-form-hero-subtitle { color: rgba(255,255,255,.8); font-size: .78rem; margin-top: .1rem; font-weight: 400; }
 .bk-form-hero-icon {
-    width: 46px; height: 46px; flex: 0 0 auto;
-    border-radius: 12px; background: rgba(255,255,255,.18);
+    width: 34px; height: 34px; flex: 0 0 auto;
+    border-radius: 9px; background: rgba(255,255,255,.16);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem; color: #fff;
+    font-size: 1.05rem; color: #fff;
 }
 .bk-form-body { padding: 1.75rem; background: #fff; }
 
