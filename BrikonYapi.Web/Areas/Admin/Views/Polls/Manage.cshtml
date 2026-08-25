@@ -95,12 +95,12 @@ else if (expired)
                     <div class="fw-semibold small mb-2">Tarihler</div>
 
                     <label class="form-label small mb-1">Başlangıç</label>
-                    <input type="datetime-local" id="pollStartsAt" class="form-control form-control-sm mb-2"
-                           value="@(Model.StartsAt?.ToString("yyyy-MM-ddTHH:mm"))" />
+                    <input type="text" autocomplete="off" id="pollStartsAt" class="form-control form-control-sm mb-2"
+                           value="@(Model.StartsAt?.ToString("yyyy-MM-ddTHH:mm"))" placeholder="gg.aa.yyyy ss:dd" />
 
                     <label class="form-label small mb-1">Bitiş</label>
-                    <input type="datetime-local" id="pollEndsAt" class="form-control form-control-sm mb-2"
-                           value="@(Model.EndsAt?.ToString("yyyy-MM-ddTHH:mm"))" />
+                    <input type="text" autocomplete="off" id="pollEndsAt" class="form-control form-control-sm mb-2"
+                           value="@(Model.EndsAt?.ToString("yyyy-MM-ddTHH:mm"))" placeholder="gg.aa.yyyy ss:dd" />
 
                     <div class="form-text small mb-0">Boş bırakılan alan sınır tanımaz. Sayfanın altındaki "Kaydet" ile birlikte kaydedilir.</div>
 
@@ -222,10 +222,11 @@ else if (expired)
 
 @section Scripts {
 <script>
-    // Bitiş, başlangıçtan önceki bir tarihe ayarlanamasın — sunucudaki (SaveAll) kontrolle
-    // aynı kural, burada anında (submit'e gerek kalmadan) uyarı olarak gösteriliyor.
-    // Tarihler ve yeni seçenek metni artık ayrı ayrı değil, tek bir "Kaydet" butonuyla
-    // gizli saveAllForm üzerinden birlikte gönderiliyor.
+    // Tarih/saat alanları brikon-admin-datepicker.js'teki ortak Türkçe flatpickr ile
+    // başlatılıyor. Bitiş, başlangıçtan önceki bir tarihe ayarlanamasın — sunucudaki
+    // (SaveAll) kontrolle aynı kural, burada anında uyarı olarak gösteriliyor. Tarihler
+    // ve yeni seçenek metni ayrı ayrı değil, tek bir "Kaydet" butonuyla gizli
+    // saveAllForm üzerinden birlikte gönderiliyor.
     (function () {
         var startInput = document.getElementById('pollStartsAt');
         var endInput = document.getElementById('pollEndsAt');
@@ -234,21 +235,25 @@ else if (expired)
         var form = document.getElementById('saveAllForm');
         if (!startInput || !endInput || !saveBtn || !form) return;
 
-        function syncMin() {
-            endInput.min = startInput.value || '';
-            if (startInput.value && endInput.value && endInput.value <= startInput.value) {
-                endInput.setCustomValidity('Bitiş tarihi başlangıçtan sonra olmalıdır.');
-            } else {
-                endInput.setCustomValidity('');
-            }
+        var startFp = window.brikonInitDateTimePicker ? brikonInitDateTimePicker(startInput) : null;
+        var endFp = window.brikonInitDateTimePicker ? brikonInitDateTimePicker(endInput) : null;
+
+        function isInvalid() {
+            return startInput.value && endInput.value && endInput.value <= startInput.value;
         }
 
-        startInput.addEventListener('change', syncMin);
-        endInput.addEventListener('change', syncMin);
-        syncMin();
+        if (startFp && endFp) {
+            startFp.config.onChange.push(function (selectedDates) {
+                endFp.set('minDate', selectedDates[0] || null);
+                endFp.altInput.classList.toggle('is-invalid', !!isInvalid());
+            });
+            endFp.config.onChange.push(function () {
+                endFp.altInput.classList.toggle('is-invalid', !!isInvalid());
+            });
+        }
 
         saveBtn.addEventListener('click', function () {
-            if (startInput.value && endInput.value && endInput.value <= startInput.value) {
+            if (isInvalid()) {
                 alert('Bitiş tarihi başlangıçtan sonra olmalıdır.');
                 return;
             }

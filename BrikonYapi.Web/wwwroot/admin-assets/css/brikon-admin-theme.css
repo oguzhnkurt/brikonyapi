@@ -157,3 +157,17 @@ a { --bs-link-color-rgb: 0, 130, 180; --bs-link-hover-color-rgb: 0, 106, 145; }
     background: linear-gradient(180deg, #0082B4, #00A0E3);
 }
 .bk-accent-card > .card-body { padding-left: 1.5rem; }
+
+/* Tarih/saat seçici (flatpickr): marka rengiyle uyumlu, sade/kurumsal görünüm */
+.flatpickr-calendar { border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.12); border: 1px solid #e8eaec; }
+.flatpickr-day.selected, .flatpickr-day.selected:hover, .flatpickr-day.selected:focus {
+    background: #0082B4; border-color: #0082B4;
+}
+.flatpickr-day.today { border-color: #0082B4; }
+.flatpickr-day.today:hover, .flatpickr-day.today:focus { background: #0082B4; border-color: #0082B4; color: #fff; }
+.flatpickr-day:hover { background: rgba(0,130,180,.1); }
+.flatpickr-current-month input.cur-year:focus,
+.numInputWrapper span.arrowUp:after { border-bottom-color: #0082B4; }
+.numInputWrapper span.arrowDown:after { border-top-color: #0082B4; }
+.flatpickr-time input:hover, .flatpickr-time .flatpickr-am-pm:hover,
+.flatpickr-time input:focus, .flatpickr-time .flatpickr-am-pm:focus { background: rgba(0,130,180,.08); }

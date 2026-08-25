@@ -62,11 +62,11 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="bk-label">Başlangıç</label>
-                                <input asp-for="StartsAt" type="datetime-local" class="form-control" />
+                                <input asp-for="StartsAt" type="text" autocomplete="off" class="form-control" placeholder="gg.aa.yyyy ss:dd" />
                             </div>
                             <div class="col-md-6">
                                 <label class="bk-label">Bitiş</label>
-                                <input asp-for="EndsAt" type="datetime-local" class="form-control" />
+                                <input asp-for="EndsAt" type="text" autocomplete="off" class="form-control" placeholder="gg.aa.yyyy ss:dd" />
                                 <div class="form-text bk-hint">Boş bırakılırsa siz kapatana kadar açık kalır.</div>
                             </div>
                         </div>
@@ -121,25 +121,41 @@
         input.focus();
     });
 
-    // Bitiş, başlangıçtan önceki bir tarihe ayarlanamasın — sunucudaki kontrolle aynı kural,
-    // burada anında (submit'e gerek kalmadan) uyarı olarak gösteriliyor.
+    // Tarih/saat alanları brikon-admin-datepicker.js'teki ortak Türkçe flatpickr ile
+    // başlatılıyor. Bitiş, başlangıçtan önceki bir tarihe ayarlanamasın — sunucudaki
+    // kontrolle aynı kural, burada anında (submit'e gerek kalmadan) uyarı olarak
+    // gösteriliyor.
     (function () {
         var startInput = document.getElementById('StartsAt');
         var endInput = document.getElementById('EndsAt');
-        if (!startInput || !endInput) return;
+        if (!startInput || !endInput || !window.brikonInitDateTimePicker) return;
 
-        function syncMin() {
-            endInput.min = startInput.value || '';
-            if (startInput.value && endInput.value && endInput.value <= startInput.value) {
-                endInput.setCustomValidity('Bitiş tarihi başlangıçtan sonra olmalıdır.');
-            } else {
-                endInput.setCustomValidity('');
+        var startFp = brikonInitDateTimePicker(startInput);
+        var endFp = brikonInitDateTimePicker(endInput);
+        if (!startFp || !endFp) return;
+
+        function validate() {
+            var s = startInput.value, e = endInput.value;
+            if (s && e && e <= s) {
+                endFp.altInput.classList.add('is-invalid');
+                return false;
             }
+            endFp.altInput.classList.remove('is-invalid');
+            return true;
         }
 
-        startInput.addEventListener('change', syncMin);
-        endInput.addEventListener('change', syncMin);
-        syncMin();
+        startFp.config.onChange.push(function (selectedDates) {
+            endFp.set('minDate', selectedDates[0] || null);
+            validate();
+        });
+        endFp.config.onChange.push(validate);
+
+        document.querySelector('form').addEventListener('submit', function (e) {
+            if (!validate()) {
+                e.preventDefault();
+                alert('Bitiş tarihi başlangıçtan sonra olmalıdır.');
+            }
+        });
     })();
 </script>
 }
