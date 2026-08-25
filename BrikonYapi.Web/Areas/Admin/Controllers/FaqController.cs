@@ -53,6 +53,8 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             existing.Question = faq.Question;
             existing.Answer = faq.Answer;
+            existing.QuestionEn = faq.QuestionEn;
+            existing.AnswerEn = faq.AnswerEn;
             existing.IsActive = faq.IsActive;
             existing.OrderIndex = faq.OrderIndex;
             existing.UpdatedAt = DateTime.Now;

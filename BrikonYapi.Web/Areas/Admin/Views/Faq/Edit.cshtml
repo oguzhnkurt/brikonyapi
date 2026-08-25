@@ -38,6 +38,22 @@
                     </div>
 
                     <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">İngilizce (opsiyonel)</div>
+
+                        <div class="mb-3">
+                            <label class="bk-label">Soru (EN)</label>
+                            <input asp-for="QuestionEn" class="form-control" placeholder="Örn: What is a mansard roof?" />
+                            <div class="form-text bk-hint">Boş bırakılırsa site İngilizce görünümünde de Türkçe soru gösterilir.</div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="bk-label">Cevap (EN)</label>
+                            <textarea asp-for="AnswerEn" class="form-control" rows="8" placeholder="Cevabın İngilizce çevirisi..."></textarea>
+                            <div class="form-text bk-hint">Boş bırakılırsa site İngilizce görünümünde de Türkçe cevap gösterilir.</div>
+                        </div>
+                    </div>
+
+                    <div class="bk-field-group mb-3">
                         <div class="bk-group-title">Yayın Ayarları</div>
                         <div class="mb-3">
                             <label class="bk-label">Sıra</label>

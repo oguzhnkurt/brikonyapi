@@ -13,6 +13,14 @@ namespace BrikonYapi.Web.Data.Entities
         [Required, MaxLength(4000)]
         public string Answer { get; set; } = string.Empty;
 
+        // İngilizce çeviriler opsiyonel — boş bırakılırsa site EN görünümünde Türkçe metin gösterilir
+        // (bkz. Project.DescriptionEn ile aynı desen).
+        [MaxLength(300)]
+        public string? QuestionEn { get; set; }
+
+        [MaxLength(4000)]
+        public string? AnswerEn { get; set; }
+
         public bool IsActive { get; set; } = true;
         public int OrderIndex { get; set; } = 0;
 

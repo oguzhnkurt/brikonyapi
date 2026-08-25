@@ -283,6 +283,10 @@ namespace BrikonYapi.Web.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
 
+                    b.Property<string>("AnswerEn")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -294,6 +298,10 @@ namespace BrikonYapi.Web.Migrations
 
                     b.Property<string>("Question")
                         .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("QuestionEn")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 

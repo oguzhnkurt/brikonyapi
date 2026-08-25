@@ -120,16 +120,20 @@ body { background: #f4f6f8; }
     {
         @foreach (var item in Model)
         {
+            @{
+                var displayQuestion = isEn && !string.IsNullOrEmpty(item.QuestionEn) ? item.QuestionEn : item.Question;
+                var displayAnswer   = isEn && !string.IsNullOrEmpty(item.AnswerEn) ? item.AnswerEn : item.Answer;
+            }
             <div class="faq-item">
                 <button type="button" class="faq-q" aria-expanded="false">
-                    <span>@item.Question</span>
+                    <span>@displayQuestion</span>
                     <svg class="faq-q-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="6 9 12 15 18 9" />
                     </svg>
                 </button>
                 <div class="faq-a-wrap">
                     <div class="faq-a-inner">
-                        <div class="faq-a">@item.Answer</div>
+                        <div class="faq-a">@displayAnswer</div>
                     </div>
                 </div>
             </div>
