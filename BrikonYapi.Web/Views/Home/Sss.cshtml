@@ -35,8 +35,17 @@ body { background: #f4f6f8; }
 }
 .faq-subtitle { font-size: .88rem; color: rgba(255,255,255,.4); line-height: 1.6; }
 
+/* ── SAYFA İSKELETİ ───────────────────────────────────
+   Soru sayısı azken (ör. tek soru) hero + liste viewport'u doldurmuyor ve
+   footer sayfa yüklenir yüklenmez ekranın büyük kısmını kaplıyormuş gibi
+   görünüyordu. faq-shell'i en az ekran yüksekliği kadar yapıp içerik
+   alanını (faq-wrap) esnetiyoruz ki footer her zaman aşağı itilsin ve
+   yalnızca scroll ile görünsün. */
+.faq-shell { display: flex; flex-direction: column; min-height: calc(100vh + 40px); }
+.faq-shell .faq-hero { flex: none; }
+
 /* ── LIST ─────────────────────────────────────────── */
-.faq-wrap { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+.faq-wrap { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem 4rem; flex: 1 0 auto; width: 100%; box-sizing: border-box; }
 
 .faq-item {
     background: #fff; border: 1px solid #e8ecf0; border-radius: 10px;
@@ -87,6 +96,7 @@ body { background: #f4f6f8; }
 </style>
 }
 
+<div class="faq-shell">
 <section class="faq-hero">
     <div class="faq-hero-inner">
         <span class="faq-eyebrow">@(isEn ? "Support" : "Destek")</span>
@@ -129,6 +139,7 @@ body { background: #f4f6f8; }
     <p class="faq-more">
         @(isEn ? "Couldn't find your answer? " : "Aradığınız cevabı bulamadınız mı? ")<a href="/Iletisim">@(isEn ? "Contact us" : "Bize ulaşın")</a>
     </p>
+</div>
 </div>
 
 @section Scripts {
