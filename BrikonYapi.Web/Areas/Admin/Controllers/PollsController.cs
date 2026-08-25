@@ -3,6 +3,8 @@ using BrikonYapi.Web.Data.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace BrikonYapi.Web.Areas.Admin.Controllers
 {
@@ -210,9 +212,28 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             var dir = Path.Combine(_env.WebRootPath, "uploads", "polls");
             Directory.CreateDirectory(dir);
 
-            var fileName = $"{Guid.NewGuid()}{ext}";
-            await using (var fs = new FileStream(Path.Combine(dir, fileName), FileMode.Create))
-                await image.CopyToAsync(fs);
+            // Bu görsel, hem Admin hem Kat Maliki panelinde her zaman ~52-56px'lik küçük bir
+            // yuvarlatılmış kare olarak gösteriliyor (bkz. Manage.cshtml, KatMaliki/Polls/Index.cshtml).
+            // Öncesinde dosya olduğu gibi (telefon kamerasından çıkan 3-4000px, birkaç MB'lık
+            // orijinal haliyle) kaydediliyordu — bu da oylama ekranının ilk açılışta yavaş
+            // yüklenmesine sebep oluyordu. Burada da proje görselleri için kullanılan ImageSharp
+            // ile küçültme uygulanıyor, ama hedef genişlik çok daha küçük (400px, retina ekranlar
+            // için bile fazlasıyla yeterli).
+            var fileName = $"{Guid.NewGuid()}.jpg";
+            var fullPath = Path.Combine(dir, fileName);
+            try
+            {
+                using var inputStream = image.OpenReadStream();
+                using var img = await Image.LoadAsync(inputStream);
+                if (img.Width > 400)
+                    img.Mutate(x => x.Resize(400, 0));
+                await img.SaveAsJpegAsync(fullPath, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 85 });
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "Geçersiz görsel dosyası.";
+                return RedirectToAction(nameof(Manage), new { id = option.PollId });
+            }
 
             DeleteUploadedFile(option.ImagePath);
             option.ImagePath = $"/uploads/polls/{fileName}";
@@ -220,6 +241,61 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             TempData["Success"] = "Seçenek görseli güncellendi.";
             return RedirectToAction(nameof(Manage), new { id = option.PollId });
+        }
+
+        /// <summary>
+        /// SetOptionImage artık yeni yüklenen görselleri otomatik küçültüyor, ama bu değişiklikten
+        /// önce yüklenmiş görseller (ör. test oylamasındaki "Meşe" görseli) sunucuda hâlâ orijinal
+        /// boyutuyla duruyor ve oylama ekranını yavaşlatmaya devam ediyor. Bu işlem tüm mevcut
+        /// seçenek görsellerini tek seferde tarayıp 400px'den büyükse küçültür — admin yeniden
+        /// yüklemek zorunda kalmadan.
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> OptimizeImages()
+        {
+            var options = await _db.PollOptions
+                .Where(o => o.ImagePath != null && o.ImagePath != "")
+                .ToListAsync();
+
+            int optimized = 0, skipped = 0, failed = 0;
+
+            foreach (var o in options)
+            {
+                try
+                {
+                    var rel = o.ImagePath!.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+                    var full = Path.GetFullPath(Path.Combine(_env.WebRootPath, rel));
+                    var root = Path.GetFullPath(Path.Combine(_env.WebRootPath, "uploads", "polls"));
+                    if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !System.IO.File.Exists(full))
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    using var img = await Image.LoadAsync(full);
+                    if (img.Width <= 400)
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    img.Mutate(x => x.Resize(400, 0));
+                    // Orijinal uzantıyla aynı formatta kaydet (ImageSharp encoder'ı dosya uzantısından
+                    // seçer) — böylece .png bir dosya JPEG içerikle yanlış etiketlenmiş olmaz.
+                    var tmpPath = Path.Combine(Path.GetDirectoryName(full)!, Path.GetFileNameWithoutExtension(full) + "_tmp" + Path.GetExtension(full));
+                    await img.SaveAsync(tmpPath);
+                    System.IO.File.Delete(full);
+                    System.IO.File.Move(tmpPath, full);
+                    optimized++;
+                }
+                catch
+                {
+                    failed++;
+                }
+            }
+
+            TempData["Success"] = $"{optimized} görsel küçültüldü, {skipped} zaten uygundu, {failed} başarısız.";
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost, ValidateAntiForgeryToken]

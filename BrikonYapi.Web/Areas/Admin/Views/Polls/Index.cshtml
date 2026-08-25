@@ -12,10 +12,20 @@
             <h5 class="card-title mb-0">Oylamalar (@Model.Count)</h5>
             <div class="text-muted small mt-1">Kat maliklerine sunulan anketler ve malzeme seçimleri.</div>
         </div>
-        <a href="/Admin/Polls/Create" class="btn btn-primary btn-sm">
-            <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>
-            Yeni Oylama
-        </a>
+        <div class="d-flex gap-2">
+            <form asp-area="Admin" asp-controller="Polls" asp-action="OptimizeImages" method="post"
+                  onsubmit="return confirm('Tüm seçenek görselleri taranıp gerekiyorsa küçültülecek. Devam edilsin mi?');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-secondary btn-sm" title="Yavaş yüklenen büyük görselleri küçültür">
+                    <iconify-icon icon="iconamoon:zap-duotone" class="me-1"></iconify-icon>
+                    Görselleri Optimize Et
+                </button>
+            </form>
+            <a href="/Admin/Polls/Create" class="btn btn-primary btn-sm">
+                <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>
+                Yeni Oylama
+            </a>
+        </div>
     </div>
     <div class="card-body p-0">
         @if (!Model.Any())
