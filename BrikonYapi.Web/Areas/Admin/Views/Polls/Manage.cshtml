@@ -93,21 +93,16 @@ else if (expired)
 
                 <div class="border-top pt-3 mt-3">
                     <div class="fw-semibold small mb-2">Tarihler</div>
-                    <form asp-area="Admin" asp-controller="Polls" asp-action="SetSchedule" method="post">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@Model.Id" />
 
-                        <label class="form-label small mb-1">Başlangıç</label>
-                        <input type="datetime-local" name="startsAt" id="pollStartsAt" class="form-control form-control-sm mb-2"
-                               value="@(Model.StartsAt?.ToString("yyyy-MM-ddTHH:mm"))" />
+                    <label class="form-label small mb-1">Başlangıç</label>
+                    <input type="datetime-local" id="pollStartsAt" class="form-control form-control-sm mb-2"
+                           value="@(Model.StartsAt?.ToString("yyyy-MM-ddTHH:mm"))" />
 
-                        <label class="form-label small mb-1">Bitiş</label>
-                        <input type="datetime-local" name="endsAt" id="pollEndsAt" class="form-control form-control-sm mb-2"
-                               value="@(Model.EndsAt?.ToString("yyyy-MM-ddTHH:mm"))" />
+                    <label class="form-label small mb-1">Bitiş</label>
+                    <input type="datetime-local" id="pollEndsAt" class="form-control form-control-sm mb-2"
+                           value="@(Model.EndsAt?.ToString("yyyy-MM-ddTHH:mm"))" />
 
-                        <div class="form-text small mb-2">Boş bırakılan alan sınır tanımaz.</div>
-                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">Tarihleri Kaydet</button>
-                    </form>
+                    <div class="form-text small mb-0">Boş bırakılan alan sınır tanımaz. Sayfanın altındaki "Kaydet" ile birlikte kaydedilir.</div>
 
                     @if (notStarted || expired)
                     {
@@ -202,27 +197,42 @@ else if (expired)
                 }
             </div>
             <div class="card-footer">
-                <form asp-area="Admin" asp-controller="Polls" asp-action="AddOption" method="post" class="d-flex gap-2">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@Model.Id" />
-                    <input name="text" class="form-control" placeholder="Yeni seçenek metni" required />
-                    <button type="submit" class="btn bk-btn-save text-nowrap">
-                        <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>
-                        Seçenek Ekle
-                    </button>
-                </form>
+                <label class="form-label small mb-1">Yeni seçenek metni (opsiyonel)</label>
+                <input id="newOptionInput" class="form-control" placeholder="Örn: Beyaz mermer" />
+                <div class="form-text small mb-0">Doldurursan sayfanın altındaki "Kaydet" ile birlikte eklenir.</div>
             </div>
         </div>
     </div>
+</div>
+
+<div class="d-flex justify-content-end align-items-center gap-2 mt-3">
+    <span class="text-muted small">Tarihler ve yeni seçenek burada birlikte kaydedilir.</span>
+    <form id="saveAllForm" asp-area="Admin" asp-controller="Polls" asp-action="SaveAll" method="post" class="d-none">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.Id" />
+        <input type="hidden" name="startsAt" id="hiddenStartsAt" />
+        <input type="hidden" name="endsAt" id="hiddenEndsAt" />
+        <input type="hidden" name="newOptionText" id="hiddenNewOptionText" />
+    </form>
+    <button type="button" id="saveAllBtn" class="btn bk-btn-save btn-lg">
+        <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-2"></iconify-icon>
+        Kaydet
+    </button>
+</div>
 
 @section Scripts {
 <script>
-    // Bitiş, başlangıçtan önceki bir tarihe ayarlanamasın — sunucudaki (SetSchedule) kontrolle
+    // Bitiş, başlangıçtan önceki bir tarihe ayarlanamasın — sunucudaki (SaveAll) kontrolle
     // aynı kural, burada anında (submit'e gerek kalmadan) uyarı olarak gösteriliyor.
+    // Tarihler ve yeni seçenek metni artık ayrı ayrı değil, tek bir "Kaydet" butonuyla
+    // gizli saveAllForm üzerinden birlikte gönderiliyor.
     (function () {
         var startInput = document.getElementById('pollStartsAt');
         var endInput = document.getElementById('pollEndsAt');
-        if (!startInput || !endInput) return;
+        var newOptionInput = document.getElementById('newOptionInput');
+        var saveBtn = document.getElementById('saveAllBtn');
+        var form = document.getElementById('saveAllForm');
+        if (!startInput || !endInput || !saveBtn || !form) return;
 
         function syncMin() {
             endInput.min = startInput.value || '';
@@ -236,7 +246,17 @@ else if (expired)
         startInput.addEventListener('change', syncMin);
         endInput.addEventListener('change', syncMin);
         syncMin();
+
+        saveBtn.addEventListener('click', function () {
+            if (startInput.value && endInput.value && endInput.value <= startInput.value) {
+                alert('Bitiş tarihi başlangıçtan sonra olmalıdır.');
+                return;
+            }
+            document.getElementById('hiddenStartsAt').value = startInput.value || '';
+            document.getElementById('hiddenEndsAt').value = endInput.value || '';
+            document.getElementById('hiddenNewOptionText').value = newOptionInput ? newOptionInput.value.trim() : '';
+            form.submit();
+        });
     })();
 </script>
 }
-</div>

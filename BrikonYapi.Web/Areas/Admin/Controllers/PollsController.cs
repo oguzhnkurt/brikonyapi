@@ -146,6 +146,41 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(Manage), new { id });
         }
 
+        /// <summary>
+        /// Yönetim ekranındaki tarihler ve "yeni seçenek ekle" alanını TEK bir "Kaydet" butonuyla
+        /// aynı anda kaydeder. Önceden bu iki alan ayrı formlar/ayrı butonlardı (Tarihleri Kaydet,
+        /// Ekle); admin tek bir "Oluştur"/"Kaydet" butonu arayınca kafası karışıyordu. newOptionText
+        /// boş bırakılırsa sadece tarihler güncellenir, yeni seçenek eklenmez.
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveAll(int id, DateTime? startsAt, DateTime? endsAt, string? newOptionText)
+        {
+            var poll = await _db.Polls.FindAsync(id);
+            if (poll == null) return NotFound();
+
+            if (startsAt.HasValue && endsAt.HasValue && endsAt.Value <= startsAt.Value)
+            {
+                TempData["Error"] = "Bitiş tarihi başlangıçtan sonra olmalıdır.";
+                return RedirectToAction(nameof(Manage), new { id });
+            }
+
+            poll.StartsAt = startsAt;
+            poll.EndsAt = endsAt;
+            poll.UpdatedAt = DateTime.Now;
+
+            var trimmedOption = (newOptionText ?? "").Trim();
+            if (trimmedOption.Length > 0)
+            {
+                var maxOrder = await _db.PollOptions.Where(o => o.PollId == id).MaxAsync(o => (int?)o.OrderIndex) ?? 0;
+                _db.PollOptions.Add(new PollOption { PollId = id, Text = trimmedOption, OrderIndex = maxOrder + 1 });
+            }
+
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = "Değişiklikler kaydedildi.";
+            return RedirectToAction(nameof(Manage), new { id });
+        }
+
         [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(12 * 1024 * 1024)]
         public async Task<IActionResult> SetOptionImage(int optionId, IFormFile image)
