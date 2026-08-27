@@ -66,6 +66,25 @@
                     </div>
 
                     <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Finansal Bilgiler</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="bk-label">m² Birim Fiyatı (₺)</label>
+                                <input asp-for="UnitPriceM2" type="number" step="0.01" min="0" id="uUnitPrice" class="form-control" placeholder="Örn: 25000" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="bk-label">Hibe/Kredi (₺)</label>
+                                <input asp-for="SubsidyAmount" type="number" step="0.01" min="0" id="uSubsidy" class="form-control" placeholder="Örn: 150000" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="bk-label">Toplam Ödeme (₺)</label>
+                                <input asp-for="ContractAmount" type="number" step="0.01" min="0" id="uContract" class="form-control" placeholder="Otomatik hesaplanır" />
+                                <div class="form-text small bk-hint">m² × Birim Fiyat − Hibe/Kredi olarak önerilir, elle değiştirilebilir.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bk-field-group mb-3">
                         <div class="bk-group-title">Malik &amp; Notlar</div>
 
                         <div class="mb-3">
@@ -104,3 +123,30 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+(function () {
+    // Toplam ödeme = m² × Birim Fiyat − Hibe/Kredi. Zaten bir Toplam Ödeme değeri kayıtlıysa
+    // (elle girilmiş/override edilmiş olabilir) otomatik hesaplama onu ezmez.
+    var areaEl = document.getElementById('AreaM2');
+    var priceEl = document.getElementById('uUnitPrice');
+    var subsidyEl = document.getElementById('uSubsidy');
+    var contractEl = document.getElementById('uContract');
+    var contractTouched = !!(contractEl.value && contractEl.value.trim() !== '');
+
+    function recalc() {
+        if (contractTouched) return;
+        var area = parseFloat(areaEl.value) || 0;
+        var price = parseFloat(priceEl.value) || 0;
+        var subsidy = parseFloat(subsidyEl.value) || 0;
+        if (area > 0 && price > 0) {
+            contractEl.value = Math.max(0, (area * price) - subsidy).toFixed(2);
+        }
+    }
+
+    contractEl.addEventListener('input', function () { contractTouched = true; });
+    [areaEl, priceEl, subsidyEl].forEach(function (el) { el.addEventListener('input', recalc); });
+})();
+</script>
+}

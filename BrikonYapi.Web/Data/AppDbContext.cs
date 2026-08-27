@@ -24,6 +24,8 @@ namespace BrikonYapi.Web.Data
         public DbSet<Unit> Units { get; set; }
         public DbSet<PaymentSchedule> PaymentSchedules { get; set; }
         public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+        public DbSet<PaymentPlanTemplate> PaymentPlanTemplates { get; set; }
+        public DbSet<PaymentPlanTemplateItem> PaymentPlanTemplateItems { get; set; }
         public DbSet<NotificationLog> NotificationLogs { get; set; }
         public DbSet<Announcement> Announcements { get; set; }
         public DbSet<FaqItem> Faqs { get; set; }
@@ -86,6 +88,20 @@ namespace BrikonYapi.Web.Data
             builder.Entity<PaymentTransaction>(e =>
             {
                 e.HasOne(t => t.PaymentSchedule).WithMany(p => p.Transactions).HasForeignKey(t => t.PaymentScheduleId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ── Ödeme Planı Şablonları (proje bazlı, gruba toplu atanabilir) ──
+            builder.Entity<PaymentPlanTemplate>(e =>
+            {
+                e.HasOne(t => t.Project).WithMany().HasForeignKey(t => t.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(t => t.ProjectId);
+            });
+
+            builder.Entity<PaymentPlanTemplateItem>(e =>
+            {
+                e.HasOne(i => i.PaymentPlanTemplate).WithMany(t => t.Items).HasForeignKey(i => i.PaymentPlanTemplateId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(i => i.ProjectStage).WithMany().HasForeignKey(i => i.ProjectStageId).OnDelete(DeleteBehavior.SetNull);
+                e.HasIndex(i => new { i.PaymentPlanTemplateId, i.OrderIndex });
             });
 
             builder.Entity<NotificationLog>(e =>

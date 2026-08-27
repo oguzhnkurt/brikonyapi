@@ -1,0 +1,272 @@
+@model BrikonYapi.Web.Data.Entities.PaymentPlanTemplate
+@using BrikonYapi.Web.Data.Entities
+@{
+    var project = (Project)ViewBag.Project;
+    var stages = (List<ProjectStage>)ViewBag.Stages;
+    ViewData["Title"] = "Yeni Ödeme Planı Şablonu";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card bk-form-card border-0">
+            <div class="bk-form-hero">
+                <div class="bk-form-hero-icon">
+                    <iconify-icon icon="mdi:file-document-multiple-outline"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="mb-0">Yeni Ödeme Planı Şablonu</h5>
+                    <div class="bk-form-hero-subtitle">@project.Name</div>
+                </div>
+            </div>
+            <div class="card-body bk-form-body">
+                <form asp-area="Admin" asp-controller="PaymentPlanTemplates" asp-action="Create" asp-route-projectId="@project.Id" method="post" id="tplForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="projectId" value="@project.Id" />
+
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Şablon Bilgileri</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="bk-label">Şablon Adı <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" maxlength="150" placeholder="Örn: Standart Pursantaj Planı" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="bk-label">Para Birimi</label>
+                                <select name="currency" class="form-select">
+                                    <option value="TRY" selected>₺ TL</option>
+                                    <option value="USD">$ USD</option>
+                                    <option value="EUR">€ EUR</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="bk-label d-block">Tür</label>
+                                <div class="btn-group w-100" role="group" id="planTypeGroup">
+                                    <input type="radio" class="btn-check" name="planType" id="typeStage" value="StageBased" checked />
+                                    <label class="btn btn-outline-primary btn-sm" for="typeStage">Hakediş</label>
+                                    <input type="radio" class="btn-check" name="planType" id="typeCalendar" value="CalendarBased" />
+                                    <label class="btn btn-outline-primary btn-sm" for="typeCalendar">Takvim</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="bk-label">Açıklama</label>
+                                <input type="text" name="description" class="form-control" maxlength="500" placeholder="Opsiyonel" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ Hızlı Oluşturucular ═══ -->
+                    <div class="bk-field-group mb-3" id="stageGeneratorWrap">
+                        <div class="bk-group-title">Hızlı Oluştur — Proje Aşamalarından</div>
+                        @if (stages.Count == 0)
+                        {
+                            <div class="text-muted small">Bu projede henüz inşaat aşaması tanımlı değil. İlerleme Yönetimi ekranından aşama ekleyebilir ya da kalemleri elle girebilirsiniz.</div>
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="small text-muted">Projenin @stages.Count aşamasından satır oluşturulur, yüzdeleri elle girersiniz.</span>
+                                <button type="button" id="btnGenStages" class="btn btn-sm btn-outline-primary">
+                                    <iconify-icon icon="mdi:auto-fix" class="me-1"></iconify-icon>Aşamalardan Satır Oluştur
+                                </button>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="bk-field-group mb-3" id="calendarGeneratorWrap" hidden>
+                        <div class="bk-group-title">Hızlı Oluştur — Peşinat + Aylık Taksit</div>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="bk-label">Peşinat %</label>
+                                <input type="number" id="genDownPct" class="form-control" min="0" max="100" value="20" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="bk-label">Taksit Sayısı</label>
+                                <input type="number" id="genCount" class="form-control" min="1" max="60" value="12" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="bk-label">İlk Taksit Ayı</label>
+                                <input type="number" id="genStartMonth" class="form-control" min="0" max="120" value="10" />
+                                <div class="form-text small bk-hint">Atama tarihinden kaç ay sonra (ör: 10)</div>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" id="btnGenCalendar" class="btn btn-sm btn-outline-primary w-100">
+                                    <iconify-icon icon="mdi:auto-fix" class="me-1"></iconify-icon>Satırları Oluştur
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ Kalemler ═══ -->
+                    <div class="bk-field-group mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="bk-group-title mb-0">Kalemler</div>
+                            <div class="small">Toplam: <span id="tplTotalPct" class="fw-bold">%0</span></div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-2" id="tplTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="small text-muted" style="width:32px;">#</th>
+                                        <th class="small">Başlık</th>
+                                        <th class="small text-center" style="width:110px;">Yüzde (%)</th>
+                                        <th class="small tpl-col-stage" style="width:220px;">İnşaat Aşaması</th>
+                                        <th class="small tpl-col-month text-center" style="width:150px;" hidden>Ay (kaçıncı ay)</th>
+                                        <th style="width:36px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tplRows"></tbody>
+                            </table>
+                        </div>
+
+                        <button type="button" id="tplAddRow" class="btn btn-link btn-sm px-0 text-decoration-none">
+                            <iconify-icon icon="mdi:plus" class="me-1"></iconify-icon>Satır Ekle
+                        </button>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn bk-btn-save">
+                            <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                            Şablonu Kaydet
+                        </button>
+                        <a href="/Admin/PaymentPlanTemplates?projectId=@project.Id" class="btn bk-btn-cancel">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="tplRowTemplate">
+    <tr class="tpl-row">
+        <td class="small text-muted tpl-row-label">1</td>
+        <td>
+            <input type="text" name="label" class="form-control form-control-sm" placeholder="Örn: Yapı Ruhsatı" maxlength="200" required />
+        </td>
+        <td>
+            <input type="number" name="percentage" class="form-control form-control-sm text-center tpl-pct" min="0" max="100" step="0.01" placeholder="10" required />
+        </td>
+        <td class="tpl-col-stage">
+            <select name="projectStageId" class="form-select form-select-sm">
+                <option value="">Seçiniz</option>
+                @foreach (var st in stages)
+                {
+                    <option value="@st.Id">@st.Name</option>
+                }
+            </select>
+        </td>
+        <td class="tpl-col-month text-center" hidden>
+            <input type="number" name="monthOffset" class="form-control form-control-sm text-center" min="0" max="120" placeholder="10" />
+        </td>
+        <td class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-danger tpl-remove">
+                <iconify-icon icon="iconamoon:close"></iconify-icon>
+            </button>
+        </td>
+    </tr>
+</template>
+
+@section Scripts {
+<script>
+(function () {
+    var rowsWrap = document.getElementById('tplRows');
+    var rowTpl = document.getElementById('tplRowTemplate');
+    var addBtn = document.getElementById('tplAddRow');
+    var totalEl = document.getElementById('tplTotalPct');
+    var stages = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(stages.Select(s => new { id = s.Id, name = s.Name })));
+
+    function renumber() {
+        rowsWrap.querySelectorAll('.tpl-row').forEach(function (row, i) {
+            row.querySelector('.tpl-row-label').textContent = String(i + 1);
+        });
+        updateTotal();
+    }
+
+    function updateTotal() {
+        var sum = 0;
+        rowsWrap.querySelectorAll('.tpl-pct').forEach(function (inp) { sum += parseFloat(inp.value) || 0; });
+        totalEl.textContent = '%' + (Math.round(sum * 100) / 100);
+        totalEl.className = 'fw-bold ' + (Math.abs(sum - 100) < 0.01 ? 'text-success' : 'text-warning');
+    }
+
+    function newRow() {
+        var node = rowTpl.content.firstElementChild.cloneNode(true);
+        node.querySelector('.tpl-remove').addEventListener('click', function () { node.remove(); renumber(); });
+        node.querySelector('.tpl-pct').addEventListener('input', updateTotal);
+        return node;
+    }
+
+    addBtn.addEventListener('click', function () {
+        var row = newRow();
+        rowsWrap.appendChild(row);
+        renumber();
+        row.querySelector('input[name="label"]').focus();
+    });
+
+    function setType(isStage) {
+        document.querySelectorAll('.tpl-col-stage').forEach(function (el) { el.hidden = !isStage; });
+        document.querySelectorAll('.tpl-col-month').forEach(function (el) { el.hidden = isStage; });
+        document.getElementById('stageGeneratorWrap').hidden = !isStage;
+        document.getElementById('calendarGeneratorWrap').hidden = isStage;
+    }
+
+    document.getElementById('planTypeGroup').addEventListener('change', function () {
+        setType(document.getElementById('typeStage').checked);
+    });
+
+    // ── Hızlı oluşturucu: proje aşamalarından ──
+    document.getElementById('btnGenStages')?.addEventListener('click', function () {
+        if (rowsWrap.children.length > 0 && !confirm('Mevcut satırlar silinip aşamalardan yeniden oluşturulacak. Devam edilsin mi?')) return;
+        rowsWrap.innerHTML = '';
+        stages.forEach(function (st) {
+            var row = newRow();
+            row.querySelector('input[name="label"]').value = st.name;
+            row.querySelector('select[name="projectStageId"]').value = st.id;
+            rowsWrap.appendChild(row);
+        });
+        renumber();
+    });
+
+    // ── Hızlı oluşturucu: peşinat + aylık taksit ──
+    document.getElementById('btnGenCalendar')?.addEventListener('click', function () {
+        if (rowsWrap.children.length > 0 && !confirm('Mevcut satırlar silinip yeniden oluşturulacak. Devam edilsin mi?')) return;
+        var downPct = parseFloat(document.getElementById('genDownPct').value) || 0;
+        var count = parseInt(document.getElementById('genCount').value, 10) || 0;
+        var startMonth = parseInt(document.getElementById('genStartMonth').value, 10) || 0;
+        if (count <= 0) { alert('Taksit sayısı geçerli olmalı.'); return; }
+
+        rowsWrap.innerHTML = '';
+
+        if (downPct > 0) {
+            var downRow = newRow();
+            downRow.querySelector('input[name="label"]').value = 'Peşinat';
+            downRow.querySelector('.tpl-pct').value = downPct;
+            downRow.querySelector('input[name="monthOffset"]').value = 0;
+            rowsWrap.appendChild(downRow);
+        }
+
+        var remaining = Math.max(0, 100 - downPct);
+        var perInstallment = Math.round((remaining / count) * 100) / 100;
+        for (var i = 0; i < count; i++) {
+            var row = newRow();
+            row.querySelector('input[name="label"]').value = 'Taksit ' + (i + 1) + '/' + count;
+            row.querySelector('.tpl-pct').value = perInstallment;
+            row.querySelector('input[name="monthOffset"]').value = startMonth + i;
+            rowsWrap.appendChild(row);
+        }
+        renumber();
+    });
+
+    document.getElementById('tplForm').addEventListener('submit', function (e) {
+        if (rowsWrap.querySelectorAll('.tpl-row').length === 0) {
+            e.preventDefault();
+            alert('En az bir kalem eklemelisiniz.');
+        }
+    });
+
+    // Başlangıçta bir boş satır ekle
+    addBtn.click();
+})();
+</script>
+}

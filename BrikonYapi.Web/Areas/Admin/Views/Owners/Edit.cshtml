@@ -183,7 +183,12 @@
                             <input type="hidden" name="ownerId" value="@Model.Id" />
                             <input type="hidden" name="unitId" value="@u.Id" />
 
-                            <div class="fw-semibold mb-2">@u.Project?.Name — @u.UnitNo @(!string.IsNullOrEmpty(u.BlockNo) ? $"({u.BlockNo})" : "")</div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="fw-semibold">@u.Project?.Name — @u.UnitNo @(!string.IsNullOrEmpty(u.BlockNo) ? $"({u.BlockNo})" : "")</div>
+                                <a href="/Admin/PaymentPlanTemplates?unitId=@u.Id" class="btn btn-sm btn-outline-primary">
+                                    <iconify-icon icon="mdi:file-document-multiple-outline" class="me-1"></iconify-icon>Ödeme Planı Şablonu Uygula
+                                </a>
+                            </div>
 
                             <div class="row g-2 align-items-end">
                                 <div class="col-3">

@@ -1,0 +1,193 @@
+@model BrikonYapi.Web.Data.Entities.PaymentPlanTemplate
+@using BrikonYapi.Web.Data.Entities
+@{
+    var project = (Project)ViewBag.Project;
+    var stages = (List<ProjectStage>)ViewBag.Stages;
+    ViewData["Title"] = "Ödeme Planı Şablonunu Düzenle";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var isStage = Model.PlanType == PaymentPlanType.StageBased;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card bk-form-card border-0">
+            <div class="bk-form-hero">
+                <div class="bk-form-hero-icon">
+                    <iconify-icon icon="mdi:file-document-multiple-outline"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="mb-0">Ödeme Planı Şablonunu Düzenle</h5>
+                    <div class="bk-form-hero-subtitle">@project.Name — @Model.Name</div>
+                </div>
+            </div>
+            <div class="card-body bk-form-body">
+                <form asp-area="Admin" asp-controller="PaymentPlanTemplates" asp-action="Edit" asp-route-id="@Model.Id" method="post" id="tplForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Şablon Bilgileri</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="bk-label">Şablon Adı <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" maxlength="150" value="@Model.Name" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="bk-label">Para Birimi</label>
+                                <select name="currency" class="form-select">
+                                    <option value="TRY" selected="@(Model.Currency == PaymentCurrency.TRY)">₺ TL</option>
+                                    <option value="USD" selected="@(Model.Currency == PaymentCurrency.USD)">$ USD</option>
+                                    <option value="EUR" selected="@(Model.Currency == PaymentCurrency.EUR)">€ EUR</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="bk-label d-block">Tür</label>
+                                <div class="btn-group w-100" role="group" id="planTypeGroup">
+                                    <input type="radio" class="btn-check" name="planType" id="typeStage" value="StageBased" checked="@isStage" />
+                                    <label class="btn btn-outline-primary btn-sm" for="typeStage">Hakediş</label>
+                                    <input type="radio" class="btn-check" name="planType" id="typeCalendar" value="CalendarBased" checked="@(!isStage)" />
+                                    <label class="btn btn-outline-primary btn-sm" for="typeCalendar">Takvim</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="bk-label">Açıklama</label>
+                                <input type="text" name="description" class="form-control" maxlength="500" value="@Model.Description" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ Kalemler ═══ -->
+                    <div class="bk-field-group mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="bk-group-title mb-0">Kalemler</div>
+                            <div class="small">Toplam: <span id="tplTotalPct" class="fw-bold">%0</span></div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-2" id="tplTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="small text-muted" style="width:32px;">#</th>
+                                        <th class="small">Başlık</th>
+                                        <th class="small text-center" style="width:110px;">Yüzde (%)</th>
+                                        <th class="small tpl-col-stage" style="width:220px;" @(isStage ? "" : "hidden")>İnşaat Aşaması</th>
+                                        <th class="small tpl-col-month text-center" style="width:150px;" @(isStage ? "hidden" : "")>Ay (kaçıncı ay)</th>
+                                        <th style="width:36px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tplRows"></tbody>
+                            </table>
+                        </div>
+
+                        <button type="button" id="tplAddRow" class="btn btn-link btn-sm px-0 text-decoration-none">
+                            <iconify-icon icon="mdi:plus" class="me-1"></iconify-icon>Satır Ekle
+                        </button>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn bk-btn-save">
+                            <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                            Kaydet
+                        </button>
+                        <a href="/Admin/PaymentPlanTemplates?projectId=@project.Id" class="btn bk-btn-cancel">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="tplRowTemplate">
+    <tr class="tpl-row">
+        <td class="small text-muted tpl-row-label">1</td>
+        <td>
+            <input type="text" name="label" class="form-control form-control-sm" placeholder="Örn: Yapı Ruhsatı" maxlength="200" required />
+        </td>
+        <td>
+            <input type="number" name="percentage" class="form-control form-control-sm text-center tpl-pct" min="0" max="100" step="0.01" placeholder="10" required />
+        </td>
+        <td class="tpl-col-stage">
+            <select name="projectStageId" class="form-select form-select-sm">
+                <option value="">Seçiniz</option>
+                @foreach (var st in stages)
+                {
+                    <option value="@st.Id">@st.Name</option>
+                }
+            </select>
+        </td>
+        <td class="tpl-col-month text-center">
+            <input type="number" name="monthOffset" class="form-control form-control-sm text-center" min="0" max="120" placeholder="10" />
+        </td>
+        <td class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-danger tpl-remove">
+                <iconify-icon icon="iconamoon:close"></iconify-icon>
+            </button>
+        </td>
+    </tr>
+</template>
+
+@section Scripts {
+<script>
+(function () {
+    var rowsWrap = document.getElementById('tplRows');
+    var rowTpl = document.getElementById('tplRowTemplate');
+    var addBtn = document.getElementById('tplAddRow');
+    var totalEl = document.getElementById('tplTotalPct');
+    var existingItems = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items.OrderBy(i => i.OrderIndex).Select(i => new { label = i.Label, percentage = i.Percentage, projectStageId = i.ProjectStageId, monthOffset = i.MonthOffset })));
+
+    function renumber() {
+        rowsWrap.querySelectorAll('.tpl-row').forEach(function (row, i) {
+            row.querySelector('.tpl-row-label').textContent = String(i + 1);
+        });
+        updateTotal();
+    }
+
+    function updateTotal() {
+        var sum = 0;
+        rowsWrap.querySelectorAll('.tpl-pct').forEach(function (inp) { sum += parseFloat(inp.value) || 0; });
+        totalEl.textContent = '%' + (Math.round(sum * 100) / 100);
+        totalEl.className = 'fw-bold ' + (Math.abs(sum - 100) < 0.01 ? 'text-success' : 'text-warning');
+    }
+
+    function newRow(data) {
+        var node = rowTpl.content.firstElementChild.cloneNode(true);
+        node.querySelector('.tpl-remove').addEventListener('click', function () { node.remove(); renumber(); });
+        node.querySelector('.tpl-pct').addEventListener('input', updateTotal);
+        if (data) {
+            node.querySelector('input[name="label"]').value = data.label || '';
+            node.querySelector('.tpl-pct').value = data.percentage != null ? data.percentage : '';
+            if (data.projectStageId) node.querySelector('select[name="projectStageId"]').value = data.projectStageId;
+            if (data.monthOffset != null) node.querySelector('input[name="monthOffset"]').value = data.monthOffset;
+        }
+        return node;
+    }
+
+    addBtn.addEventListener('click', function () {
+        var row = newRow(null);
+        rowsWrap.appendChild(row);
+        renumber();
+        row.querySelector('input[name="label"]').focus();
+    });
+
+    function setType(isStageType) {
+        document.querySelectorAll('.tpl-col-stage').forEach(function (el) { el.hidden = !isStageType; });
+        document.querySelectorAll('.tpl-col-month').forEach(function (el) { el.hidden = isStageType; });
+    }
+
+    document.getElementById('planTypeGroup').addEventListener('change', function () {
+        setType(document.getElementById('typeStage').checked);
+    });
+
+    document.getElementById('tplForm').addEventListener('submit', function (e) {
+        if (rowsWrap.querySelectorAll('.tpl-row').length === 0) {
+            e.preventDefault();
+            alert('En az bir kalem eklemelisiniz.');
+        }
+    });
+
+    // Mevcut kalemleri yükle
+    existingItems.forEach(function (item) { rowsWrap.appendChild(newRow(item)); });
+    if (existingItems.length === 0) rowsWrap.appendChild(newRow(null));
+    renumber();
+})();
+</script>
+}

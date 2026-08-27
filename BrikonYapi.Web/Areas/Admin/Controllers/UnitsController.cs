@@ -104,6 +104,9 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             existing.OwnerId = unit.OwnerId == 0 ? null : unit.OwnerId;
             existing.Notes = unit.Notes;
             existing.IsActive = unit.IsActive;
+            existing.UnitPriceM2 = unit.UnitPriceM2;
+            existing.SubsidyAmount = unit.SubsidyAmount;
+            existing.ContractAmount = unit.ContractAmount;
             existing.UpdatedAt = DateTime.Now;
 
             await _db.SaveChangesAsync();

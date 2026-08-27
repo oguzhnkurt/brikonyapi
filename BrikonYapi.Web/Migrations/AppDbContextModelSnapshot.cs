@@ -1371,6 +1371,9 @@ namespace BrikonYapi.Web.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<decimal?>("ContractAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -1400,10 +1403,16 @@ namespace BrikonYapi.Web.Migrations
                     b.Property<int>("ProjectId")
                         .HasColumnType("integer");
 
+                    b.Property<decimal?>("SubsidyAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("UnitNo")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<decimal?>("UnitPriceM2")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -1416,6 +1425,88 @@ namespace BrikonYapi.Web.Migrations
                         .IsUnique();
 
                     b.ToTable("Units");
+                });
+
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentPlanTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Currency")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("PlanType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("PaymentPlanTemplates");
+                });
+
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentPlanTemplateItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("MonthOffset")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PaymentPlanTemplateId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Percentage")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int?>("ProjectStageId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentPlanTemplateId", "OrderIndex");
+
+                    b.HasIndex("ProjectStageId");
+
+                    b.ToTable("PaymentPlanTemplateItems");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1845,6 +1936,35 @@ namespace BrikonYapi.Web.Migrations
                     b.Navigation("PaymentSchedule");
                 });
 
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentPlanTemplate", b =>
+                {
+                    b.HasOne("BrikonYapi.Web.Data.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentPlanTemplateItem", b =>
+                {
+                    b.HasOne("BrikonYapi.Web.Data.Entities.PaymentPlanTemplate", "PaymentPlanTemplate")
+                        .WithMany("Items")
+                        .HasForeignKey("PaymentPlanTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BrikonYapi.Web.Data.Entities.ProjectStage", "ProjectStage")
+                        .WithMany()
+                        .HasForeignKey("ProjectStageId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("PaymentPlanTemplate");
+
+                    b.Navigation("ProjectStage");
+                });
+
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.Project", b =>
                 {
                     b.HasOne("BrikonYapi.Web.Data.Entities.Category", "Category")
@@ -1948,6 +2068,11 @@ namespace BrikonYapi.Web.Migrations
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentSchedule", b =>
                 {
                     b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentPlanTemplate", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.ChatPoll", b =>

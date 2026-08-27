@@ -1,0 +1,132 @@
+@model List<BrikonYapi.Web.Data.Entities.PaymentPlanTemplate>
+@using BrikonYapi.Web.Data.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Ödeme Planı Şablonları";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var selectedProjectId = (int?)ViewBag.SelectedProjectId;
+    var unit = (Unit?)ViewBag.Unit;
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0">Ödeme Planı Şablonları</h4>
+        <div class="text-muted small">
+            @if (unit != null)
+            {
+                <span>@unit.Project?.Name / @unit.UnitNo bölümüne uygulanacak şablonu seçin.</span>
+            }
+            else
+            {
+                <span>Bir projeye özel, gruba toplu atanabilir hakediş/takvim bazlı ödeme planları.</span>
+            }
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <form method="get" class="d-flex align-items-center gap-2">
+            @if (unit != null)
+            {
+                <input type="hidden" name="unitId" value="@unit.Id" />
+            }
+            <select name="projectId" class="form-select form-select-sm" style="min-width:220px;" @(unit != null ? "disabled" : "") onchange="this.form.submit()">
+                <option value="">Tüm Projeler</option>
+                @foreach (var p in (SelectList)ViewBag.Projects)
+                {
+                    <option value="@p.Value" selected="@(p.Selected)">@p.Text</option>
+                }
+            </select>
+        </form>
+        @if (selectedProjectId.HasValue && unit == null)
+        {
+            <a href="/Admin/PaymentPlanTemplates/Create?projectId=@selectedProjectId" class="btn btn-sm bk-btn-save">
+                <iconify-icon icon="mdi:plus" class="me-1"></iconify-icon>Yeni Şablon
+            </a>
+        }
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (!selectedProjectId.HasValue)
+{
+    <div class="alert alert-info">Şablonları görmek veya yeni şablon oluşturmak için yukarıdan bir proje seçin.</div>
+}
+else if (!Model.Any())
+{
+    <div class="card border-0 bk-form-card">
+        <div class="card-body text-center text-muted py-5">
+            Bu projede henüz ödeme planı şablonu tanımlanmamış.
+            <div class="mt-2">
+                <a href="/Admin/PaymentPlanTemplates/Create?projectId=@selectedProjectId" class="btn btn-sm bk-btn-save">
+                    <iconify-icon icon="mdi:plus" class="me-1"></iconify-icon>İlk Şablonu Oluştur
+                </a>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var t in Model)
+        {
+            var totalPct = t.Items.Sum(i => i.Percentage);
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 bk-form-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <div class="fw-semibold">@t.Name</div>
+                                <div class="text-muted small">@t.Project?.Name</div>
+                            </div>
+                            <span class="badge @(t.PlanType == PaymentPlanType.StageBased ? "bg-primary-subtle text-primary" : "bg-success-subtle text-success")">
+                                @(t.PlanType == PaymentPlanType.StageBased ? "Hakediş / Aşama" : "Takvim / Aylık")
+                            </span>
+                        </div>
+                        <div class="small text-muted mb-2">
+                            @t.Items.Count kalem · Toplam %@totalPct.ToString("0.##")
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(t.Description))
+                        {
+                            <div class="small text-muted mb-2">@t.Description</div>
+                        }
+                        <ul class="list-unstyled small mb-3">
+                            @foreach (var item in t.Items.OrderBy(i => i.OrderIndex).Take(4))
+                            {
+                                <li class="d-flex justify-content-between border-bottom py-1">
+                                    <span class="text-truncate me-2">@item.Label</span>
+                                    <span class="text-muted">%@item.Percentage.ToString("0.##")</span>
+                                </li>
+                            }
+                            @if (t.Items.Count > 4)
+                            {
+                                <li class="text-muted">+ @(t.Items.Count - 4) kalem daha…</li>
+                            }
+                        </ul>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="/Admin/PaymentPlanTemplates/Assign?templateId=@t.Id@(unit != null ? "&unitId=" + unit.Id : "")" class="btn btn-sm bk-btn-save">
+                                <iconify-icon icon="mdi:check-circle-outline" class="me-1"></iconify-icon>Uygula
+                            </a>
+                            <a href="/Admin/PaymentPlanTemplates/Edit/@t.Id" class="btn btn-sm btn-outline-secondary">
+                                <iconify-icon icon="mdi:pencil-outline"></iconify-icon>
+                            </a>
+                            <form asp-area="Admin" asp-controller="PaymentPlanTemplates" asp-action="Delete" asp-route-id="@t.Id" method="post"
+                                  onsubmit="return confirm('Bu şablon silinsin mi? (Daha önce uygulanmış taksitler etkilenmez)');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <iconify-icon icon="mdi:trash-can-outline"></iconify-icon>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

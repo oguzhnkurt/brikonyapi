@@ -140,6 +140,16 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "PaymentPlanTemplates" ? "active" : "")"
+                       href="/Admin/PaymentPlanTemplates">
+                        <span class="nav-icon">
+                            <iconify-icon icon="mdi:file-document-multiple-outline"></iconify-icon>
+                        </span>
+                        <span class="nav-text">Ödeme Planı Şablonları</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ProjectProgress" ? "active" : "")"
                        href="/Admin/ProjectProgress">
                         <span class="nav-icon">
