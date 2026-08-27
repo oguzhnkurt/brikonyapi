@@ -246,6 +246,16 @@ using (var scope = app.Services.CreateScope())
 
     db.Database.Migrate();
 
+    // Güvenlik ağı: bazı ortamlarda migration gecmisi (EFMigrationsHistory) zaten
+    // uygulanmis gorunup asil kolon eklenmemis olabiliyor (ör. FaqItem EN alanlari).
+    // IF NOT EXISTS ile idempotent sekilde garanti altina aliyoruz.
+    try
+    {
+        db.Database.ExecuteSqlRaw(@"ALTER TABLE ""Faqs"" ADD COLUMN IF NOT EXISTS ""QuestionEn"" character varying(300);");
+        db.Database.ExecuteSqlRaw(@"ALTER TABLE ""Faqs"" ADD COLUMN IF NOT EXISTS ""AnswerEn"" character varying(4000);");
+    }
+    catch { /* Tablo henüz yoksa veya kolon zaten varsa yoksay */ }
+
     var um = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
     const string adminEmail = "admin@brikonyapi.com";
     if (await um.FindByEmailAsync(adminEmail) == null)
