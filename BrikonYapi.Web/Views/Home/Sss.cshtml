@@ -120,10 +120,8 @@ body { background: #f4f6f8; }
     {
         @foreach (var item in Model)
         {
-            @{
-                var displayQuestion = isEn && !string.IsNullOrEmpty(item.QuestionEn) ? item.QuestionEn : item.Question;
-                var displayAnswer   = isEn && !string.IsNullOrEmpty(item.AnswerEn) ? item.AnswerEn : item.Answer;
-            }
+            var displayQuestion = isEn && !string.IsNullOrEmpty(item.QuestionEn) ? item.QuestionEn : item.Question;
+            var displayAnswer   = isEn && !string.IsNullOrEmpty(item.AnswerEn) ? item.AnswerEn : item.Answer;
             <div class="faq-item">
                 <button type="button" class="faq-q" aria-expanded="false">
                     <span>@displayQuestion</span>
