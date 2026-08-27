@@ -14,6 +14,7 @@ namespace BrikonYapi.Web.Data.Entities
         public bool PushEnabled { get; set; } = true;
         public bool SmsEnabled { get; set; } = true;
         public bool EmailEnabled { get; set; } = true;
+        public bool WhatsAppEnabled { get; set; } = true;
 
         // ── Bildirim tipleri ──────────────────────────────────
         public bool NotifyPayment { get; set; } = true;

@@ -503,6 +503,9 @@ namespace BrikonYapi.Web.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<bool>("WhatsAppEnabled")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId")

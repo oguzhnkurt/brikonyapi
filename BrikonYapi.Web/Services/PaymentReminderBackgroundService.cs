@@ -6,18 +6,20 @@ namespace BrikonYapi.Web.Services
 {
     /// <summary>
     /// Günde bir kez çalışan arka plan görevi:
-    ///   1) Vadesine "PaymentNotifications:ReminderDaysBefore" gün veya daha az kalan, henüz
-    ///      ödenmemiş taksitler için (daha önce hatırlatma gönderilmediyse) hatırlatma yollar.
+    ///   1) "PaymentNotifications:ReminderCheckpoints" içinde tanımlı her kontrol noktası için
+    ///      (varsayılan: vadeye 7 gün ve 1 gün kala) henüz ödenmemiş taksitlere, o kontrol noktası
+    ///      için daha önce gönderilmediyse hatırlatma yollar (SMS/e-posta + yapılandırılmışsa WhatsApp).
     ///   2) Vadesi geçmiş ama hâlâ "Pending" görünen taksitleri "Overdue" olarak işaretler ve
     ///      (daha önce bildirilmediyse) malike gecikme bildirimi gönderir.
     ///
     /// "Daha önce gönderildi mi?" kontrolü ayrı bir alan eklemek yerine NotificationLog'daki
-    /// kayıtlar üzerinden yapılır — bu sayede şema değişikliği gerekmez.
+    /// kayıtlar üzerinden yapılır (her kontrol noktası kendi Subject'iyle tekilleşir) — bu sayede
+    /// şema değişikliği gerekmez.
     /// </summary>
     public class PaymentReminderBackgroundService : BackgroundService
     {
-        private const string ReminderSubject = "Ödeme Hatırlatması — Brikon Yapı";
         private const string OverdueSubject = "Gecikmiş Ödeme — Brikon Yapı";
+        private static readonly int[] DefaultReminderCheckpoints = { 7, 1 };
 
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IConfiguration _config;
@@ -52,9 +54,13 @@ namespace BrikonYapi.Web.Services
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 var notify = scope.ServiceProvider.GetRequiredService<PaymentNotificationService>();
 
-                var reminderDays = _config.GetValue<int>("PaymentNotifications:ReminderDaysBefore", 3);
+                var checkpoints = _config.GetSection("PaymentNotifications:ReminderCheckpoints").Get<int[]>();
+                if (checkpoints == null || checkpoints.Length == 0) checkpoints = DefaultReminderCheckpoints;
+                // Büyükten küçüğe sırala: aynı gün birden fazla kontrol noktasına birden denk gelinirse
+                // (ör. uygulama birkaç gün kapalı kalmışsa) en erken/az acil olandan başlanır.
+                checkpoints = checkpoints.OrderByDescending(d => d).ToArray();
+
                 var today = DateTime.Today;
-                var reminderHorizon = today.AddDays(reminderDays);
 
                 var pending = await db.PaymentSchedules
                     .Include(s => s.Unit).ThenInclude(u => u!.Owner)
@@ -76,14 +82,20 @@ namespace BrikonYapi.Web.Services
                             n => n.RelatedPaymentScheduleId == schedule.Id && n.Subject == OverdueSubject, ct);
                         if (!alreadyNotified)
                             await notify.NotifyOverdueAsync(owner, schedule);
+                        continue;
                     }
-                    else if (schedule.DueDate.Date <= reminderHorizon)
+
+                    // Ulaşılmış her kontrol noktası için (vade o noktaya eşit veya daha yakınsa),
+                    // o noktaya özgü Subject'le daha önce gönderilmediyse hatırlatma yollanır.
+                    foreach (var daysBefore in checkpoints)
                     {
-                        // Vadeye az kaldı → (ilk kezse) hatırlatma gönder.
+                        if (schedule.DueDate.Date > today.AddDays(daysBefore)) continue;
+
+                        var subject = $"Ödeme Hatırlatması ({daysBefore} gün kala) — Brikon Yapı";
                         var alreadyReminded = await db.NotificationLogs.AnyAsync(
-                            n => n.RelatedPaymentScheduleId == schedule.Id && n.Subject == ReminderSubject, ct);
+                            n => n.RelatedPaymentScheduleId == schedule.Id && n.Subject == subject, ct);
                         if (!alreadyReminded)
-                            await notify.NotifyReminderAsync(owner, schedule);
+                            await notify.NotifyReminderAsync(owner, schedule, daysBefore);
                     }
                 }
 

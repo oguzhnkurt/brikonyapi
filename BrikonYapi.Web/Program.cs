@@ -138,6 +138,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ExchangeRateService>();
 builder.Services.AddScoped<SmsService>();
+builder.Services.AddScoped<WhatsAppService>();
 builder.Services.AddScoped<PaymentNotificationService>();
 builder.Services.AddHostedService<PaymentReminderBackgroundService>();
 

@@ -15,17 +15,24 @@ namespace BrikonYapi.Web.Services
         private readonly AppDbContext _db;
         private readonly SmsService _sms;
         private readonly EmailService _email;
+        private readonly WhatsAppService _whatsapp;
         private readonly IConfiguration _config;
         private readonly ILogger<PaymentNotificationService> _logger;
 
-        public PaymentNotificationService(AppDbContext db, SmsService sms, EmailService email, IConfiguration config, ILogger<PaymentNotificationService> logger)
+        public PaymentNotificationService(AppDbContext db, SmsService sms, EmailService email, WhatsAppService whatsapp, IConfiguration config, ILogger<PaymentNotificationService> logger)
         {
             _db = db;
             _sms = sms;
             _email = email;
+            _whatsapp = whatsapp;
             _config = config;
             _logger = logger;
         }
+
+        /// <summary>Bir WhatsApp bildirimi için gönderilecek onaylı şablon adı ve gövde parametreleri.
+        /// null geçilirse (çoğu bildirim tipi — henüz onaylı şablonu olmayanlar) WhatsApp atlanır;
+        /// SMS/e-posta serbest metinle gönderilmeye devam eder.</summary>
+        private sealed record WhatsAppTemplate(string Name, IReadOnlyList<string> BodyParams);
 
         private static string Money(PaymentSchedule schedule) =>
             schedule.CurrencySymbol + schedule.Amount.ToString("N0", new System.Globalization.CultureInfo("tr-TR"));
@@ -39,10 +46,27 @@ namespace BrikonYapi.Web.Services
 
         /// <summary>Bir malike, bir ödeme kalemiyle ilgili bildirim gönderir (tercihlerine saygılı) ve
         /// gönderim denemelerini NotificationLog'a yazar.</summary>
-        private async Task NotifyOwnerAsync(Owner owner, PaymentSchedule? schedule, string subject, string message)
+        private async Task NotifyOwnerAsync(Owner owner, PaymentSchedule? schedule, string subject, string message, WhatsAppTemplate? whatsapp = null)
         {
             var pref = await GetPreferenceAsync(owner.Id);
             if (!pref.NotifyPayment) return; // malik ödeme bildirimlerini kapatmış
+
+            if (pref.WhatsAppEnabled && whatsapp != null && !string.IsNullOrWhiteSpace(owner.Phone))
+            {
+                var languageCode = _config["WhatsApp:TemplateLanguage"] ?? "tr";
+                var (ok, err) = await _whatsapp.SendTemplateAsync(owner.Phone!, whatsapp.Name, languageCode, whatsapp.BodyParams);
+                _db.NotificationLogs.Add(new NotificationLog
+                {
+                    OwnerId = owner.Id,
+                    RelatedPaymentScheduleId = schedule?.Id,
+                    Channel = NotificationChannel.WhatsApp,
+                    Subject = subject,
+                    Message = message,
+                    Status = ok ? NotificationStatus.Sent : NotificationStatus.Failed,
+                    ErrorMessage = err,
+                    SentAt = ok ? DateTime.Now : null
+                });
+            }
 
             if (pref.SmsEnabled && !string.IsNullOrWhiteSpace(owner.Phone))
             {
@@ -95,11 +119,33 @@ namespace BrikonYapi.Web.Services
             return NotifyOwnerAsync(owner, schedule, "Yeni Ödeme Kalemi — Brikon Yapı", message);
         }
 
-        public Task NotifyReminderAsync(Owner owner, PaymentSchedule schedule)
+        /// <summary>Vade hatırlatması gönderir. <paramref name="daysBefore"/>, hatırlatmanın hangi
+        /// kontrol noktasına ait olduğunu belirtir (ör. 7 = "1 hafta kala", 1 = "1 gün kala") ve
+        /// bildirim konusuna dahil edilir — böylece PaymentReminderBackgroundService'in "bu kontrol
+        /// noktası için daha önce gönderildi mi?" kontrolü (NotificationLog.Subject üzerinden) her
+        /// kontrol noktasını birbirinden bağımsız olarak tekilleştirebilir.</summary>
+        public Task NotifyReminderAsync(Owner owner, PaymentSchedule schedule, int daysBefore)
         {
             var desc = string.IsNullOrWhiteSpace(schedule.Description) ? "Taksit" : schedule.Description;
-            var message = $"{desc} taksitinizin vadesi {schedule.DueDate:dd.MM.yyyy} tarihinde doluyor. Tutar: {Money(schedule)}.";
-            return NotifyOwnerAsync(owner, schedule, "Ödeme Hatırlatması — Brikon Yapı", message);
+            var whenText = daysBefore switch
+            {
+                <= 0 => "bugün",
+                1 => "yarın",
+                7 => "1 hafta içinde",
+                _ => $"{daysBefore} gün içinde"
+            };
+            var message = $"{desc} taksitinizin vadesi {whenText} ({schedule.DueDate:dd.MM.yyyy}) doluyor. Tutar: {Money(schedule)}.";
+            var subject = $"Ödeme Hatırlatması ({daysBefore} gün kala) — Brikon Yapı";
+
+            // WhatsApp:ReminderTemplateName appsettings'te tanımlıysa (hesap açılıp şablon Meta'da
+            // onaylandıktan sonra) aynı hatırlatma WhatsApp üzerinden de gönderilir. Şablon parametreleri:
+            // {{1}} malik adı, {{2}} tutar, {{3}} vade tarihi — 360dialog/Meta'da bu sırayla onaylatılmalı.
+            var templateName = _config["WhatsApp:ReminderTemplateName"];
+            WhatsAppTemplate? whatsapp = string.IsNullOrWhiteSpace(templateName)
+                ? null
+                : new WhatsAppTemplate(templateName, new[] { owner.FullName, Money(schedule), schedule.DueDate.ToString("dd.MM.yyyy") });
+
+            return NotifyOwnerAsync(owner, schedule, subject, message, whatsapp);
         }
 
         /// <summary>Bir inşaat aşaması "Tamamlandı" olarak işaretlendiğinde, o aşamaya bağlı ve henüz
