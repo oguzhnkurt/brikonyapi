@@ -112,9 +112,13 @@
                             <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
                             Kaydet
                         </button>
-                        <a href="/Admin/PaymentSchedules?unitId=@Model.Id" class="btn btn-outline-primary">
+                        <a href="/Admin/PaymentSchedules?unitId=@Model.Id" class="btn btn-outline-primary" title="Bu bölüme taksitleri tek tek elle ekle">
                             <iconify-icon icon="iconamoon:credit-card-duotone" class="me-1"></iconify-icon>
                             Ödeme Planı
+                        </a>
+                        <a href="/Admin/PaymentPlanTemplates?unitId=@Model.Id" class="btn btn-outline-info" title="Hazır bir ödeme planı şablonunu bu bölüme uygula">
+                            <iconify-icon icon="mdi:file-document-multiple-outline" class="me-1"></iconify-icon>
+                            Şablon Uygula
                         </a>
                         <a href="/Admin/Units" class="btn bk-btn-cancel">İptal</a>
                     </div>

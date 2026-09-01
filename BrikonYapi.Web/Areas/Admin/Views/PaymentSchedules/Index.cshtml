@@ -29,20 +29,34 @@
         <h5 class="mb-0">@unit.Project?.Name — @unit.UnitNo</h5>
         <span class="text-muted small">Malik: @(unit.Owner?.FullName ?? "Atanmamış") &middot; İlerleme: %@unit.ProgressPercentage</span>
     </div>
-    <a href="/Admin/PaymentSchedules/Create?unitId=@unit.Id" class="btn btn-primary btn-sm">
-        <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>
-        Yeni Ödeme Kalemi
-    </a>
+    <div class="d-flex gap-2">
+        <a href="/Admin/PaymentPlanTemplates?unitId=@unit.Id" class="btn btn-outline-info btn-sm" title="Hazır bir ödeme planı şablonunu bu bölüme uygula">
+            <iconify-icon icon="mdi:file-document-multiple-outline" class="me-1"></iconify-icon>
+            Şablon Uygula
+        </a>
+        <a href="/Admin/PaymentSchedules/Create?unitId=@unit.Id" class="btn btn-primary btn-sm">
+            <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>
+            Yeni Ödeme Kalemi
+        </a>
+    </div>
 </div>
 
 @if (!Model.Any())
 {
     <div class="card">
-        <div class="card-body text-center text-muted py-5">Henüz ödeme kalemi eklenmemiş.</div>
+        <div class="card-body text-center text-muted py-5">
+            Henüz ödeme kalemi eklenmemiş. Taksitleri elle "Yeni Ödeme Kalemi" ile tek tek girebilir,
+            ya da "Şablon Uygula" ile hazır bir ödeme planı şablonunu bu bölüme uygulayabilirsiniz.
+        </div>
     </div>
 }
 else
 {
+    <div class="alert alert-light border small text-muted d-flex gap-2 align-items-start mb-3">
+        <iconify-icon icon="iconamoon:information-circle-duotone" class="fs-18 text-warning flex-shrink-0"></iconify-icon>
+        <div>Bu bölümde zaten @Model.Count ödeme kalemi var. Üzerine bir şablon daha uygularsanız yeni taksitler
+            eklenir, mevcutlar silinmez — mükerrer taksit oluşabilir.</div>
+    </div>
     foreach (var s in Model)
     {
         <div class="card bk-accent-card mb-3">

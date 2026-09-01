@@ -54,6 +54,22 @@
     <div class="alert alert-danger">@TempData["Error"]</div>
 }
 
+@if (unit == null)
+{
+    <div class="alert alert-light border small text-muted d-flex gap-2 align-items-start">
+        <iconify-icon icon="iconamoon:information-circle-duotone" class="fs-18 text-primary flex-shrink-0"></iconify-icon>
+        <div>
+            Şablonlar, bir projedeki birden fazla bağımsız bölüme tek seferde uygulanabilecek, yeniden kullanılabilir
+            ödeme planlarıdır (örn. "%10 peşinat + 24 ay eşit taksit" ya da hakedişe bağlı aşama ödemeleri).
+            Bir şablon oluşturduktan sonra kart üzerindeki <strong>"Uygula"</strong> butonuna basıp hangi bölümlere
+            atanacağını seçersiniz — o an seçilen bölümlerin taksitleri (Ödeme Kalemi) otomatik oluşturulur.
+            Bir bölüme zaten elle taksit girdiyseniz, aynı bölüme şablon uygulamak taksitleri tekrar oluşturup
+            mükerrer kayda yol açar; önce <a href="/Admin/Units">Bağımsız Bölümler</a> üzerinden o bölümün
+            mevcut ödeme planını kontrol edin.
+        </div>
+    </div>
+}
+
 @if (!selectedProjectId.HasValue)
 {
     <div class="alert alert-info">Şablonları görmek veya yeni şablon oluşturmak için yukarıdan bir proje seçin.</div>

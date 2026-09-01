@@ -24,6 +24,18 @@
             </a>
         </div>
     </div>
+    <div class="px-3 pt-3">
+        <div class="alert alert-light border small text-muted mb-0 d-flex gap-2 align-items-start">
+            <iconify-icon icon="iconamoon:information-circle-duotone" class="fs-18 text-primary flex-shrink-0"></iconify-icon>
+            <div>
+                Burada her dairenin/dükkanın (bağımsız bölüm) alan, fiyat ve malik bilgilerini tanımlarsınız.
+                Bir bölümün ödeme takvimini oluşturmak için iki yol var: <strong>"Ödeme Planı"</strong> ile o bölüme
+                özel taksitleri tek tek elle girersiniz, <strong>"Şablon Uygula"</strong> ile ise önceden hazırlanmış
+                bir ödeme planı şablonunu (örn. %10 peşinat + 24 ay taksit) o bölüme otomatik uygularsınız.
+                İkisini aynı bölüme birden uygulamayın — taksitler mükerrer oluşur.
+            </div>
+        </div>
+    </div>
     <div class="card-body p-0">
         @if (!Model.Any())
         {
@@ -84,9 +96,13 @@
                                 </td>
                                 <td class="text-end">
                                     <div class="d-flex gap-1 justify-content-end">
-                                        <a href="/Admin/PaymentSchedules?unitId=@u.Id" class="btn btn-sm btn-outline-primary">
+                                        <a href="/Admin/PaymentSchedules?unitId=@u.Id" class="btn btn-sm btn-outline-primary" title="Bu bölüme taksitleri tek tek elle ekle">
                                             <iconify-icon icon="iconamoon:credit-card-duotone"></iconify-icon>
                                             Ödeme Planı
+                                        </a>
+                                        <a href="/Admin/PaymentPlanTemplates?unitId=@u.Id" class="btn btn-sm btn-outline-info" title="Hazır bir ödeme planı şablonunu bu bölüme uygula">
+                                            <iconify-icon icon="mdi:file-document-multiple-outline"></iconify-icon>
+                                            Şablon Uygula
                                         </a>
                                         <a href="/Admin/Units/Edit/@u.Id" class="btn btn-sm btn-outline-secondary">
                                             <iconify-icon icon="iconamoon:edit-duotone"></iconify-icon>

@@ -220,6 +220,15 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                     .OrderBy(u => u.UnitNo).ToListAsync();
             }
 
+            // Her bölümün zaten kaç ödeme kalemi (taksit) olduğunu gösterip mükerrer atama riskine karşı
+            // admini uyarmak için sayıyoruz.
+            var unitIdsOnScreen = ((List<Unit>)ViewBag.Units).Select(u => u.Id).ToList();
+            ViewBag.ExistingCounts = await _db.PaymentSchedules
+                .Where(s => unitIdsOnScreen.Contains(s.UnitId))
+                .GroupBy(s => s.UnitId)
+                .Select(g => new { UnitId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.UnitId, x => x.Count);
+
             return View();
         }
 
