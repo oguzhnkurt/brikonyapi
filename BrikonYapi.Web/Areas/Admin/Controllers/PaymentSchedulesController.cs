@@ -19,12 +19,34 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         }
 
         // Ünite seçilmemişse tüm bağımsız bölümleri listele (seçim ekranı)
-        public async Task<IActionResult> Index(int? unitId)
+        public async Task<IActionResult> Index(int? unitId, int? projectId)
         {
             if (unitId == null)
             {
-                var units = await _db.Units.Include(u => u.Project).Include(u => u.Owner)
-                    .OrderBy(u => u.Project!.Name).ThenBy(u => u.UnitNo).ToListAsync();
+                var query = _db.Units.Include(u => u.Project).Include(u => u.Owner).AsQueryable();
+                if (projectId.HasValue) query = query.Where(u => u.ProjectId == projectId);
+                var units = await query.OrderBy(u => u.Project!.Name).ThenBy(u => u.UnitNo).ToListAsync();
+
+                var unitIds = units.Select(u => u.Id).ToList();
+                // Her bölümün ödeme planı özetini (kaç kalem, kaçı ödendi/gecikti) tek sorguda çıkarıp
+                // seçim ekranında "plan var mı, durumu ne" bilgisini doğrudan gösterebilmek için.
+                var statsRaw = await _db.PaymentSchedules
+                    .Where(s => unitIds.Contains(s.UnitId))
+                    .GroupBy(s => s.UnitId)
+                    .Select(g => new
+                    {
+                        UnitId = g.Key,
+                        Total = g.Count(),
+                        Paid = g.Count(s => s.Status == PaymentScheduleStatus.Paid),
+                        Overdue = g.Count(s => s.Status == PaymentScheduleStatus.Overdue)
+                    })
+                    .ToListAsync();
+                var stats = statsRaw.ToDictionary(x => x.UnitId, x => (Total: x.Total, Paid: x.Paid, Overdue: x.Overdue));
+
+                ViewBag.Stats = stats;
+                ViewBag.Projects = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
+                    await _db.Projects.OrderBy(p => p.Name).ToListAsync(), "Id", "Name", projectId);
+                ViewBag.SelectedProjectId = projectId;
                 return View("SelectUnit", units);
             }
 
