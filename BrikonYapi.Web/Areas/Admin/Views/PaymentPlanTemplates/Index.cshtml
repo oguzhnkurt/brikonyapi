@@ -70,20 +70,23 @@
     </div>
 }
 
-@if (!selectedProjectId.HasValue)
-{
-    <div class="alert alert-info">Şablonları görmek veya yeni şablon oluşturmak için yukarıdan bir proje seçin.</div>
-}
-else if (!Model.Any())
+@if (!Model.Any())
 {
     <div class="card border-0 bk-form-card">
         <div class="card-body text-center text-muted py-5">
-            Bu projede henüz ödeme planı şablonu tanımlanmamış.
-            <div class="mt-2">
-                <a href="/Admin/PaymentPlanTemplates/Create?projectId=@selectedProjectId" class="btn btn-sm bk-btn-save">
-                    <iconify-icon icon="mdi:plus" class="me-1"></iconify-icon>İlk Şablonu Oluştur
-                </a>
-            </div>
+            @if (selectedProjectId.HasValue)
+            {
+                <span>Bu projede henüz ödeme planı şablonu tanımlanmamış.</span>
+                <div class="mt-2">
+                    <a href="/Admin/PaymentPlanTemplates/Create?projectId=@selectedProjectId" class="btn btn-sm bk-btn-save">
+                        <iconify-icon icon="mdi:plus" class="me-1"></iconify-icon>İlk Şablonu Oluştur
+                    </a>
+                </div>
+            }
+            else
+            {
+                <span>Henüz hiçbir projede ödeme planı şablonu tanımlanmamış. Şablon oluşturmak için yukarıdan bir proje seçin.</span>
+            }
         </div>
     </div>
 }
