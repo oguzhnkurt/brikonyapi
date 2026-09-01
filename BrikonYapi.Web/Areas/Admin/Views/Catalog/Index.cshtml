@@ -58,7 +58,7 @@
     <div class="col-md-6">
         <div class="card h-100 border-success">
             <div class="card-header d-flex align-items-center gap-2 bg-success-subtle">
-                <iconify-icon icon="iconamoon:magic-wand-duotone" style="font-size:22px;color:#198754;"></iconify-icon>
+                <iconify-icon icon="mdi:auto-fix" style="font-size:22px;color:#198754;"></iconify-icon>
                 <h5 class="card-title mb-0 text-success">Seçenek 2 — Otomatik Katalog Oluştur</h5>
             </div>
             <div class="card-body">
@@ -79,7 +79,7 @@
                     </div>
                     <button type="submit" class="btn btn-success w-100" id="generateBtn"
                             onclick="this.innerHTML='<span class=\'spinner-border spinner-border-sm me-2\'></span>Oluşturuluyor...'; this.disabled=true; this.form.submit();">
-                        <iconify-icon icon="iconamoon:magic-wand-duotone" class="me-1"></iconify-icon>
+                        <iconify-icon icon="mdi:auto-fix" class="me-1"></iconify-icon>
                         Kataloğu Otomatik Oluştur
                     </button>
                     <div class="form-text mt-2 text-center">⏱ Proje sayısına göre 5–20 saniye sürebilir.</div>
@@ -141,7 +141,7 @@
                                     @if (!string.IsNullOrEmpty(c.PdfPath))
                                     {
                                         <a href="@c.PdfPath" target="_blank" class="text-decoration-none small">
-                                            <iconify-icon icon="iconamoon:file-pdf-duotone" class="me-1 text-danger"></iconify-icon>
+                                            <iconify-icon icon="mdi:file-pdf-box" class="me-1 text-danger"></iconify-icon>
                                             PDF Görüntüle
                                         </a>
                                     }

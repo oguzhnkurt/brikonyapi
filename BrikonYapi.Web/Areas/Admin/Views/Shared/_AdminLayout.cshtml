@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] — Brikon Yapı Admin</title>
 
+    <!-- Panel teması "Wix Madefor Text" fontunu kullanacak şekilde tasarlanmış (app.min.css içinde
+         --bs-font-sans-serif olarak tanımlı) ama font hiçbir yerden yüklenmiyordu, bu yüzden tüm panelde
+         sistemin varsayılan (kalitesiz görünen) yazı tipine düşülüyordu. Google Fonts üzerinden yükleyerek
+         tema tasarımının zaten beklediği görünüme kavuşturuyoruz. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Wix+Madefor+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Vendor CSS -->
     <link href="/admin-assets/css/vendor.min.css" rel="stylesheet" />
     <!-- Icons CSS (Boxicons) -->
@@ -61,7 +69,7 @@
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Projects" ? "active" : "")"
                        href="/Admin/Projects">
                         <span class="nav-icon">
-                            <iconify-icon icon="iconamoon:building-apartment-duotone"></iconify-icon>
+                            <iconify-icon icon="mdi:domain"></iconify-icon>
                         </span>
                         <span class="nav-text">Projeler</span>
                     </a>
@@ -91,7 +99,7 @@
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Certificates" ? "active" : "")"
                        href="/Admin/Certificates">
                         <span class="nav-icon">
-                            <iconify-icon icon="iconamoon:award-duotone"></iconify-icon>
+                            <iconify-icon icon="iconamoon:certificate-badge-duotone"></iconify-icon>
                         </span>
                         <span class="nav-text">Sertifikalar</span>
                     </a>
@@ -123,7 +131,7 @@
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Units" ? "active" : "")"
                        href="/Admin/Units">
                         <span class="nav-icon">
-                            <iconify-icon icon="iconamoon:building-1-duotone"></iconify-icon>
+                            <iconify-icon icon="mdi:home-city-outline"></iconify-icon>
                         </span>
                         <span class="nav-text">Bağımsız Bölümler</span>
                     </a>

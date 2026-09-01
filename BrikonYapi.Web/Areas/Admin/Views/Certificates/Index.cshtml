@@ -15,11 +15,11 @@
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="card-title mb-0">
-            <iconify-icon icon="iconamoon:award-duotone" class="me-2 text-warning"></iconify-icon>
+            <iconify-icon icon="iconamoon:certificate-badge-duotone" class="me-2 text-warning"></iconify-icon>
             Sertifikalar (@Model.Count)
         </h5>
         <a href="/Admin/Certificates/Create" class="btn btn-primary btn-sm">
-            <iconify-icon icon="iconamoon:plus-circle-duotone" class="me-1"></iconify-icon>
+            <iconify-icon icon="iconamoon:sign-plus-circle-duotone" class="me-1"></iconify-icon>
             Yeni Sertifika Ekle
         </a>
     </div>
@@ -27,7 +27,7 @@
         @if (!Model.Any())
         {
             <div class="d-flex flex-column align-items-center justify-content-center text-muted py-5">
-                <iconify-icon icon="iconamoon:award-duotone" style="font-size:48px;"></iconify-icon>
+                <iconify-icon icon="iconamoon:certificate-badge-duotone" style="font-size:48px;"></iconify-icon>
                 <span class="mt-2">Henüz sertifika eklenmemiş.</span>
             </div>
         }

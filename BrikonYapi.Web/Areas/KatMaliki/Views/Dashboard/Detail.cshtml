@@ -122,7 +122,7 @@ else
     @if (rejectedTx != null)
     {
         <div class="km-note is-warn mb-3">
-            <iconify-icon icon="iconamoon:sign-exclamation-circle-duotone"></iconify-icon>
+            <iconify-icon icon="iconamoon:attention-circle-duotone"></iconify-icon>
             <div>
                 <div class="km-note-title">Önceki bildiriminiz onaylanmadı</div>
                 <div class="km-note-sub">@(string.IsNullOrWhiteSpace(rejectedTx.Note) ? "Lütfen dekontu tekrar yükleyin veya yönetim ile iletişime geçin." : rejectedTx.Note)</div>

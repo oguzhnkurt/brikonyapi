@@ -33,13 +33,13 @@
         "PhoneNumber"   => "iconamoon:phone-duotone",
         "Email"         => "iconamoon:email-duotone",
         "Address"       => "iconamoon:location-duotone",
-        "WhatsApp"      => "iconamoon:brand-whatsapp-duotone",
-        "Instagram"     => "iconamoon:brand-instagram-duotone",
-        "Facebook"      => "iconamoon:brand-facebook-duotone",
-        "LinkedIn"      => "iconamoon:brand-linkedin-duotone",
-        "CompanySlogan" => "iconamoon:quote-left-duotone",
+        "WhatsApp"      => "mdi:whatsapp",
+        "Instagram"     => "mdi:instagram",
+        "Facebook"      => "mdi:facebook",
+        "LinkedIn"      => "mdi:linkedin",
+        "CompanySlogan" => "mdi:format-quote-close",
         "AboutText"     => "iconamoon:file-document-duotone",
-        "MarqueeMode"   => "iconamoon:video-camera-duotone",
+        "MarqueeMode"   => "iconamoon:camera-video-duotone",
         _               => "iconamoon:settings-duotone"
     };
 
@@ -80,7 +80,7 @@
                     <hr class="my-4" />
 
                     <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size:.7rem;letter-spacing:.12em;">
-                        <iconify-icon icon="iconamoon:brand-instagram-duotone" class="me-1"></iconify-icon> Sosyal Medya
+                        <iconify-icon icon="mdi:instagram" class="me-1"></iconify-icon> Sosyal Medya
                     </h6>
                     @foreach (var key in new[]{"Instagram","Facebook","LinkedIn"})
                     {
@@ -101,7 +101,7 @@
                     </h6>
                     <div class="mb-3">
                         <label class="form-label fw-medium">
-                            <iconify-icon icon="iconamoon:quote-left-duotone" class="me-1 text-primary"></iconify-icon>Şirket Sloganı
+                            <iconify-icon icon="mdi:format-quote-close" class="me-1 text-primary"></iconify-icon>Şirket Sloganı
                         </label>
                         <div class="input-group mb-1">
                             <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
@@ -213,7 +213,7 @@
                         var modeVal = Model["MarqueeMode"] ?? "image";
                         <div class="mb-3">
                             <label class="form-label fw-medium">
-                                <iconify-icon icon="iconamoon:video-camera-duotone" class="me-1 text-primary"></iconify-icon>
+                                <iconify-icon icon="iconamoon:camera-video-duotone" class="me-1 text-primary"></iconify-icon>
                                 @Label("MarqueeMode")
                             </label>
                             <select name="settings[MarqueeMode]" class="form-select">
@@ -360,7 +360,7 @@
         <div class="card mt-3">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <iconify-icon icon="iconamoon:share-duotone" class="me-2"></iconify-icon>
+                    <iconify-icon icon="iconamoon:share-1-duotone" class="me-2"></iconify-icon>
                     SEO — Paylaşım Görseli
                 </h5>
             </div>
@@ -400,7 +400,7 @@
         <div class="card mt-3">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <iconify-icon icon="iconamoon:image-duotone" class="me-2"></iconify-icon>
+                    <iconify-icon icon="iconamoon:camera-image-duotone" class="me-2"></iconify-icon>
                     Hakkımızda — Görsel / Video
                 </h5>
             </div>
