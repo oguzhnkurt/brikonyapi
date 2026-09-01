@@ -199,7 +199,17 @@
             .km-navbar { border-radius:0 0 22px 22px; }
             .km-content { padding-top:.25rem; }
             .card, .km-card { box-shadow:0 4px 16px rgba(20,30,40,.07); }
-            .km-bottomnav { max-width:640px; margin:0 auto calc(10px + env(safe-area-inset-bottom, 0px)); }
+            /* Alt sekme çubuğu, telefonda parmakla dokunmaya göre boyutlandırılmıştı (40px ikon,
+               ~11px yazı) — masaüstünde normal görüntüleme mesafesinde bu "minicik" görünüyordu.
+               Çubuğu ve içindekileri masaüstü için büyütüyoruz, uygulama sütunuyla (640px) aynı
+               genişlikte ve ortada kalmaya devam ediyor. */
+            .km-bottomnav {
+                max-width:640px; margin:0 auto calc(16px + env(safe-area-inset-bottom, 0px));
+                border-radius:26px;
+            }
+            .km-bottomnav-inner { padding:10px; }
+            .km-bottomnav a { min-height:70px; font-size:.85rem; gap:.4rem; }
+            .km-bottomnav a iconify-icon { font-size:1.55rem; width:48px; height:48px; border-radius:15px; }
         }
     </style>
     @await RenderSectionAsync("Styles", required: false)
