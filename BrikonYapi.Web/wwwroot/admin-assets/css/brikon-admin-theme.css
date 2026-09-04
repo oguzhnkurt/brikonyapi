@@ -11,6 +11,10 @@
     --bs-primary-rgb: 0, 130, 180;
     --bs-input-focus-border-color: #0082B4;
     --bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%230082B4' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    /* Kullanıcının beğendiği bir referans şablondan (Logisko) alınan font — geri almak için
+       bu satırı silmek yeterli, panel otomatik olarak eski "Wix Madefor Text" fontuna döner
+       (_AdminLayout.cshtml'deki Google Fonts <link>'i de o zaman eski haline getirilmeli). */
+    --bs-font-sans-serif: "DM Sans", sans-serif;
 }
 
 /* Buton: dolgu rengi bileşen bazlı custom property'lerde tanımlı, root'tan miras almıyor */

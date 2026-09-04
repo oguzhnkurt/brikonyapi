@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] — Brikon Yapı Admin</title>
 
-    <!-- Panel teması "Wix Madefor Text" fontunu kullanacak şekilde tasarlanmış (app.min.css içinde
-         --bs-font-sans-serif olarak tanımlı) ama font hiçbir yerden yüklenmiyordu, bu yüzden tüm panelde
-         sistemin varsayılan (kalitesiz görünen) yazı tipine düşülüyordu. Google Fonts üzerinden yükleyerek
-         tema tasarımının zaten beklediği görünüme kavuşturuyoruz. -->
+    <!-- Font: "DM Sans" — kullanıcının beğendiği bir referans şablondan (Logisko) alınan yazı tipi.
+         Panelin varsayılan fontu app.min.css'te --bs-font-sans-serif ile "Wix Madefor Text" idi;
+         onu burada yükleyip brikon-admin-theme.css'te --bs-font-sans-serif'i "DM Sans" ile
+         override ediyoruz. Geri almak için: bu <link>'i eski Wix Madefor Text haline döndür ve
+         brikon-admin-theme.css'teki --bs-font-sans-serif override satırını kaldır. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Wix+Madefor+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
 
     <!-- Vendor CSS -->
     <link href="/admin-assets/css/vendor.min.css" rel="stylesheet" />
