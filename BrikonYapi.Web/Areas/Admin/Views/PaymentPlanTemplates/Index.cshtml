@@ -128,17 +128,17 @@ else
                                 <li class="text-muted">+ @(t.Items.Count - 4) kalem daha…</li>
                             }
                         </ul>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <a href="/Admin/PaymentPlanTemplates/Assign?templateId=@t.Id@(unit != null ? "&unitId=" + unit.Id : "")" class="btn btn-sm bk-btn-save">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <a href="/Admin/PaymentPlanTemplates/Assign?templateId=@t.Id@(unit != null ? "&unitId=" + unit.Id : "")" class="btn bk-btn-save flex-grow-1">
                                 <iconify-icon icon="mdi:check-circle-outline" class="me-1"></iconify-icon>Uygula
                             </a>
-                            <a href="/Admin/PaymentPlanTemplates/Edit/@t.Id" class="btn btn-sm btn-outline-secondary">
+                            <a href="/Admin/PaymentPlanTemplates/Edit/@t.Id" class="btn btn-outline-secondary bk-btn-icon" title="Düzenle">
                                 <iconify-icon icon="mdi:pencil-outline"></iconify-icon>
                             </a>
-                            <form asp-area="Admin" asp-controller="PaymentPlanTemplates" asp-action="Delete" asp-route-id="@t.Id" method="post"
+                            <form asp-area="Admin" asp-controller="PaymentPlanTemplates" asp-action="Delete" asp-route-id="@t.Id" method="post" class="d-inline-flex"
                                   onsubmit="return confirm('Bu şablon silinsin mi? (Daha önce uygulanmış taksitler etkilenmez)');">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <button type="submit" class="btn btn-outline-danger bk-btn-icon" title="Sil">
                                     <iconify-icon icon="mdi:trash-can-outline"></iconify-icon>
                                 </button>
                             </form>

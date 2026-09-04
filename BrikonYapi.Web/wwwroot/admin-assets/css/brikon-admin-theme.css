@@ -150,6 +150,15 @@ a { --bs-link-color-rgb: 0, 130, 180; --bs-link-hover-color-rgb: 0, 106, 145; }
 }
 .bk-btn-cancel:hover { background: #f5f6f7; border-color: #c9ced3; color: #2B2A29; }
 
+/* İkon-only aksiyon butonları (Düzenle/Sil gibi): bk-btn-save ile aynı satırda kullanıldığında
+   Bootstrap'ın standart .btn-sm boyutlarıyla eşleşmeyip düzensiz/dağınık görünüyorlardı — bu
+   sınıf onları bk-btn-save ile aynı yükseklik ve köşe yuvarlaklığına sabitler. */
+.bk-btn-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 42px; height: 42px; padding: 0; border-radius: 10px; flex-shrink: 0;
+    font-size: 1.05rem;
+}
+
 /* Liste sayfaları için: sayfa üstü özet şeridi ve marka vurgulu kart satırları */
 .bk-page-header {
     background: linear-gradient(135deg, rgba(0,130,180,.07), rgba(0,160,227,.03));
