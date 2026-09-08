@@ -1,0 +1,95 @@
+@{
+    ViewData["Title"] = "Yeni Yönetici";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card bk-form-card border-0">
+            <div class="bk-form-hero">
+                <div class="bk-form-hero-icon">
+                    <iconify-icon icon="mdi:shield-account-outline"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="mb-0">Yeni Yönetici Hesabı</h5>
+                    <div class="bk-form-hero-subtitle">Panelin tamamına tam yetkili erişim verir</div>
+                </div>
+            </div>
+            <div class="card-body bk-form-body">
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger">@TempData["Error"]</div>
+                }
+
+                <form asp-area="Admin" asp-controller="AdminUsers" asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Giriş Bilgileri</div>
+                        <div class="mb-3">
+                            <label class="bk-label">E-posta (giriş için kullanılacak) <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" required />
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="bk-label">Başlangıç Şifresi <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="text" name="password" id="pwField" class="form-control" required minlength="8"
+                                       placeholder="min. 8 karakter, büyük harf ve rakam içermeli" />
+                                <button type="button" class="btn btn-outline-primary" id="pwGen">
+                                    <iconify-icon icon="iconamoon:synchronize-duotone" class="me-1"></iconify-icon>Şifre Üret
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="pwCopy" title="Kopyala">
+                                    <iconify-icon icon="iconamoon:copy-duotone"></iconify-icon>
+                                </button>
+                            </div>
+                            <div class="form-text bk-hint" id="pwHint">Bu şifreyi ilgili kişiye güvenli bir kanaldan (örn. telefonla) iletin.</div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning small">
+                        <iconify-icon icon="iconamoon:warning-circle-duotone" class="me-1"></iconify-icon>
+                        Bu hesap, kat malikleri kişisel bilgileri ve tüm ödeme kayıtları dahil panelin tamamına
+                        erişebilecek. Sadece güvendiğiniz kişi/kurumlar için oluşturun.
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn bk-btn-save">
+                            <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                            Oluştur
+                        </button>
+                        <a href="/Admin/AdminUsers" class="btn bk-btn-cancel">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    var field = document.getElementById('pwField');
+    var hint  = document.getElementById('pwHint');
+    var seps  = ['!', '*', '.', '?', '-'];
+
+    document.getElementById('pwGen').addEventListener('click', function () {
+        var sep = seps[Math.floor(Math.random() * seps.length)];
+        var num = Math.floor(1000 + Math.random() * 9000);
+        field.value = 'Brikon' + sep + num;
+        field.focus();
+        field.select();
+    });
+
+    document.getElementById('pwCopy').addEventListener('click', function () {
+        if (!field.value) return;
+        field.select();
+        navigator.clipboard.writeText(field.value).then(function () {
+            var old = hint.textContent;
+            hint.textContent = 'Şifre panoya kopyalandı.';
+            setTimeout(function () { hint.textContent = old; }, 2000);
+        });
+    });
+})();
+</script>
+}

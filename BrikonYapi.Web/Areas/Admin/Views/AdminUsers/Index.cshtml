@@ -1,0 +1,113 @@
+@using Microsoft.AspNetCore.Identity
+@model List<IdentityUser>
+@{
+    ViewData["Title"] = "Yöneticiler";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <h5 class="card-title mb-0">Yöneticiler (@Model.Count)</h5>
+        <a href="/Admin/AdminUsers/Create" class="btn btn-primary btn-sm">
+            <iconify-icon icon="iconamoon:sign-plus-circle-duotone" class="me-1"></iconify-icon>
+            Yeni Yönetici
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success m-3">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger m-3">@TempData["Error"]</div>
+    }
+
+    <div class="alert alert-light border small text-muted d-flex gap-2 align-items-start m-3">
+        <iconify-icon icon="iconamoon:information-circle-duotone" class="fs-18 text-primary flex-shrink-0"></iconify-icon>
+        <div>
+            Bu ekrandan eklenen her hesap panelin <strong>tamamına</strong> erişebilir (ödemeler, kat malikleri
+            kişisel bilgileri dahil) — sistemde şu an daha kısıtlı bir yönetici rolü yok. Sadece güvendiğiniz
+            kişi/kurumlar için hesap açın.
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="d-flex flex-column align-items-center justify-content-center text-muted py-5">
+                <iconify-icon icon="iconamoon:profile-duotone" style="font-size:48px;"></iconify-icon>
+                <span class="mt-2">Henüz ek yönetici eklenmemiş.</span>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>E-posta</th>
+                            <th>Durum</th>
+                            <th class="text-end">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model)
+                        {
+                            var locked = u.LockoutEnd.HasValue && u.LockoutEnd > DateTimeOffset.Now;
+                            <tr>
+                                <td>@u.Email</td>
+                                <td>
+                                    @if (locked)
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary">Devre dışı</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success-subtle text-success">Aktif</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <form asp-area="Admin" asp-controller="AdminUsers" asp-action="ResetPassword" method="post" class="d-inline"
+                                              onsubmit="return confirm('Bu yönetici için yeni bir şifre oluşturulacak. Devam edilsin mi?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                <iconify-icon icon="iconamoon:restart-duotone"></iconify-icon>
+                                                Şifre Sıfırla
+                                            </button>
+                                        </form>
+                                        @if (locked)
+                                        {
+                                            <form asp-area="Admin" asp-controller="AdminUsers" asp-action="Activate" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@u.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    <iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon>
+                                                    Etkinleştir
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-area="Admin" asp-controller="AdminUsers" asp-action="Deactivate" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Bu yöneticinin erişimi devre dışı bırakılacak. Devam edilsin mi?')">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@u.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <iconify-icon icon="iconamoon:close-circle-1-duotone"></iconify-icon>
+                                                    Devre Dışı Bırak
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

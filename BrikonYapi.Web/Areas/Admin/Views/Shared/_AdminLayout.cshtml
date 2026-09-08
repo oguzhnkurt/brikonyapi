@@ -206,6 +206,16 @@
                 <li class="menu-title">Sistem</li>
 
                 <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminUsers" ? "active" : "")"
+                       href="/Admin/AdminUsers">
+                        <span class="nav-icon">
+                            <iconify-icon icon="mdi:shield-account-outline"></iconify-icon>
+                        </span>
+                        <span class="nav-text">Yöneticiler</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Settings" ? "active" : "")"
                        href="/Admin/Settings">
                         <span class="nav-icon">
