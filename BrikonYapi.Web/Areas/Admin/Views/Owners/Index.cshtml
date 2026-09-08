@@ -7,6 +7,7 @@
 
     var allProjects = (List<Project>)(ViewBag.AllProjects ?? new List<Project>());
     var committeeAccess = (List<OwnerProjectAccess>)(ViewBag.CommitteeAccess ?? new List<OwnerProjectAccess>());
+    var notificationPrefs = (List<OwnerNotificationPreference>)(ViewBag.NotificationPrefs ?? new List<OwnerNotificationPreference>());
     var projectFilter = (SelectList)ViewBag.ProjectFilter;
     int? selectedProjectId = ViewBag.SelectedProjectId;
 }
@@ -111,6 +112,11 @@
                                             <iconify-icon icon="mdi:star-outline"></iconify-icon>
                                             Temsil Heyeti
                                         </button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="modal" data-bs-target="#notificationModal-@o.Id">
+                                            <iconify-icon icon="mdi:bell-outline"></iconify-icon>
+                                            Bildirimler
+                                        </button>
                                         <form asp-area="Admin" asp-controller="Owners" asp-action="ResetPassword" method="post" class="d-inline"
                                               onsubmit="return confirm('Bu malik için yeni bir şifre oluşturulacak. Devam edilsin mi?')">
                                             @Html.AntiForgeryToken()
@@ -189,6 +195,60 @@
                                     <div class="text-muted small">Aktif proje bulunmuyor.</div>
                                 }
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                var myPref = notificationPrefs.FirstOrDefault(p => p.OwnerId == o.Id);
+                // Hiç kayıt yoksa (malik henüz Profilim'den ayar değiştirmediyse) varsayılanları göster: hepsi açık.
+                var smsOn      = myPref?.SmsEnabled      ?? true;
+                var emailOn    = myPref?.EmailEnabled    ?? true;
+                var whatsappOn = myPref?.WhatsAppEnabled ?? true;
+
+                <div class="modal fade" id="notificationModal-@o.Id" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <iconify-icon icon="mdi:bell" class="text-primary me-1"></iconify-icon>
+                                    Bildirim Tercihleri — @o.FullName
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                            </div>
+                            <form asp-area="Admin" asp-controller="Owners" asp-action="SaveNotificationPreferences" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="ownerId" value="@o.Id" />
+                                <div class="modal-body">
+                                    <label class="form-label small fw-semibold">Telefon (SMS ve WhatsApp için gerekli)</label>
+                                    <input type="tel" name="phone" class="form-control mb-3" value="@o.Phone" placeholder="05XX XXX XX XX" />
+
+                                    <label class="form-label small fw-semibold">Bildirim Kanalları</label>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="sms-@o.Id" name="smsEnabled" value="true" checked="@smsOn" />
+                                        <label class="form-check-label" for="sms-@o.Id">SMS</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="email-@o.Id" name="emailEnabled" value="true" checked="@emailOn" />
+                                        <label class="form-check-label" for="email-@o.Id">E-posta</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-1">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="wa-@o.Id" name="whatsAppEnabled" value="true" checked="@whatsappOn" />
+                                        <label class="form-check-label" for="wa-@o.Id">
+                                            <iconify-icon icon="ic:baseline-whatsapp" class="text-success"></iconify-icon>
+                                            WhatsApp
+                                        </label>
+                                    </div>
+                                    <div class="text-muted small mt-2">
+                                        WhatsApp bildirimleri, sunucu tarafında 360dialog API anahtarı tanımlanana kadar
+                                        gönderilmez (bu anahtar kod ayarlarından girilir, bu ekrandan değil).
+                                        Telefon numarası boşsa SMS ve WhatsApp otomatik atlanır.
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn bk-btn-cancel" data-bs-dismiss="modal">Vazgeç</button>
+                                    <button type="submit" class="btn bk-btn-save">Kaydet</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>

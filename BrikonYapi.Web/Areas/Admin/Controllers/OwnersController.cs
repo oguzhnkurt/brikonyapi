@@ -50,6 +50,11 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 .Include(a => a.Project)
                 .ToListAsync();
 
+            // Bildirim tercihleri: her malik için bir satır var ya da hiç yok (KatMaliki tarafında
+            // "Profilim" ekranından ilk kayıt oluşturulmadıysa satır yok demektir) — view, eksik
+            // olan malikler için varsayılan (hepsi açık, WhatsApp dahil) değerleri gösterecek.
+            ViewBag.NotificationPrefs = await _db.OwnerNotificationPreferences.ToListAsync();
+
             return View(owners);
         }
 
@@ -382,6 +387,38 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 TempData["Success"] = "Temsil Heyeti üyeliği kaldırıldı.";
             }
 
+            return RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>
+        /// Kat malikinin SMS/E-posta/WhatsApp bildirim kanallarını ve (varsa) telefon numarasını
+        /// admin panelinden düzenlemeyi sağlar. Malikin daha önce (KatMaliki &gt; Profilim'den)
+        /// hiç tercih kaydı oluşturmamış olma ihtimaline karşı find-or-create yapılır — WhatsApp
+        /// dahil her kanal varsayılan olarak açık başlar.
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveNotificationPreferences(int ownerId, string? phone, bool smsEnabled, bool emailEnabled, bool whatsAppEnabled)
+        {
+            var owner = await _db.Owners.FindAsync(ownerId);
+            if (owner == null) return NotFound();
+
+            owner.Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
+            owner.UpdatedAt = DateTime.Now;
+
+            var pref = await _db.OwnerNotificationPreferences.FirstOrDefaultAsync(p => p.OwnerId == ownerId);
+            if (pref == null)
+            {
+                pref = new OwnerNotificationPreference { OwnerId = ownerId, CreatedAt = DateTime.Now };
+                _db.OwnerNotificationPreferences.Add(pref);
+            }
+
+            pref.SmsEnabled      = smsEnabled;
+            pref.EmailEnabled    = emailEnabled;
+            pref.WhatsAppEnabled = whatsAppEnabled;
+            pref.UpdatedAt       = DateTime.Now;
+
+            await _db.SaveChangesAsync();
+            TempData["Success"] = $"{owner.FullName} için bildirim tercihleri güncellendi.";
             return RedirectToAction(nameof(Index));
         }
 
