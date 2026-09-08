@@ -202,9 +202,14 @@
             /* Alt sekme çubuğu, telefonda parmakla dokunmaya göre boyutlandırılmıştı (40px ikon,
                ~11px yazı) — masaüstünde normal görüntüleme mesafesinde bu "minicik" görünüyordu.
                Çubuğu ve içindekileri masaüstü için büyütüyoruz, uygulama sütunuyla (640px) aynı
-               genişlikte ve ortada kalmaya devam ediyor. */
+               genişlikte ve ortada kalmaya devam ediyor.
+               Not: body flex sütunu içinde margin:0 auto TEK BAŞINA genişliği içeriğe göre
+               küçültüyordu (auto kenar boşluğu, dikey flex'te "stretch" davranışını iptal edip
+               çubuğu sadece ~280px'e daraltıyordu) — bu yüzden 640px'e asla ulaşmıyor, ekranın
+               ortasında minik bir hap gibi kalıyordu. width:100% eklemek bunu düzeltir.
+            */
             .km-bottomnav {
-                max-width:640px; margin:0 auto calc(16px + env(safe-area-inset-bottom, 0px));
+                width:100%; max-width:640px; margin:0 auto calc(16px + env(safe-area-inset-bottom, 0px));
                 border-radius:26px;
             }
             .km-bottomnav-inner { padding:10px; }
