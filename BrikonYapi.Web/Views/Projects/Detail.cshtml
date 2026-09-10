@@ -58,11 +58,10 @@
 }
 
 <!-- ═══════════════════════════════════════════════
-     BÖLÜM 1: Fotoğraf Slaytı  |  Koyu Panel + Harita
+     BÖLÜM 1: Fotoğraf Slaytı (harita/sağ panel kaldırıldı, tam genişlik)
      ═══════════════════════════════════════════════ -->
-<section class="pd-top">
+<section class="pd-top pd-top-nomap">
 
-  <!-- Sol: Fotoğraf -->
   <div class="pd-gallery" id="pd-gallery">
     @if (allImages.Any())
     {
@@ -84,13 +83,6 @@
     {
       <div class="pd-slide active" style="background:linear-gradient(135deg,#1e1d1c,#2B2A29)"></div>
     }
-  </div>
-
-  <!-- Sağ: Koyu panel (harita kaldırıldı) -->
-  <div class="pd-right pd-right-notabs">
-    <nav class="pd-tabs">
-      <a href="#pd-specs" class="pd-tab">@(isEn ? "Specifications" : "Özellikler")</a>
-    </nav>
   </div>
 </section>
 

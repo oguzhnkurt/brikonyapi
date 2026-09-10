@@ -1332,6 +1332,8 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
   min-height:440px;
   margin-top:68px;  /* below fixed header */
 }
+/* Harita/sağ panel kaldırıldı: galeri tam genişlik */
+.pd-top-nomap { grid-template-columns:1fr; }
 
 /* Fotoğraf slaytı */
 .pd-gallery {
