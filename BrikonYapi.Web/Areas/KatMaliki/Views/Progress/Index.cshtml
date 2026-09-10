@@ -288,7 +288,16 @@
         scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
     }
     .km-photo-scroll::-webkit-scrollbar { height:5px; }
+    .km-photo-scroll::-webkit-scrollbar-track { background:#eef0f2; border-radius:10px; }
     .km-photo-scroll::-webkit-scrollbar-thumb { background:#d8dde1; border-radius:10px; }
+    /* Web/masaüstü görünümde: mobildeki ince dokunmatik iz yerine, fare ile sürüklenip
+       görülebilecek daha kalın, belirgin bir scrollbar */
+    @@media (min-width: 768px) {
+        .km-photo-scroll { scrollbar-width: auto; scrollbar-color: #b9c0c7 #eef0f2; }
+        .km-photo-scroll::-webkit-scrollbar { height:12px; }
+        .km-photo-scroll::-webkit-scrollbar-thumb { background:#b9c0c7; border-radius:10px; border:3px solid #eef0f2; }
+        .km-photo-scroll::-webkit-scrollbar-thumb:hover { background:#9aa3ac; }
+    }
     .km-photo-card {
         position:relative; flex:0 0 240px; scroll-snap-align:start; border:none; padding:0;
         border-radius:14px; overflow:hidden; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); text-align:left;
