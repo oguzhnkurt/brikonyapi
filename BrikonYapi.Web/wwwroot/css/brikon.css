@@ -1406,6 +1406,9 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
   height:64px; border-top:1px solid rgba(255,255,255,.07);
   flex-shrink:0;
 }
+/* Harita kaldırıldıktan sonra: sağ panel sadece sekmeyi dikey ortala */
+.pd-right-notabs { justify-content:center; }
+.pd-right-notabs .pd-tabs { border-top:none; height:auto; }
 .pd-tab {
   font-family:'Inter',sans-serif; font-size:.9rem;
   letter-spacing:.14em; text-transform:uppercase;

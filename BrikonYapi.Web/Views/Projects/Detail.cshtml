@@ -55,10 +55,6 @@
     var hasSeps = Model.TotalArea.HasValue || Model.UnitCount.HasValue || Model.FloorCount.HasValue
                || Model.BlockCount.HasValue || Model.StartDate.HasValue || Model.EndDate.HasValue
                || !string.IsNullOrEmpty(Model.Location);
-    var hasMap  = Model.Latitude.HasValue && Model.Longitude.HasValue;
-    var latStr  = hasMap ? Model.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
-    var lngStr  = hasMap ? Model.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
-    var gmapUrl = hasMap ? $"https://maps.google.com/maps?q={latStr},{lngStr}&z=15&output=embed" : "";
 }
 
 <!-- ═══════════════════════════════════════════════
@@ -90,28 +86,11 @@
     }
   </div>
 
-  <!-- Sağ: Koyu panel -->
-  <div class="pd-right">
-
-    @if (hasMap)
-    {
-      <iframe class="pd-map" src="@gmapUrl" frameborder="0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-    }
-    else
-    {
-      <div class="pd-map-empty">
-        <svg width="40" height="40" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5" viewBox="0 0 24 24">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-          <circle cx="12" cy="9" r="2.5"/>
-        </svg>
-        <span>@(isEn ? "No map coordinates added" : "Harita koordinatı eklenmemiş")</span>
-      </div>
-    }
-
+  <!-- Sağ: Koyu panel (harita kaldırıldı) -->
+  <div class="pd-right pd-right-notabs">
     <nav class="pd-tabs">
       <a href="#pd-specs" class="pd-tab">@(isEn ? "Specifications" : "Özellikler")</a>
     </nav>
-
   </div>
 </section>
 
