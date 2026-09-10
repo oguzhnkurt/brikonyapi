@@ -815,6 +815,12 @@
 .tile-btn.active { border-color:#333; background:#333; color:#fff; }
 .tile-btn.active svg { stroke:#fff; }
 
+/* "Koyu" mod: anahtar gerektiren bir tile servisi yerine, standart (ücretsiz) harita
+   üzerine CSS filtresiyle koyu görünüm uygulanıyor. */
+.home-map-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.85); }
+.home-map-dark .leaflet-marker-pane,
+.home-map-dark .leaflet-popup-pane { filter: none; }
+
 /* ── Proje Modal ── */
 .hm-overlay {
   display:none; position:fixed; top:0; right:0; bottom:0; left:320px;
@@ -1146,15 +1152,19 @@
   map.getContainer().addEventListener('mouseenter', function(){ map.scrollWheelZoom.enable(); });
   map.getContainer().addEventListener('mouseleave', function(){ map.scrollWheelZoom.disable(); });
 
-  /* ── Tile katmanları ── */
+  /* ── Tile katmanları ──
+     Not: CARTO'nun ücretsiz basemap servisi artık API anahtarı istiyor (harita üstünde
+     "API KEY REQUIRED" filigranı çıkıyordu). Anahtar gerektirmeyen OpenStreetMap tile'larına
+     geçtik; "Koyu" modu ayrı bir tile seti yerine CSS filtresiyle (bkz. .home-map-dark) simüle
+     ediliyor — bu şekilde ücretsiz ve anahtarsız kalıyor. ── */
   var tileLayers = {
-    light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution:'© <a href="https://carto.com/">CARTO</a>',
-      subdomains:'abcd', maxZoom:19
+    light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      subdomains:'abc', maxZoom:19
     }),
-    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution:'© <a href="https://carto.com/">CARTO</a>',
-      subdomains:'abcd', maxZoom:19
+    dark: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      subdomains:'abc', maxZoom:19
     }),
     sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution:'© Esri', maxZoom:18
@@ -1425,6 +1435,7 @@
       map.removeLayer(tileLayers[currentTile]);
       currentTile = btn.dataset.tile;
       tileLayers[currentTile].addTo(map);
+      map.getContainer().classList.toggle('home-map-dark', currentTile === 'dark');
     });
   });
 
