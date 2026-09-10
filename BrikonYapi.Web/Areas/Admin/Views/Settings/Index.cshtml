@@ -67,7 +67,7 @@
 </style>
 
 <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-xl-11">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
@@ -327,119 +327,140 @@
                             </h2>
                             <div id="secSeo" class="accordion-collapse collapse">
                                 <div class="accordion-body">
-                                    <p class="text-muted small mb-3">
-                                        Google sonuçlarında ve WhatsApp/LinkedIn link önizlemelerinde görünen bilgiler.
-                                        Boş bırakılan alanlar için varsayılan değerler kullanılır.
-                                    </p>
 
-                                    <div class="row g-3 mb-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-medium">Site Adı</label>
-                                            <input type="text" name="settings[SeoSiteName]" value="@V("SeoSiteName")"
-                                                   class="form-control" placeholder="Brikon Yapı" />
-                                            <div class="form-text">Sayfa başlıklarının sonuna eklenir: “Projeler - Brikon Yapı”.</div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-medium">Site Adresi</label>
-                                            <input type="url" name="settings[SeoBaseUrl]" value="@V("SeoBaseUrl")"
-                                                   class="form-control" placeholder="https://brikonyapi.com" />
-                                            <div class="form-text">
-                                                Canonical, sitemap ve paylaşım linkleri bu adresle üretilir.
-                                                Boş bırakılırsa istek adresi kullanılır.
+                                    <!-- Hızlı bağlantılar -->
+                                    <div class="d-flex flex-wrap gap-2 mb-4">
+                                        <a href="/Admin/Faq" class="btn btn-sm btn-outline-primary rounded-pill">
+                                            <iconify-icon icon="mdi:frequently-asked-questions" class="me-1"></iconify-icon>SSS
+                                        </a>
+                                        <a href="/Admin/References" class="btn btn-sm btn-outline-primary rounded-pill">
+                                            <iconify-icon icon="mdi:certificate-outline" class="me-1"></iconify-icon>Referanslar
+                                        </a>
+                                        <a href="/sitemap.xml" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary rounded-pill">
+                                            <iconify-icon icon="mdi:sitemap-outline" class="me-1"></iconify-icon>sitemap.xml
+                                        </a>
+                                        <a href="/robots.txt" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary rounded-pill">
+                                            <iconify-icon icon="mdi:robot-outline" class="me-1"></iconify-icon>robots.txt
+                                        </a>
+                                    </div>
+
+                                    <div class="row g-4">
+                                        <!-- ── Sol sütun: temel meta bilgileri + Google önizleme ── -->
+                                        <div class="col-lg-7">
+                                            <div class="row g-3 mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-medium">Site Adı</label>
+                                                    <input type="text" name="settings[SeoSiteName]" value="@V("SeoSiteName")"
+                                                           id="seoSiteName" class="form-control" placeholder="Brikon Yapı" />
+                                                    <div class="form-text">Sayfa başlıklarının sonuna eklenir: “Projeler - Brikon Yapı”.</div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-medium">Site Adresi</label>
+                                                    <input type="url" name="settings[SeoBaseUrl]" value="@V("SeoBaseUrl")"
+                                                           id="seoBaseUrl" class="form-control" placeholder="https://brikonyapi.com" />
+                                                    <div class="form-text">Boş bırakılırsa istek adresi kullanılır.</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-baseline">
+                                                    <label class="form-label fw-medium mb-1">Meta Başlık</label>
+                                                    <span class="form-text mb-1" id="seoTitleCount">0 / 60</span>
+                                                </div>
+                                                <input type="text" name="settings[SeoDefaultTitle]" value="@V("SeoDefaultTitle")"
+                                                       id="seoTitle" class="form-control" maxlength="70"
+                                                       placeholder="Brikon Yapı — Kentsel Dönüşüm ve İnşaat" />
+                                                <div class="form-text">Kendi başlığı olmayan sayfalarda kullanılır.</div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-baseline">
+                                                    <label class="form-label fw-medium mb-1">Meta Açıklama</label>
+                                                    <span class="form-text mb-1" id="seoDescCount">0 / 160</span>
+                                                </div>
+                                                <textarea name="settings[SeoDescription]" id="seoDesc" class="form-control" rows="3" maxlength="300"
+                                                          placeholder="Brikon Yapı - Kaliteli ve güvenilir inşaat hizmetleriyle geleceği inşa ediyoruz.">@V("SeoDescription")</textarea>
+                                                <div class="form-text">Google sonuçlarında başlığın altında görünen metin. 150-160 karakter idealdir.</div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label fw-medium">Anahtar Kelimeler</label>
+                                                <input type="text" name="settings[SeoKeywords]" value="@V("SeoKeywords")"
+                                                       class="form-control" placeholder="kentsel dönüşüm, inşaat, müteahhit, İstanbul" />
+                                                <div class="form-text">Virgülle ayırın.</div>
+                                            </div>
+
+                                            <!-- Google önizleme -->
+                                            <div class="mb-1">
+                                                <label class="form-label fw-medium small text-muted">
+                                                    <iconify-icon icon="mdi:google" class="me-1"></iconify-icon>Google Önizleme
+                                                </label>
+                                                <div class="p-3 border rounded-3 bg-white" style="font-family:arial,sans-serif;">
+                                                    <div style="color:#1a0dab;font-size:1.15rem;line-height:1.3;" id="seoPrevTitle">Brikon Yapı</div>
+                                                    <div style="color:#006621;font-size:.82rem;margin-top:2px;" id="seoPrevUrl">brikonyapi.com</div>
+                                                    <div style="color:#545454;font-size:.85rem;margin-top:3px;" id="seoPrevDesc">Meta açıklama burada görünecek.</div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div class="mb-3">
-                                        <label class="form-label fw-medium">Varsayılan Sayfa Başlığı</label>
-                                        <input type="text" name="settings[SeoDefaultTitle]" value="@V("SeoDefaultTitle")"
-                                               class="form-control" placeholder="Brikon Yapı — Kentsel Dönüşüm ve İnşaat" />
-                                        <div class="form-text">Kendi başlığı olmayan sayfalarda kullanılır. En fazla ~60 karakter önerilir.</div>
-                                    </div>
+                                        <!-- ── Sağ sütun: paylaşım görseli + arama motoru araçları ── -->
+                                        <div class="col-lg-5">
+                                            <div class="bk-field-group mb-3">
+                                                <div class="bk-group-title">
+                                                    <iconify-icon icon="iconamoon:share-1-duotone" class="me-1"></iconify-icon>Sosyal Medya Görseli (Open Graph)
+                                                </div>
+                                                <p class="text-muted small mb-2">
+                                                    Bağlantı WhatsApp, Facebook, Instagram veya LinkedIn'de paylaşıldığında kart halinde çıkan önizleme resmi.
+                                                </p>
+                                                @if (hasOgImage)
+                                                {
+                                                    <div class="mb-2">
+                                                        <img src="@ogImagePath" style="width:100%;max-width:100%;border-radius:8px;display:block;border:1px solid #dee2e6" />
+                                                        <button type="submit" form="ogImageDeleteForm" class="btn btn-sm btn-outline-danger mt-2">Kaldır</button>
+                                                    </div>
+                                                }
+                                                <div class="input-group input-group-sm">
+                                                    <input type="file" name="file" form="ogImageForm" class="form-control" accept="image/jpeg,image/png,image/webp" />
+                                                    <button type="submit" form="ogImageForm" class="btn btn-primary">Yükle</button>
+                                                </div>
+                                                <div class="form-text mt-1">JPG, PNG, WEBP (en fazla 5 MB) — önerilen 1200 × 630 px.</div>
+                                            </div>
 
-                                    <div class="mb-3">
-                                        <label class="form-label fw-medium">Varsayılan Açıklama</label>
-                                        <textarea name="settings[SeoDescription]" class="form-control" rows="2" maxlength="300"
-                                                  placeholder="Brikon Yapı - Kaliteli ve güvenilir inşaat hizmetleriyle geleceği inşa ediyoruz.">@V("SeoDescription")</textarea>
-                                        <div class="form-text">Google sonuçlarında başlığın altında görünen metin. 150-160 karakter idealdir.</div>
-                                    </div>
+                                            <div class="bk-field-group mb-3">
+                                                <div class="bk-group-title">
+                                                    <iconify-icon icon="mdi:tools" class="me-1"></iconify-icon>Arama Motoru Araçları
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-medium">Google Site Doğrulama Kodu</label>
+                                                    <input type="text" name="settings[SeoGoogleVerification]" value="@V("SeoGoogleVerification")"
+                                                           class="form-control" placeholder="google-site-verification içeriği" />
+                                                    <div class="form-text" style="font-size:.78em;">
+                                                        <a href="https://search.google.com/search-console" target="_blank" rel="noopener">search.google.com/search-console</a> →
+                                                        siteyi ekleyin → "HTML etiketi" → <code>content="..."</code> değerini buraya yapıştırın.
+                                                    </div>
+                                                </div>
 
-                                    <div class="mb-3">
-                                        <label class="form-label fw-medium">Anahtar Kelimeler</label>
-                                        <input type="text" name="settings[SeoKeywords]" value="@V("SeoKeywords")"
-                                               class="form-control" placeholder="kentsel dönüşüm, inşaat, müteahhit, İstanbul" />
-                                        <div class="form-text">Virgülle ayırın.</div>
-                                    </div>
+                                                @{ var noIndex = V("SeoNoIndex") == "true"; }
+                                                <div class="mb-0">
+                                                    <label class="form-label fw-medium">Arama Motoru Erişimi</label>
+                                                    <select name="settings[SeoNoIndex]" class="form-select">
+                                                        <option value="false" selected="@(!noIndex)">Açık — site Google'da listelensin</option>
+                                                        <option value="true" selected="@noIndex">Kapalı — test ortamı, hiçbir sayfa listelenmesin</option>
+                                                    </select>
+                                                </div>
+                                            </div>
 
-                                    <div class="row g-3 mb-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-medium">Facebook Sayfası</label>
-                                            <input type="url" name="settings[SeoFacebook]" value="@V("SeoFacebook")"
-                                                   class="form-control" placeholder="https://facebook.com/brikonyapi" />
+                                            <div class="mb-3">
+                                                <label class="form-label fw-medium">Facebook Sayfası</label>
+                                                <input type="url" name="settings[SeoFacebook]" value="@V("SeoFacebook")"
+                                                       class="form-control form-control-sm" placeholder="https://facebook.com/brikonyapi" />
+                                            </div>
+                                            <div class="mb-0">
+                                                <label class="form-label fw-medium">Instagram Hesabı</label>
+                                                <input type="url" name="settings[SeoInstagram]" value="@V("SeoInstagram")"
+                                                       class="form-control form-control-sm" placeholder="https://instagram.com/brikonyapi" />
+                                            </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-medium">Instagram Hesabı</label>
-                                            <input type="url" name="settings[SeoInstagram]" value="@V("SeoInstagram")"
-                                                   class="form-control" placeholder="https://instagram.com/brikonyapi" />
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-medium">Google Doğrulama Kodu</label>
-                                        <input type="text" name="settings[SeoGoogleVerification]" value="@V("SeoGoogleVerification")"
-                                               class="form-control" placeholder="google-site-verification içeriği" />
-                                        <div class="form-text">
-                                            Google Search Console'un verdiği doğrulama kodu.
-                                            <span class="text-muted" style="font-size:.78em;">
-                                                Henüz alınmadıysa: <a href="https://search.google.com/search-console" target="_blank" rel="noopener">search.google.com/search-console</a> adresine girip
-                                                siteyi ekleyin, doğrulama yöntemi olarak "HTML etiketi"ni seçin, verilen <code>content="..."</code> değerini kopyalayıp buraya yapıştırın.
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    @{ var noIndex = V("SeoNoIndex") == "true"; }
-                                    <div class="mb-3">
-                                        <label class="form-label fw-medium">Arama Motoru Erişimi</label>
-                                        <select name="settings[SeoNoIndex]" class="form-select">
-                                            <option value="false" selected="@(!noIndex)">Açık — site Google'da listelensin</option>
-                                            <option value="true" selected="@noIndex">Kapalı — hiçbir sayfa listelenmesin (test ortamı)</option>
-                                        </select>
-                                        <div class="form-text">
-                                            "Kapalı" seçilirse tüm sayfalara <code>noindex</code> eklenir ve robots.txt siteyi tamamen kapatır.
-                                            Canlıda <strong>açık</strong> olmalıdır.
-                                        </div>
-                                    </div>
-
-                                    <div class="alert alert-info small mb-4">
-                                        <iconify-icon icon="iconamoon:information-circle-duotone" class="me-1"></iconify-icon>
-                                        Site haritanız <a href="/sitemap.xml" target="_blank" rel="noopener">/sitemap.xml</a>,
-                                        tarayıcı kuralları <a href="/robots.txt" target="_blank" rel="noopener">/robots.txt</a>
-                                        adresinde otomatik üretiliyor. Yönetim paneli ve kat maliki portalı aramaya kapalıdır.
-                                    </div>
-
-                                    <!-- Paylaşım görseli yükleme — SEO ayarlarının hemen altında, ayrı (multipart) form -->
-                                    <hr class="my-3" />
-                                    <p class="form-text mb-2"><iconify-icon icon="iconamoon:share-1-duotone" class="me-1"></iconify-icon>SEO — Paylaşım Görseli</p>
-                                    <div class="alert alert-light border small mb-3">
-                                        <iconify-icon icon="iconamoon:information-circle-duotone" class="me-1"></iconify-icon>
-                                        <strong>Paylaşım görseli</strong> nedir? Bu bağlantı WhatsApp, Facebook, Instagram veya LinkedIn'de
-                                        paylaşıldığında kart halinde çıkan önizleme resmidir. Sayfanın kendi görseli yoksa (ör. ana sayfa,
-                                        iletişim) bu görsel kullanılır.
-                                    </div>
-                                    @if (hasOgImage)
-                                    {
-                                        <div class="mb-3">
-                                            <img src="@ogImagePath" style="max-width:260px;border-radius:8px;display:block;border:1px solid #dee2e6" />
-                                            <button type="submit" form="ogImageDeleteForm" class="btn btn-sm btn-outline-danger mt-2">Kaldır</button>
-                                        </div>
-                                    }
-                                    <div class="input-group">
-                                        <input type="file" name="file" form="ogImageForm" class="form-control" accept="image/jpeg,image/png,image/webp" />
-                                        <button type="submit" form="ogImageForm" class="btn btn-primary">Yükle</button>
-                                    </div>
-                                    <div class="form-text mt-1">
-                                        Desteklenen formatlar: JPG, PNG, WEBP (en fazla 5 MB)<br/>
-                                        <strong>Önerilen boyut: 1200 × 630 piksel</strong> — çoğu platformun önizleme kartı bu orana göre kırpar.
                                     </div>
                                 </div>
                             </div>
@@ -496,3 +517,40 @@
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        var titleEl = document.getElementById('seoTitle');
+        var descEl = document.getElementById('seoDesc');
+        var siteNameEl = document.getElementById('seoSiteName');
+        var baseUrlEl = document.getElementById('seoBaseUrl');
+        var titleCount = document.getElementById('seoTitleCount');
+        var descCount = document.getElementById('seoDescCount');
+        var prevTitle = document.getElementById('seoPrevTitle');
+        var prevUrl = document.getElementById('seoPrevUrl');
+        var prevDesc = document.getElementById('seoPrevDesc');
+        if (!titleEl || !descEl) return;
+
+        function updatePreview() {
+            var t = titleEl.value.trim();
+            var d = descEl.value.trim();
+            var siteName = (siteNameEl && siteNameEl.value.trim()) || 'Brikon Yapı';
+            var url = (baseUrlEl && baseUrlEl.value.trim()) || 'https://brikonyapi.com';
+
+            titleCount.textContent = t.length + ' / 60';
+            titleCount.classList.toggle('text-danger', t.length > 60);
+            descCount.textContent = d.length + ' / 160';
+            descCount.classList.toggle('text-danger', d.length > 160);
+
+            prevTitle.textContent = t ? (t + ' - ' + siteName) : siteName;
+            prevUrl.textContent = url.replace(/^https?:\/\//, '');
+            prevDesc.textContent = d || 'Meta açıklama burada görünecek.';
+        }
+
+        titleEl.addEventListener('input', updatePreview);
+        descEl.addEventListener('input', updatePreview);
+        if (siteNameEl) siteNameEl.addEventListener('input', updatePreview);
+        if (baseUrlEl) baseUrlEl.addEventListener('input', updatePreview);
+        updatePreview();
+    })();
+</script>
