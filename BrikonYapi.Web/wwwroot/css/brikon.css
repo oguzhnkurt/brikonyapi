@@ -182,6 +182,7 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
   font-family:'Inter',sans-serif; font-size:1rem;
   letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.75);
   transition:color var(--dur);
+  text-align:center; max-width:85%;
 }
 .mobile-nav-sub:hover { color:var(--c-secondary); }
 
