@@ -184,3 +184,47 @@ a { --bs-link-color-rgb: 0, 130, 180; --bs-link-hover-color-rgb: 0, 106, 145; }
 .numInputWrapper span.arrowDown:after { border-top-color: #0082B4; }
 .flatpickr-time input:hover, .flatpickr-time .flatpickr-am-pm:hover,
 .flatpickr-time input:focus, .flatpickr-time .flatpickr-am-pm:focus { background: rgba(0,130,180,.08); }
+
+/* ── Yüksek kontrastlı tipografi: küçük başlıklar/etiketler ince kalıyordu.
+   "Şantiye Pro" tarzı kurumsal görünüm için başlıklar çok kalın (800/900),
+   gövde metni normal (400), buton/etiket metinleri orta (500) ağırlıkta. ── */
+
+/* Sidebar bölüm etiketleri (GENEL / İÇERİK / KAT MALİKLERİ / SİSTEM) */
+.wrapper .main-nav .navbar-nav .menu-title {
+    font-weight: 800 !important;
+    letter-spacing: .06em;
+    color: #8a94a6;
+}
+/* Sidebar menü linkleri (Dashboard, Projeler, vb.) */
+.wrapper .main-nav .navbar-nav .nav-item .nav-link {
+    font-weight: 600 !important;
+}
+.wrapper .main-nav .navbar-nav .nav-item .nav-link.active {
+    font-weight: 700 !important;
+}
+
+/* Üst bar sayfa başlığı (ör. "Site Ayarları") */
+.topbar .fw-semibold { font-weight: 800 !important; color: #111111; }
+
+/* Kart başlıkları (card-header h5/h6, card-title) */
+.card-header .card-title, .card-title { font-weight: 800 !important; color: #111111; }
+
+/* Açılır/kapanır bölüm başlıkları (accordion) — Site Ayarları vb. */
+.accordion-button { font-weight: 800 !important; }
+.accordion-button strong { font-weight: 800; }
+
+/* Küçük grup başlıkları (ör. "SOSYAL MEDYA GÖRSELİ", "ARAMA MOTORU ARAÇLARI") */
+.bk-group-title { font-weight: 800 !important; }
+
+/* Hero panel başlıkları (bk-form-hero h5) */
+.bk-form-hero h5 { font-weight: 800 !important; }
+
+/* Genel başlık etiketleri */
+h1, h2, h3, h4, h5, h6 { font-weight: 800; color: #111111; }
+
+/* Form etiketleri ve buton metinleri: orta ağırlık, gövde metninden ayırt edilsin */
+.form-label, label.fw-medium, .bk-label { font-weight: 600 !important; }
+.btn { font-weight: 600; }
+
+/* Gövde metni: etiketlerin karşısında yumuşak gri kalsın */
+.form-text, .text-muted { color: #6b7280; font-weight: 400; }
