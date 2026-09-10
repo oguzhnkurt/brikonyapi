@@ -258,7 +258,8 @@
 
 /* "Koyu" mod: anahtar gerektiren bir tile servisi yerine, standart (ücretsiz) harita
    üzerine CSS filtresiyle koyu görünüm uygulanıyor. */
-.mp-map-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.85); }
+.mp-map-dark .leaflet-tile-pane,
+.mp-map-dark .leaflet-shadow-pane { filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.85); }
 
 /* ── Cluster ── */
 .bk-cluster-full {
@@ -377,13 +378,18 @@
      Not: CARTO'nun ücretsiz basemap servisi artık API anahtarı istiyor (harita üstünde
      "API KEY REQUIRED" filigranı çıkıyordu). Onun yerine Esri'nin ücretsiz/anahtarsız
      "Light Gray Canvas" servisini kullanıyoruz — önceki CARTO Positron'a çok yakın, sade/
-     soluk gri bir görünüm. "Koyu" modu ayrı bir tile seti yerine CSS filtresiyle (bkz.
+     soluk gri bir görünüm. Esri bu temada il/ülke isimlerini ayrı bir "Reference" (etiket)
+     katmanında veriyor; bu yüzden gri temanın üstüne ayrıca etiket katmanı ekliyoruz, yoksa
+     il isimleri hiç görünmüyor. "Koyu" modu ayrı bir tile seti yerine CSS filtresiyle (bkz.
      .mp-map-dark) simüle ediliyor. ── */
   var grayTiles = function() {
     return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       attribution:'© Esri', maxZoom:16
     });
   };
+  var grayLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+    attribution:'© Esri', maxZoom:16, pane:'shadowPane'
+  });
   var tileLayers = {
     street: grayTiles(),
     light: grayTiles(),
@@ -396,6 +402,7 @@
   var currentTile = 'light';
   var map = L.map('project-map-full', { zoomControl:true, scrollWheelZoom:false });
   tileLayers.light.addTo(map);
+  grayLabels.addTo(map);
 
   // Harita container boyutunu doğru hesapla (mobil dahil)
   setTimeout(function(){ map.invalidateSize(); }, 200);
@@ -608,6 +615,8 @@
       map.removeLayer(tileLayers[currentTile]);
       currentTile = btn.dataset.tile;
       tileLayers[currentTile].addTo(map);
+      if (currentTile === 'sat') { map.removeLayer(grayLabels); }
+      else if (!map.hasLayer(grayLabels)) { grayLabels.addTo(map); }
       map.getContainer().classList.toggle('mp-map-dark', currentTile === 'dark');
     });
   });

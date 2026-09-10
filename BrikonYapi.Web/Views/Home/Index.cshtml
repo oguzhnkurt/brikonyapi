@@ -817,7 +817,8 @@
 
 /* "Koyu" mod: anahtar gerektiren bir tile servisi yerine, standart (ücretsiz) harita
    üzerine CSS filtresiyle koyu görünüm uygulanıyor. */
-.home-map-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.85); }
+.home-map-dark .leaflet-tile-pane,
+.home-map-dark .leaflet-shadow-pane { filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.85); }
 .home-map-dark .leaflet-marker-pane,
 .home-map-dark .leaflet-popup-pane { filter: none; }
 
@@ -1156,8 +1157,13 @@
      Not: CARTO'nun ücretsiz basemap servisi artık API anahtarı istiyor (harita üstünde
      "API KEY REQUIRED" filigranı çıkıyordu). Onun yerine Esri'nin ücretsiz/anahtarsız
      "Light Gray Canvas" servisini kullanıyoruz — önceki CARTO Positron'a çok yakın, sade/
-     soluk gri bir görünüm. "Koyu" modu ayrı bir tile seti yerine CSS filtresiyle (bkz.
+     soluk gri bir görünüm. Esri bu temada il/ülke isimlerini ayrı bir "Reference" (etiket)
+     katmanında veriyor; bu yüzden gri temanın üstüne ayrıca etiket katmanı ekliyoruz, yoksa
+     il isimleri hiç görünmüyor. "Koyu" modu ayrı bir tile seti yerine CSS filtresiyle (bkz.
      .home-map-dark) simüle ediliyor. ── */
+  var grayLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+    attribution:'© Esri', maxZoom:16, pane:'shadowPane'
+  });
   var tileLayers = {
     light: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       attribution:'© Esri', maxZoom:16
@@ -1171,6 +1177,7 @@
   };
   var currentTile = 'light';
   tileLayers.light.addTo(map);
+  grayLabels.addTo(map);
 
   /* ── Pin ikonu ── */
   function makePin(status, active) {
@@ -1434,6 +1441,8 @@
       map.removeLayer(tileLayers[currentTile]);
       currentTile = btn.dataset.tile;
       tileLayers[currentTile].addTo(map);
+      if (currentTile === 'sat') { map.removeLayer(grayLabels); }
+      else if (!map.hasLayer(grayLabels)) { grayLabels.addTo(map); }
       map.getContainer().classList.toggle('home-map-dark', currentTile === 'dark');
     });
   });
