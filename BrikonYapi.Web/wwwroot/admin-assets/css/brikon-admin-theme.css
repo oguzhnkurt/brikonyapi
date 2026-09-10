@@ -204,23 +204,30 @@ a { --bs-link-color-rgb: 0, 130, 180; --bs-link-hover-color-rgb: 0, 106, 145; }
 }
 
 /* Üst bar sayfa başlığı (ör. "Site Ayarları") */
-.topbar .fw-semibold { font-weight: 800 !important; color: #111111; }
+.topbar .fw-semibold { font-weight: 800 !important; font-size: .92rem !important; color: #111111; }
 
 /* Kart başlıkları (card-header h5/h6, card-title) */
-.card-header .card-title, .card-title { font-weight: 800 !important; color: #111111; }
+.card-header .card-title, .card-title { font-weight: 800 !important; font-size: .92rem !important; color: #111111; }
 
 /* Açılır/kapanır bölüm başlıkları (accordion) — Site Ayarları vb. */
-.accordion-button { font-weight: 800 !important; }
+.accordion-button { font-weight: 800 !important; font-size: .92rem !important; }
 .accordion-button strong { font-weight: 800; }
 
 /* Küçük grup başlıkları (ör. "SOSYAL MEDYA GÖRSELİ", "ARAMA MOTORU ARAÇLARI") */
 .bk-group-title { font-weight: 800 !important; }
 
 /* Hero panel başlıkları (bk-form-hero h5) */
-.bk-form-hero h5 { font-weight: 800 !important; }
+.bk-form-hero h5 { font-weight: 800 !important; font-size: .88rem !important; }
 
-/* Genel başlık etiketleri */
+/* Genel başlık etiketleri: kalınlık artırıldı ama boyut şablonun varsayılanından
+   biraz küçük tutuluyor (kalın+büyük birlikte "kocaman" görünüyordu) */
 h1, h2, h3, h4, h5, h6 { font-weight: 800; color: #111111; }
+h1 { font-size: 1.95rem; }
+h2 { font-size: 1.625rem; }
+h3 { font-size: 1.3rem; }
+h4 { font-size: 1rem; }
+h5 { font-size: .875rem; }
+h6 { font-size: .7rem; }
 
 /* Form etiketleri ve buton metinleri: orta ağırlık, gövde metninden ayırt edilsin */
 .form-label, label.fw-medium, .bk-label { font-weight: 600 !important; }
