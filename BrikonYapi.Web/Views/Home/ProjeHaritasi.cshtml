@@ -387,7 +387,7 @@
   var tileLayers = {
     street: grayTiles(),
     light: grayTiles(),
-    dark: osmTiles(),
+    dark: grayTiles(),
     sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution:'© Esri', maxZoom:18
     })
