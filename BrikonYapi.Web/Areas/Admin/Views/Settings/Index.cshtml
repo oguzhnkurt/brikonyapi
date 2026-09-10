@@ -47,7 +47,24 @@
     var seoKeys = new[]{"SeoSiteName","SeoBaseUrl","SeoDefaultTitle","SeoDescription","SeoKeywords","SeoOgImage","SeoTwitterSite","SeoFacebook","SeoInstagram","SeoGoogleVerification","SeoNoIndex"};
     var handled = new[]{"PhoneNumber","Email","Address","WhatsApp","Instagram","Facebook","LinkedIn","CompanySlogan","CompanySloganEn","AboutText","MarqueeMode"}.Concat(aboutKeys).Concat(seoKeys).ToArray();
     string V(string key) => Model.ContainsKey(key) ? (Model[key] ?? "") : "";
+    var leftovers = Model.Where(s => !handled.Contains(s.Key)).ToList();
+
+    var ogImagePath = Model.ContainsKey("SeoOgImage") ? Model["SeoOgImage"] : "";
+    bool hasOgImage = !string.IsNullOrEmpty(ogImagePath);
+    var mediaPath = Model.ContainsKey("AboutMediaPath") ? Model["AboutMediaPath"] : "";
+    bool isVideo  = !string.IsNullOrEmpty(mediaPath) && (mediaPath!.EndsWith(".mp4") || mediaPath.EndsWith(".mov") || mediaPath.EndsWith(".webm"));
 }
+
+<style>
+    /* Açılır/kapanır bölümler: başlığa tıklayınca sadece o bölüm genişler, sayfa
+       uzayıp gitmez. Varsayılan olarak sadece İletişim Bilgileri açık gelir. */
+    .settings-accordion .accordion-button:not(.collapsed) {
+        background: #eaf6fb; color: #0082B4; box-shadow: none;
+    }
+    .settings-accordion .accordion-button:focus { box-shadow: none; border-color: rgba(0,130,180,.25); }
+    .settings-accordion .accordion-item { border-color: #e8eaec; }
+    .settings-accordion .accordion-body { background: #fcfdfe; }
+</style>
 
 <div class="row justify-content-center">
     <div class="col-lg-8">
@@ -59,289 +76,399 @@
                 </h5>
             </div>
             <div class="card-body">
+                <p class="text-muted small mb-3">
+                    <iconify-icon icon="iconamoon:information-circle-duotone" class="me-1"></iconify-icon>
+                    Bir bölümün başlığına tıklayınca sadece o bölüm açılır/kapanır — birden fazla bölümü aynı anda açık tutabilirsiniz.
+                </p>
+
                 <form asp-area="Admin" asp-controller="Settings" asp-action="Save" method="post">
                     @Html.AntiForgeryToken()
 
-                    <h6 class="text-muted text-uppercase fw-bold mb-3 mt-2" style="font-size:.7rem;letter-spacing:.12em;">
-                        <iconify-icon icon="iconamoon:phone-duotone" class="me-1"></iconify-icon> İletişim Bilgileri
-                    </h6>
-                    @foreach (var key in new[]{"PhoneNumber","Email","Address","WhatsApp"})
-                    {
-                        if (!Model.ContainsKey(key)) continue;
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">
-                                <iconify-icon icon="@Icon(key)" class="me-1 text-primary"></iconify-icon>@Label(key)
-                            </label>
-                            <input type="text" name="settings[@key]" value="@Model[key]" class="form-control" placeholder="@Hint(key)" />
-                            <div class="form-text">@Hint(key)</div>
-                        </div>
-                    }
+                    <div class="accordion settings-accordion" id="siteSettingsAccordion">
 
-                    <hr class="my-4" />
-
-                    <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size:.7rem;letter-spacing:.12em;">
-                        <iconify-icon icon="mdi:instagram" class="me-1"></iconify-icon> Sosyal Medya
-                    </h6>
-                    @foreach (var key in new[]{"Instagram","Facebook","LinkedIn"})
-                    {
-                        if (!Model.ContainsKey(key)) continue;
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">
-                                <iconify-icon icon="@Icon(key)" class="me-1 text-primary"></iconify-icon>@Label(key)
-                            </label>
-                            <input type="url" name="settings[@key]" value="@Model[key]" class="form-control" placeholder="https://..." />
-                            <div class="form-text">@Hint(key)</div>
-                        </div>
-                    }
-
-                    <hr class="my-4" />
-
-                    <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size:.7rem;letter-spacing:.12em;">
-                        <iconify-icon icon="iconamoon:file-document-duotone" class="me-1"></iconify-icon> İçerik & Görünüm
-                    </h6>
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">
-                            <iconify-icon icon="mdi:format-quote-close" class="me-1 text-primary"></iconify-icon>Şirket Sloganı
-                        </label>
-                        <div class="input-group mb-1">
-                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
-                            <input type="text" name="settings[CompanySlogan]" value="@V("CompanySlogan")" class="form-control" placeholder="Geleceği İnşa Ediyoruz" />
-                        </div>
-                        <div class="input-group">
-                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
-                            <input type="text" name="settings[CompanySloganEn]" value="@V("CompanySloganEn")" class="form-control" placeholder="Building the Future" />
-                        </div>
-                        <div class="form-text">Hero bölümünde ana başlık olarak gösterilir</div>
-                    </div>
-
-                    <hr class="my-4" />
-
-                    <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size:.7rem;letter-spacing:.12em;">
-                        <iconify-icon icon="iconamoon:home-duotone" class="me-1"></iconify-icon> Ana Sayfa — Hakkımızda Bölümü
-                    </h6>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">Hakkımızda — Başlık</label>
-                        <div class="input-group mb-1">
-                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
-                            <input type="text" name="settings[AboutTitle]" value="@V("AboutTitle")" class="form-control" placeholder="Güvenilir Bir Yapı Ortağı" />
-                        </div>
-                        <div class="input-group">
-                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
-                            <input type="text" name="settings[AboutTitleEn]" value="@V("AboutTitleEn")" class="form-control" placeholder="A Reliable Construction Partner" />
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">1. Paragraf</label>
-                        <div class="input-group mb-1 align-items-start">
-                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
-                            <textarea name="settings[AboutText]" class="form-control" rows="2">@V("AboutText")</textarea>
-                        </div>
-                        <div class="input-group align-items-start">
-                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
-                            <textarea name="settings[AboutTextEn]" class="form-control" rows="2" placeholder="English version...">@V("AboutTextEn")</textarea>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">2. Paragraf</label>
-                        <div class="input-group mb-1 align-items-start">
-                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
-                            <textarea name="settings[AboutText2]" class="form-control" rows="3">@V("AboutText2")</textarea>
-                        </div>
-                        <div class="input-group align-items-start">
-                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
-                            <textarea name="settings[AboutText2En]" class="form-control" rows="3" placeholder="English version...">@V("AboutText2En")</textarea>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-3">
-                            <label class="form-label fw-medium">Kuruluş Yılı</label>
-                            <input type="text" name="settings[AboutYearFounded]" value="@V("AboutYearFounded")" class="form-control" placeholder="2005" />
-                        </div>
-                        <div class="col-md-9">
-                            <label class="form-label fw-medium">Yıl Etiketi</label>
-                            <div class="input-group mb-1">
-                                <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
-                                <input type="text" name="settings[AboutYearLabel]" value="@V("AboutYearLabel")" class="form-control" placeholder="2005'ten Bu Yana" />
-                            </div>
-                            <div class="input-group">
-                                <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
-                                <input type="text" name="settings[AboutYearLabelEn]" value="@V("AboutYearLabelEn")" class="form-control" placeholder="Since 2005" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <p class="form-text mb-2 mt-3">Özellik Kartları (4 adet)</p>
-                    @for (int i = 1; i <= 4; i++)
-                    {
-                        var tKey  = $"AboutCard{i}Title";
-                        var dKey  = $"AboutCard{i}Desc";
-                        var tKeyE = $"AboutCard{i}TitleEn";
-                        var dKeyE = $"AboutCard{i}DescEn";
-                        <div class="border rounded p-3 mb-2">
-                            <p class="small fw-bold mb-2 text-muted">Kart @i</p>
-                            <div class="row g-2 mb-1">
-                                <div class="col-md-4">
-                                    <div class="input-group input-group-sm mb-1">
-                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;color:#6c757d;min-width:36px">TR</span>
-                                        <input type="text" name="settings[@tKey]" value="@V(tKey)" class="form-control" placeholder="Başlık" />
-                                    </div>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:36px">EN</span>
-                                        <input type="text" name="settings[@tKeyE]" value="@V(tKeyE)" class="form-control" placeholder="Title (EN)" />
-                                    </div>
+                        <!-- ═══ İletişim Bilgileri ═══ -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#secContact" aria-expanded="true" aria-controls="secContact">
+                                    <iconify-icon icon="iconamoon:phone-duotone" class="me-2 text-primary"></iconify-icon>
+                                    <strong>İletişim Bilgileri</strong>
+                                </button>
+                            </h2>
+                            <div id="secContact" class="accordion-collapse collapse show">
+                                <div class="accordion-body">
+                                    @foreach (var key in new[]{"PhoneNumber","Email","Address","WhatsApp"})
+                                    {
+                                        if (!Model.ContainsKey(key)) continue;
+                                        <div class="mb-3">
+                                            <label class="form-label fw-medium">
+                                                <iconify-icon icon="@Icon(key)" class="me-1 text-primary"></iconify-icon>@Label(key)
+                                            </label>
+                                            <input type="text" name="settings[@key]" value="@Model[key]" class="form-control" placeholder="@Hint(key)" />
+                                            <div class="form-text">@Hint(key)</div>
+                                        </div>
+                                    }
                                 </div>
-                                <div class="col-md-8">
-                                    <div class="input-group input-group-sm mb-1">
-                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;color:#6c757d;min-width:36px">TR</span>
-                                        <input type="text" name="settings[@dKey]" value="@V(dKey)" class="form-control" placeholder="Açıklama" />
-                                    </div>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:36px">EN</span>
-                                        <input type="text" name="settings[@dKeyE]" value="@V(dKeyE)" class="form-control" placeholder="Description (EN)" />
+                            </div>
+                        </div>
+
+                        <!-- ═══ Sosyal Medya ═══ -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#secSocial" aria-expanded="false" aria-controls="secSocial">
+                                    <iconify-icon icon="mdi:instagram" class="me-2 text-primary"></iconify-icon>
+                                    <strong>Sosyal Medya</strong>
+                                </button>
+                            </h2>
+                            <div id="secSocial" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    @foreach (var key in new[]{"Instagram","Facebook","LinkedIn"})
+                                    {
+                                        if (!Model.ContainsKey(key)) continue;
+                                        <div class="mb-3">
+                                            <label class="form-label fw-medium">
+                                                <iconify-icon icon="@Icon(key)" class="me-1 text-primary"></iconify-icon>@Label(key)
+                                            </label>
+                                            <input type="url" name="settings[@key]" value="@Model[key]" class="form-control" placeholder="https://..." />
+                                            <div class="form-text">@Hint(key)</div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ═══ İçerik & Görünüm — Şirket Sloganı ═══ -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#secSlogan" aria-expanded="false" aria-controls="secSlogan">
+                                    <iconify-icon icon="iconamoon:file-document-duotone" class="me-2 text-primary"></iconify-icon>
+                                    <strong>İçerik &amp; Görünüm</strong> — Şirket Sloganı
+                                </button>
+                            </h2>
+                            <div id="secSlogan" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="mb-0">
+                                        <label class="form-label fw-medium">
+                                            <iconify-icon icon="mdi:format-quote-close" class="me-1 text-primary"></iconify-icon>Şirket Sloganı
+                                        </label>
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
+                                            <input type="text" name="settings[CompanySlogan]" value="@V("CompanySlogan")" class="form-control" placeholder="Geleceği İnşa Ediyoruz" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
+                                            <input type="text" name="settings[CompanySloganEn]" value="@V("CompanySloganEn")" class="form-control" placeholder="Building the Future" />
+                                        </div>
+                                        <div class="form-text">Hero bölümünde ana başlık olarak gösterilir</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    }
 
-                    @if (Model.ContainsKey("MarqueeMode"))
-                    {
-                        var modeVal = Model["MarqueeMode"] ?? "image";
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">
-                                <iconify-icon icon="iconamoon:camera-video-duotone" class="me-1 text-primary"></iconify-icon>
-                                @Label("MarqueeMode")
-                            </label>
-                            <select name="settings[MarqueeMode]" class="form-select">
-                                @if (modeVal == "video")
-                                {
-                                    <option value="video" selected>🎬 Video — videosu olan projeler otomatik oynar</option>
-                                    <option value="image">🖼️ Resim — tüm kartlarda sadece kapak fotoğrafı</option>
-                                }
-                                else
-                                {
-                                    <option value="video">🎬 Video — videosu olan projeler otomatik oynar</option>
-                                    <option value="image" selected>🖼️ Resim — tüm kartlarda sadece kapak fotoğrafı</option>
-                                }
-                            </select>
-                            <div class="form-text">@Hint("MarqueeMode")</div>
-                        </div>
-                    }
+                        <!-- ═══ Ana Sayfa — Hakkımızda Bölümü (+ görsel/video hemen altında) ═══ -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#secAbout" aria-expanded="false" aria-controls="secAbout">
+                                    <iconify-icon icon="iconamoon:home-duotone" class="me-2 text-primary"></iconify-icon>
+                                    <strong>Ana Sayfa</strong> — Hakkımızda Bölümü
+                                </button>
+                            </h2>
+                            <div id="secAbout" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-medium">Hakkımızda — Başlık</label>
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
+                                            <input type="text" name="settings[AboutTitle]" value="@V("AboutTitle")" class="form-control" placeholder="Güvenilir Bir Yapı Ortağı" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
+                                            <input type="text" name="settings[AboutTitleEn]" value="@V("AboutTitleEn")" class="form-control" placeholder="A Reliable Construction Partner" />
+                                        </div>
+                                    </div>
 
-                    <!-- ── SEO (Arama Motoru) ───────────────────────────── -->
-                    <hr class="my-4" />
-                    <h6 class="fw-semibold mb-1">
-                        <iconify-icon icon="iconamoon:search-duotone" class="me-1 text-primary"></iconify-icon>
-                        SEO — Arama Motoru Ayarları
-                    </h6>
-                    <p class="text-muted small mb-3">
-                        Google sonuçlarında ve WhatsApp/LinkedIn link önizlemelerinde görünen bilgiler.
-                        Boş bırakılan alanlar için varsayılan değerler kullanılır.
-                    </p>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-medium">1. Paragraf</label>
+                                        <div class="input-group mb-1 align-items-start">
+                                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
+                                            <textarea name="settings[AboutText]" class="form-control" rows="2">@V("AboutText")</textarea>
+                                        </div>
+                                        <div class="input-group align-items-start">
+                                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
+                                            <textarea name="settings[AboutTextEn]" class="form-control" rows="2" placeholder="English version...">@V("AboutTextEn")</textarea>
+                                        </div>
+                                    </div>
 
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Site Adı</label>
-                            <input type="text" name="settings[SeoSiteName]" value="@V("SeoSiteName")"
-                                   class="form-control" placeholder="Brikon Yapı" />
-                            <div class="form-text">Sayfa başlıklarının sonuna eklenir: “Projeler - Brikon Yapı”.</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Site Adresi</label>
-                            <input type="url" name="settings[SeoBaseUrl]" value="@V("SeoBaseUrl")"
-                                   class="form-control" placeholder="https://brikonyapi.com" />
-                            <div class="form-text">
-                                Canonical, sitemap ve paylaşım linkleri bu adresle üretilir.
-                                Boş bırakılırsa istek adresi kullanılır.
+                                    <div class="mb-3">
+                                        <label class="form-label fw-medium">2. Paragraf</label>
+                                        <div class="input-group mb-1 align-items-start">
+                                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
+                                            <textarea name="settings[AboutText2]" class="form-control" rows="3">@V("AboutText2")</textarea>
+                                        </div>
+                                        <div class="input-group align-items-start">
+                                            <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
+                                            <textarea name="settings[AboutText2En]" class="form-control" rows="3" placeholder="English version...">@V("AboutText2En")</textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label fw-medium">Kuruluş Yılı</label>
+                                            <input type="text" name="settings[AboutYearFounded]" value="@V("AboutYearFounded")" class="form-control" placeholder="2005" />
+                                        </div>
+                                        <div class="col-md-9">
+                                            <label class="form-label fw-medium">Yıl Etiketi</label>
+                                            <div class="input-group mb-1">
+                                                <span class="input-group-text" style="font-size:.7rem;font-weight:700;color:#6c757d;min-width:42px">TR</span>
+                                                <input type="text" name="settings[AboutYearLabel]" value="@V("AboutYearLabel")" class="form-control" placeholder="2005'ten Bu Yana" />
+                                            </div>
+                                            <div class="input-group">
+                                                <span class="input-group-text" style="font-size:.7rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:42px">EN</span>
+                                                <input type="text" name="settings[AboutYearLabelEn]" value="@V("AboutYearLabelEn")" class="form-control" placeholder="Since 2005" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <p class="form-text mb-2 mt-3">Özellik Kartları (4 adet)</p>
+                                    @for (int i = 1; i <= 4; i++)
+                                    {
+                                        var tKey  = $"AboutCard{i}Title";
+                                        var dKey  = $"AboutCard{i}Desc";
+                                        var tKeyE = $"AboutCard{i}TitleEn";
+                                        var dKeyE = $"AboutCard{i}DescEn";
+                                        <div class="border rounded p-3 mb-2">
+                                            <p class="small fw-bold mb-2 text-muted">Kart @i</p>
+                                            <div class="row g-2 mb-1">
+                                                <div class="col-md-4">
+                                                    <div class="input-group input-group-sm mb-1">
+                                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;color:#6c757d;min-width:36px">TR</span>
+                                                        <input type="text" name="settings[@tKey]" value="@V(tKey)" class="form-control" placeholder="Başlık" />
+                                                    </div>
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:36px">EN</span>
+                                                        <input type="text" name="settings[@tKeyE]" value="@V(tKeyE)" class="form-control" placeholder="Title (EN)" />
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <div class="input-group input-group-sm mb-1">
+                                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;color:#6c757d;min-width:36px">TR</span>
+                                                        <input type="text" name="settings[@dKey]" value="@V(dKey)" class="form-control" placeholder="Açıklama" />
+                                                    </div>
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text" style="font-size:.65rem;font-weight:700;background:#0082B4;color:#fff;border-color:#0082B4;min-width:36px">EN</span>
+                                                        <input type="text" name="settings[@dKeyE]" value="@V(dKeyE)" class="form-control" placeholder="Description (EN)" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (Model.ContainsKey("MarqueeMode"))
+                                    {
+                                        var modeVal = Model["MarqueeMode"] ?? "image";
+                                        <div class="mb-3">
+                                            <label class="form-label fw-medium">
+                                                <iconify-icon icon="iconamoon:camera-video-duotone" class="me-1 text-primary"></iconify-icon>
+                                                @Label("MarqueeMode")
+                                            </label>
+                                            <select name="settings[MarqueeMode]" class="form-select">
+                                                @if (modeVal == "video")
+                                                {
+                                                    <option value="video" selected>🎬 Video — videosu olan projeler otomatik oynar</option>
+                                                    <option value="image">🖼️ Resim — tüm kartlarda sadece kapak fotoğrafı</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="video">🎬 Video — videosu olan projeler otomatik oynar</option>
+                                                    <option value="image" selected>🖼️ Resim — tüm kartlarda sadece kapak fotoğrafı</option>
+                                                }
+                                            </select>
+                                            <div class="form-text">@Hint("MarqueeMode")</div>
+                                        </div>
+                                    }
+
+                                    <!-- Görsel/video yükleme — Hakkımızda içeriğinin hemen altında, ayrı form
+                                         (multipart) olduğu için "form" attribute'u ile dışarıdaki #aboutMediaForm'a bağlanır. -->
+                                    <hr class="my-3" />
+                                    <p class="form-text mb-2"><iconify-icon icon="iconamoon:camera-image-duotone" class="me-1"></iconify-icon>Hakkımızda — Görsel / Video</p>
+                                    @if (!string.IsNullOrEmpty(mediaPath))
+                                    {
+                                        <div class="mb-3">
+                                            @if (isVideo)
+                                            {
+                                                <video src="@mediaPath" controls style="max-width:260px;border-radius:8px;display:block"></video>
+                                            }
+                                            else
+                                            {
+                                                <img src="@mediaPath" style="max-width:260px;border-radius:8px;display:block" />
+                                            }
+                                            <button type="submit" form="aboutMediaDeleteForm" class="btn btn-sm btn-outline-danger mt-2">Kaldır</button>
+                                        </div>
+                                    }
+                                    <div class="input-group">
+                                        <input type="file" name="file" form="aboutMediaForm" class="form-control" accept="image/*,video/mp4,video/webm,video/quicktime" />
+                                        <button type="submit" form="aboutMediaForm" class="btn btn-primary">Yükle</button>
+                                    </div>
+                                    <div class="form-text mt-1">
+                                        Desteklenen formatlar: JPG, PNG, WEBP, MP4, MOV, WEBM<br/>
+                                        <strong>Önerilen boyut: 1200 × 900 piksel (4:3 oran)</strong> — görsel bu oranda kırpılarak gösterilir.<br/>
+                                        Dikey (9:16) veya kare (1:1) yüklemekten kaçının; yatay dikdörtgen en iyi sonucu verir.
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">Varsayılan Sayfa Başlığı</label>
-                        <input type="text" name="settings[SeoDefaultTitle]" value="@V("SeoDefaultTitle")"
-                               class="form-control" placeholder="Brikon Yapı — Kentsel Dönüşüm ve İnşaat" />
-                        <div class="form-text">Kendi başlığı olmayan sayfalarda kullanılır. En fazla ~60 karakter önerilir.</div>
-                    </div>
+                        <!-- ═══ SEO — Arama Motoru Ayarları (+ paylaşım görseli hemen altında) ═══ -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#secSeo" aria-expanded="false" aria-controls="secSeo">
+                                    <iconify-icon icon="iconamoon:search-duotone" class="me-2 text-primary"></iconify-icon>
+                                    <strong>SEO</strong> — Arama Motoru Ayarları
+                                </button>
+                            </h2>
+                            <div id="secSeo" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <p class="text-muted small mb-3">
+                                        Google sonuçlarında ve WhatsApp/LinkedIn link önizlemelerinde görünen bilgiler.
+                                        Boş bırakılan alanlar için varsayılan değerler kullanılır.
+                                    </p>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">Varsayılan Açıklama</label>
-                        <textarea name="settings[SeoDescription]" class="form-control" rows="2" maxlength="300"
-                                  placeholder="Brikon Yapı - Kaliteli ve güvenilir inşaat hizmetleriyle geleceği inşa ediyoruz.">@V("SeoDescription")</textarea>
-                        <div class="form-text">Google sonuçlarında başlığın altında görünen metin. 150-160 karakter idealdir.</div>
-                    </div>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-medium">Site Adı</label>
+                                            <input type="text" name="settings[SeoSiteName]" value="@V("SeoSiteName")"
+                                                   class="form-control" placeholder="Brikon Yapı" />
+                                            <div class="form-text">Sayfa başlıklarının sonuna eklenir: “Projeler - Brikon Yapı”.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-medium">Site Adresi</label>
+                                            <input type="url" name="settings[SeoBaseUrl]" value="@V("SeoBaseUrl")"
+                                                   class="form-control" placeholder="https://brikonyapi.com" />
+                                            <div class="form-text">
+                                                Canonical, sitemap ve paylaşım linkleri bu adresle üretilir.
+                                                Boş bırakılırsa istek adresi kullanılır.
+                                            </div>
+                                        </div>
+                                    </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">Anahtar Kelimeler</label>
-                        <input type="text" name="settings[SeoKeywords]" value="@V("SeoKeywords")"
-                               class="form-control" placeholder="kentsel dönüşüm, inşaat, müteahhit, İstanbul" />
-                        <div class="form-text">Virgülle ayırın.</div>
-                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-medium">Varsayılan Sayfa Başlığı</label>
+                                        <input type="text" name="settings[SeoDefaultTitle]" value="@V("SeoDefaultTitle")"
+                                               class="form-control" placeholder="Brikon Yapı — Kentsel Dönüşüm ve İnşaat" />
+                                        <div class="form-text">Kendi başlığı olmayan sayfalarda kullanılır. En fazla ~60 karakter önerilir.</div>
+                                    </div>
 
-                    <div class="alert alert-light border small mb-3">
-                        <iconify-icon icon="iconamoon:information-circle-duotone" class="me-1"></iconify-icon>
-                        <strong>Paylaşım görseli</strong> nedir? Bu bağlantı WhatsApp, Facebook, Instagram veya LinkedIn'de
-                        paylaşıldığında kart halinde çıkan önizleme resmidir. Sayfanın kendi görseli yoksa (ör. ana sayfa,
-                        iletişim) bu görsel kullanılır. Aşağıdaki kart üzerinden cihazınızdan seçip yükleyebilirsiniz.
-                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-medium">Varsayılan Açıklama</label>
+                                        <textarea name="settings[SeoDescription]" class="form-control" rows="2" maxlength="300"
+                                                  placeholder="Brikon Yapı - Kaliteli ve güvenilir inşaat hizmetleriyle geleceği inşa ediyoruz.">@V("SeoDescription")</textarea>
+                                        <div class="form-text">Google sonuçlarında başlığın altında görünen metin. 150-160 karakter idealdir.</div>
+                                    </div>
 
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Facebook Sayfası</label>
-                            <input type="url" name="settings[SeoFacebook]" value="@V("SeoFacebook")"
-                                   class="form-control" placeholder="https://facebook.com/brikonyapi" />
+                                    <div class="mb-3">
+                                        <label class="form-label fw-medium">Anahtar Kelimeler</label>
+                                        <input type="text" name="settings[SeoKeywords]" value="@V("SeoKeywords")"
+                                               class="form-control" placeholder="kentsel dönüşüm, inşaat, müteahhit, İstanbul" />
+                                        <div class="form-text">Virgülle ayırın.</div>
+                                    </div>
+
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-medium">Facebook Sayfası</label>
+                                            <input type="url" name="settings[SeoFacebook]" value="@V("SeoFacebook")"
+                                                   class="form-control" placeholder="https://facebook.com/brikonyapi" />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-medium">Instagram Hesabı</label>
+                                            <input type="url" name="settings[SeoInstagram]" value="@V("SeoInstagram")"
+                                                   class="form-control" placeholder="https://instagram.com/brikonyapi" />
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-medium">Google Doğrulama Kodu</label>
+                                        <input type="text" name="settings[SeoGoogleVerification]" value="@V("SeoGoogleVerification")"
+                                               class="form-control" placeholder="google-site-verification içeriği" />
+                                        <div class="form-text">
+                                            Google Search Console'un verdiği doğrulama kodu.
+                                            <span class="text-muted" style="font-size:.78em;">
+                                                Henüz alınmadıysa: <a href="https://search.google.com/search-console" target="_blank" rel="noopener">search.google.com/search-console</a> adresine girip
+                                                siteyi ekleyin, doğrulama yöntemi olarak "HTML etiketi"ni seçin, verilen <code>content="..."</code> değerini kopyalayıp buraya yapıştırın.
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    @{ var noIndex = V("SeoNoIndex") == "true"; }
+                                    <div class="mb-3">
+                                        <label class="form-label fw-medium">Arama Motoru Erişimi</label>
+                                        <select name="settings[SeoNoIndex]" class="form-select">
+                                            <option value="false" selected="@(!noIndex)">Açık — site Google'da listelensin</option>
+                                            <option value="true" selected="@noIndex">Kapalı — hiçbir sayfa listelenmesin (test ortamı)</option>
+                                        </select>
+                                        <div class="form-text">
+                                            "Kapalı" seçilirse tüm sayfalara <code>noindex</code> eklenir ve robots.txt siteyi tamamen kapatır.
+                                            Canlıda <strong>açık</strong> olmalıdır.
+                                        </div>
+                                    </div>
+
+                                    <div class="alert alert-info small mb-4">
+                                        <iconify-icon icon="iconamoon:information-circle-duotone" class="me-1"></iconify-icon>
+                                        Site haritanız <a href="/sitemap.xml" target="_blank" rel="noopener">/sitemap.xml</a>,
+                                        tarayıcı kuralları <a href="/robots.txt" target="_blank" rel="noopener">/robots.txt</a>
+                                        adresinde otomatik üretiliyor. Yönetim paneli ve kat maliki portalı aramaya kapalıdır.
+                                    </div>
+
+                                    <!-- Paylaşım görseli yükleme — SEO ayarlarının hemen altında, ayrı (multipart) form -->
+                                    <hr class="my-3" />
+                                    <p class="form-text mb-2"><iconify-icon icon="iconamoon:share-1-duotone" class="me-1"></iconify-icon>SEO — Paylaşım Görseli</p>
+                                    <div class="alert alert-light border small mb-3">
+                                        <iconify-icon icon="iconamoon:information-circle-duotone" class="me-1"></iconify-icon>
+                                        <strong>Paylaşım görseli</strong> nedir? Bu bağlantı WhatsApp, Facebook, Instagram veya LinkedIn'de
+                                        paylaşıldığında kart halinde çıkan önizleme resmidir. Sayfanın kendi görseli yoksa (ör. ana sayfa,
+                                        iletişim) bu görsel kullanılır.
+                                    </div>
+                                    @if (hasOgImage)
+                                    {
+                                        <div class="mb-3">
+                                            <img src="@ogImagePath" style="max-width:260px;border-radius:8px;display:block;border:1px solid #dee2e6" />
+                                            <button type="submit" form="ogImageDeleteForm" class="btn btn-sm btn-outline-danger mt-2">Kaldır</button>
+                                        </div>
+                                    }
+                                    <div class="input-group">
+                                        <input type="file" name="file" form="ogImageForm" class="form-control" accept="image/jpeg,image/png,image/webp" />
+                                        <button type="submit" form="ogImageForm" class="btn btn-primary">Yükle</button>
+                                    </div>
+                                    <div class="form-text mt-1">
+                                        Desteklenen formatlar: JPG, PNG, WEBP (en fazla 5 MB)<br/>
+                                        <strong>Önerilen boyut: 1200 × 630 piksel</strong> — çoğu platformun önizleme kartı bu orana göre kırpar.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Instagram Hesabı</label>
-                            <input type="url" name="settings[SeoInstagram]" value="@V("SeoInstagram")"
-                                   class="form-control" placeholder="https://instagram.com/brikonyapi" />
-                        </div>
-                    </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">Google Doğrulama Kodu</label>
-                        <input type="text" name="settings[SeoGoogleVerification]" value="@V("SeoGoogleVerification")"
-                               class="form-control" placeholder="google-site-verification içeriği" />
-                        <div class="form-text">
-                            Google Search Console'un verdiği doğrulama kodu.
-                            <span class="text-muted" style="font-size:.78em;">
-                                Henüz alınmadıysa: <a href="https://search.google.com/search-console" target="_blank" rel="noopener">search.google.com/search-console</a> adresine girip
-                                siteyi ekleyin, doğrulama yöntemi olarak "HTML etiketi"ni seçin, verilen <code>content="..."</code> değerini kopyalayıp buraya yapıştırın.
-                            </span>
-                        </div>
-                    </div>
+                        @if (leftovers.Any())
+                        {
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#secOther" aria-expanded="false" aria-controls="secOther">
+                                        <iconify-icon icon="iconamoon:settings-duotone" class="me-2 text-primary"></iconify-icon>
+                                        <strong>Diğer Ayarlar</strong>
+                                    </button>
+                                </h2>
+                                <div id="secOther" class="accordion-collapse collapse">
+                                    <div class="accordion-body">
+                                        @foreach (var setting in leftovers)
+                                        {
+                                            <div class="mb-3">
+                                                <label class="form-label fw-medium">@Label(setting.Key)</label>
+                                                <input type="text" name="settings[@setting.Key]" value="@setting.Value" class="form-control" />
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
 
-                    @{ var noIndex = V("SeoNoIndex") == "true"; }
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">Arama Motoru Erişimi</label>
-                        <select name="settings[SeoNoIndex]" class="form-select">
-                            <option value="false" selected="@(!noIndex)">Açık — site Google'da listelensin</option>
-                            <option value="true" selected="@noIndex">Kapalı — hiçbir sayfa listelenmesin (test ortamı)</option>
-                        </select>
-                        <div class="form-text">
-                            "Kapalı" seçilirse tüm sayfalara <code>noindex</code> eklenir ve robots.txt siteyi tamamen kapatır.
-                            Canlıda <strong>açık</strong> olmalıdır.
-                        </div>
                     </div>
-
-                    <div class="alert alert-info small mb-0">
-                        <iconify-icon icon="iconamoon:information-circle-duotone" class="me-1"></iconify-icon>
-                        Site haritanız <a href="/sitemap.xml" target="_blank" rel="noopener">/sitemap.xml</a>,
-                        tarayıcı kuralları <a href="/robots.txt" target="_blank" rel="noopener">/robots.txt</a>
-                        adresinde otomatik üretiliyor. Yönetim paneli ve kat maliki portalı aramaya kapalıdır.
-                    </div>
-
-                    @foreach (var setting in Model.Where(s => !handled.Contains(s.Key)))
-                    {
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">@Label(setting.Key)</label>
-                            <input type="text" name="settings[@setting.Key]" value="@setting.Value" class="form-control" />
-                        </div>
-                    }
 
                     <div class="mt-4">
                         <button type="submit" class="btn btn-primary">
@@ -350,89 +477,20 @@
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
 
-        @{
-            var ogImagePath = Model.ContainsKey("SeoOgImage") ? Model["SeoOgImage"] : "";
-            bool hasOgImage = !string.IsNullOrEmpty(ogImagePath);
-        }
-        <div class="card mt-3">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <iconify-icon icon="iconamoon:share-1-duotone" class="me-2"></iconify-icon>
-                    SEO — Paylaşım Görseli
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="text-muted small mb-3">
-                    Link WhatsApp, Facebook, Instagram veya LinkedIn'de paylaşıldığında önizleme kartında çıkan görsel.
-                    Kendi görseli olmayan sayfalarda (ana sayfa, iletişim vb.) bu görsel kullanılır.
-                </p>
-                @if (hasOgImage)
-                {
-                    <div class="mb-3">
-                        <img src="@ogImagePath" style="max-width:260px;border-radius:8px;display:block;border:1px solid #dee2e6" />
-                        <form asp-area="Admin" asp-controller="Settings" asp-action="DeleteSeoImage" method="post" class="mt-2">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Kaldır</button>
-                        </form>
-                    </div>
-                }
-                <form asp-area="Admin" asp-controller="Settings" asp-action="UploadSeoImage" method="post" enctype="multipart/form-data">
+                <!-- Görsel yükleme/silme işlemleri kendi (multipart) formlarında çalışır; içerikleri
+                     yukarıdaki accordion bölümlerinde "form" attribute'u ile bu formlara bağlanır. -->
+                <form id="aboutMediaForm" asp-area="Admin" asp-controller="Settings" asp-action="UploadAboutMedia" method="post" enctype="multipart/form-data" class="d-none">
                     @Html.AntiForgeryToken()
-                    <div class="input-group">
-                        <input type="file" name="file" class="form-control" accept="image/jpeg,image/png,image/webp" />
-                        <button type="submit" class="btn btn-primary">Yükle</button>
-                    </div>
-                    <div class="form-text mt-1">
-                        Desteklenen formatlar: JPG, PNG, WEBP (en fazla 5 MB)<br/>
-                        <strong>Önerilen boyut: 1200 × 630 piksel</strong> — çoğu platformun önizleme kartı bu orana göre kırpar.
-                    </div>
                 </form>
-            </div>
-        </div>
-
-        @{
-            var mediaPath = Model.ContainsKey("AboutMediaPath") ? Model["AboutMediaPath"] : "";
-            bool isVideo  = !string.IsNullOrEmpty(mediaPath) && (mediaPath!.EndsWith(".mp4") || mediaPath.EndsWith(".mov") || mediaPath.EndsWith(".webm"));
-        }
-        <div class="card mt-3">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <iconify-icon icon="iconamoon:camera-image-duotone" class="me-2"></iconify-icon>
-                    Hakkımızda — Görsel / Video
-                </h5>
-            </div>
-            <div class="card-body">
-                @if (!string.IsNullOrEmpty(mediaPath))
-                {
-                    <div class="mb-3">
-                        @if (isVideo)
-                        {
-                            <video src="@mediaPath" controls style="max-width:260px;border-radius:8px;display:block"></video>
-                        }
-                        else
-                        {
-                            <img src="@mediaPath" style="max-width:260px;border-radius:8px;display:block" />
-                        }
-                        <form asp-area="Admin" asp-controller="Settings" asp-action="DeleteAboutMedia" method="post" class="mt-2">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Kaldır</button>
-                        </form>
-                    </div>
-                }
-                <form asp-area="Admin" asp-controller="Settings" asp-action="UploadAboutMedia" method="post" enctype="multipart/form-data">
+                <form id="aboutMediaDeleteForm" asp-area="Admin" asp-controller="Settings" asp-action="DeleteAboutMedia" method="post" class="d-none">
                     @Html.AntiForgeryToken()
-                    <div class="input-group">
-                        <input type="file" name="file" class="form-control" accept="image/*,video/mp4,video/webm,video/quicktime" />
-                        <button type="submit" class="btn btn-primary">Yükle</button>
-                    </div>
-                    <div class="form-text mt-1">
-                        Desteklenen formatlar: JPG, PNG, WEBP, MP4, MOV, WEBM<br/>
-                        <strong>Önerilen boyut: 1200 × 900 piksel (4:3 oran)</strong> — görsel bu oranda kırpılarak gösterilir.<br/>
-                        Dikey (9:16) veya kare (1:1) yüklemekten kaçının; yatay dikdörtgen en iyi sonucu verir.
-                    </div>
+                </form>
+                <form id="ogImageForm" asp-area="Admin" asp-controller="Settings" asp-action="UploadSeoImage" method="post" enctype="multipart/form-data" class="d-none">
+                    @Html.AntiForgeryToken()
+                </form>
+                <form id="ogImageDeleteForm" asp-area="Admin" asp-controller="Settings" asp-action="DeleteSeoImage" method="post" class="d-none">
+                    @Html.AntiForgeryToken()
                 </form>
             </div>
         </div>
