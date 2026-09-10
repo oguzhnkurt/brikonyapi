@@ -1154,17 +1154,16 @@
 
   /* ── Tile katmanları ──
      Not: CARTO'nun ücretsiz basemap servisi artık API anahtarı istiyor (harita üstünde
-     "API KEY REQUIRED" filigranı çıkıyordu). Anahtar gerektirmeyen OpenStreetMap tile'larına
-     geçtik; "Koyu" modu ayrı bir tile seti yerine CSS filtresiyle (bkz. .home-map-dark) simüle
-     ediliyor — bu şekilde ücretsiz ve anahtarsız kalıyor. ── */
+     "API KEY REQUIRED" filigranı çıkıyordu). Onun yerine Esri'nin ücretsiz/anahtarsız
+     "Light Gray Canvas" servisini kullanıyoruz — önceki CARTO Positron'a çok yakın, sade/
+     soluk gri bir görünüm. "Koyu" modu ayrı bir tile seti yerine CSS filtresiyle (bkz.
+     .home-map-dark) simüle ediliyor. ── */
   var tileLayers = {
-    light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      subdomains:'abc', maxZoom:19
+    light: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution:'© Esri', maxZoom:16
     }),
-    dark: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      subdomains:'abc', maxZoom:19
+    dark: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution:'© Esri', maxZoom:16
     }),
     sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution:'© Esri', maxZoom:18
