@@ -376,24 +376,20 @@
 
   /* ── Tile katmanları ──
      Not: CARTO'nun ücretsiz basemap servisi artık API anahtarı istiyor (harita üstünde
-     "API KEY REQUIRED" filigranı çıkıyordu). Onun yerine Esri'nin ücretsiz/anahtarsız
-     "Light Gray Canvas" servisini kullanıyoruz — önceki CARTO Positron'a çok yakın, sade/
-     soluk gri bir görünüm. Esri bu temada il/ülke isimlerini ayrı bir "Reference" (etiket)
-     katmanında veriyor; bu yüzden gri temanın üstüne ayrıca etiket katmanı ekliyoruz, yoksa
-     il isimleri hiç görünmüyor. "Koyu" modu ayrı bir tile seti yerine CSS filtresiyle (bkz.
-     .mp-map-dark) simüle ediliyor. ── */
-  var grayTiles = function() {
-    return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution:'© Esri', maxZoom:16
+     "API KEY REQUIRED" filigranı çıkıyordu). Google Haritalar benzeri renkli görünüm istendi;
+     bunun için Esri'nin ücretsiz/anahtarsız "World Street Map" servisini kullanıyoruz — sarı
+     ana yollar, yeşil parklar, mavi su, POI ikonları ve etiketler tek katmanda geliyor (ayrı
+     bir etiket katmanı gerekmiyor). "Koyu" modu ayrı bir tile seti yerine CSS filtresiyle
+     (bkz. .mp-map-dark) simüle ediliyor. ── */
+  var streetTiles = function() {
+    return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution:'© Esri', maxZoom:19
     });
   };
-  var grayLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-    attribution:'© Esri', maxZoom:16, pane:'shadowPane'
-  });
   var tileLayers = {
-    street: grayTiles(),
-    light: grayTiles(),
-    dark: grayTiles(),
+    street: streetTiles(),
+    light: streetTiles(),
+    dark: streetTiles(),
     sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution:'© Esri', maxZoom:18
     })
@@ -402,7 +398,6 @@
   var currentTile = 'light';
   var map = L.map('project-map-full', { zoomControl:true, scrollWheelZoom:false });
   tileLayers.light.addTo(map);
-  grayLabels.addTo(map);
 
   // Harita container boyutunu doğru hesapla (mobil dahil)
   setTimeout(function(){ map.invalidateSize(); }, 200);
@@ -615,8 +610,6 @@
       map.removeLayer(tileLayers[currentTile]);
       currentTile = btn.dataset.tile;
       tileLayers[currentTile].addTo(map);
-      if (currentTile === 'sat') { map.removeLayer(grayLabels); }
-      else if (!map.hasLayer(grayLabels)) { grayLabels.addTo(map); }
       map.getContainer().classList.toggle('mp-map-dark', currentTile === 'dark');
     });
   });

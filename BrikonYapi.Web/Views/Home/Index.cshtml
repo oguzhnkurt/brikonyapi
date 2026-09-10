@@ -1155,21 +1155,17 @@
 
   /* ── Tile katmanları ──
      Not: CARTO'nun ücretsiz basemap servisi artık API anahtarı istiyor (harita üstünde
-     "API KEY REQUIRED" filigranı çıkıyordu). Onun yerine Esri'nin ücretsiz/anahtarsız
-     "Light Gray Canvas" servisini kullanıyoruz — önceki CARTO Positron'a çok yakın, sade/
-     soluk gri bir görünüm. Esri bu temada il/ülke isimlerini ayrı bir "Reference" (etiket)
-     katmanında veriyor; bu yüzden gri temanın üstüne ayrıca etiket katmanı ekliyoruz, yoksa
-     il isimleri hiç görünmüyor. "Koyu" modu ayrı bir tile seti yerine CSS filtresiyle (bkz.
-     .home-map-dark) simüle ediliyor. ── */
-  var grayLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-    attribution:'© Esri', maxZoom:16, pane:'shadowPane'
-  });
+     "API KEY REQUIRED" filigranı çıkıyordu). Google Haritalar benzeri renkli görünüm istendi;
+     bunun için Esri'nin ücretsiz/anahtarsız "World Street Map" servisini kullanıyoruz — sarı
+     ana yollar, yeşil parklar, mavi su, POI ikonları ve etiketler tek katmanda geliyor (ayrı
+     bir etiket katmanı gerekmiyor). "Koyu" modu ayrı bir tile seti yerine CSS filtresiyle
+     (bkz. .home-map-dark) simüle ediliyor. ── */
   var tileLayers = {
-    light: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution:'© Esri', maxZoom:16
+    light: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution:'© Esri', maxZoom:19
     }),
-    dark: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution:'© Esri', maxZoom:16
+    dark: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution:'© Esri', maxZoom:19
     }),
     sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution:'© Esri', maxZoom:18
@@ -1177,7 +1173,6 @@
   };
   var currentTile = 'light';
   tileLayers.light.addTo(map);
-  grayLabels.addTo(map);
 
   /* ── Pin ikonu ── */
   function makePin(status, active) {
@@ -1441,8 +1436,6 @@
       map.removeLayer(tileLayers[currentTile]);
       currentTile = btn.dataset.tile;
       tileLayers[currentTile].addTo(map);
-      if (currentTile === 'sat') { map.removeLayer(grayLabels); }
-      else if (!map.hasLayer(grayLabels)) { grayLabels.addTo(map); }
       map.getContainer().classList.toggle('home-map-dark', currentTile === 'dark');
     });
   });
