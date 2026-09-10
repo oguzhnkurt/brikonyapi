@@ -229,6 +229,17 @@
             .km-bottomnav-inner { padding:10px; }
             .km-bottomnav a { min-height:70px; font-size:.85rem; gap:.4rem; }
             .km-bottomnav a iconify-icon { font-size:1.55rem; width:48px; height:48px; border-radius:15px; }
+
+            /* Avatar menüsü (km-sheet): mobilde ekranın tam genişliğine yayılan bir "bottom
+               sheet" — masaüstünde bu tam-ekran-genişliği tuhaf ve aşırı büyük görünüyordu.
+               Uygulama sütunuyla (640px) aynı genişlikte, ortalanmış, ekranın altına yapışık
+               olmayan (küçük bir boşluk bırakan) yuvarlak köşeli bir panel olarak göster. */
+            .km-sheet {
+                left:50%; right:auto; bottom:16px;
+                width:100%; max-width:640px; transform:translate(-50%, 120%);
+                border-radius:20px; box-shadow:0 12px 40px rgba(20,30,40,.22);
+            }
+            .km-sheet.show { transform:translate(-50%, 0); }
         }
     </style>
     @await RenderSectionAsync("Styles", required: false)
