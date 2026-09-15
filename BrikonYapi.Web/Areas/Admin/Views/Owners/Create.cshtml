@@ -43,8 +43,11 @@
                         <div class="mb-0">
                             <label class="bk-label">Başlangıç Şifresi <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <input type="text" name="password" id="pwField" class="form-control" required minlength="8"
-                                       placeholder="min. 8 karakter, büyük harf ve rakam içermeli" />
+                                <input type="password" name="password" id="pwField" class="form-control" required minlength="8"
+                                       placeholder="min. 8 karakter, büyük harf ve rakam içermeli" autocomplete="new-password" />
+                                <button type="button" class="btn btn-outline-secondary" id="pwToggle" title="Şifreyi göster">
+                                    <iconify-icon icon="iconamoon:eye-duotone" id="pwToggleIcon"></iconify-icon>
+                                </button>
                                 <button type="button" class="btn btn-outline-primary" id="pwGen">
                                     <iconify-icon icon="iconamoon:synchronize-duotone" class="me-1"></iconify-icon>Şifre Üret
                                 </button>
@@ -86,6 +89,15 @@
     var field = document.getElementById('pwField');
     var hint  = document.getElementById('pwHint');
     var seps  = ['!', '*', '.', '?', '-'];
+
+    var toggleBtn = document.getElementById('pwToggle');
+    var toggleIcon = document.getElementById('pwToggleIcon');
+    toggleBtn.addEventListener('click', function () {
+        var showing = field.type === 'text';
+        field.type = showing ? 'password' : 'text';
+        toggleIcon.setAttribute('icon', showing ? 'iconamoon:eye-duotone' : 'iconamoon:eye-off-duotone');
+        toggleBtn.title = showing ? 'Şifreyi göster' : 'Şifreyi gizle';
+    });
 
     // Sunucudaki OwnerPasswordGenerator ile aynı kalıp: Brikon!4827
     document.getElementById('pwGen').addEventListener('click', function () {
