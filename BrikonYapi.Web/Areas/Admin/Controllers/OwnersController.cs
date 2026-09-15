@@ -97,8 +97,10 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             _db.Owners.Add(owner);
             await _db.SaveChangesAsync();
 
-            TempData["Success"] = "Kat maliki hesabı oluşturuldu.";
-            return RedirectToAction(nameof(Index));
+            TempData["Success"] = "Kat maliki hesabı oluşturuldu. Şimdi isterseniz aşağıdan bir bağımsız bölüm atayabilirsiniz.";
+            // Doğrudan Edit ekranına yönlendiriyoruz ki bölüm ataması aynı akışın devamı gibi hissettirsin
+            // (ayrı bir "Bağımsız Bölümler" ekranına gitmek zorunda kalınmasın).
+            return RedirectToAction(nameof(Edit), new { id = owner.Id });
         }
 
         // ── Excel ile toplu kat maliki ekleme ────────────────────
@@ -301,7 +303,53 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 .Where(a => a.OwnerId == id)
                 .ToListAsync();
 
+            // Bağımsız Bölüm Ata paneli için: sahipsiz bölümler + bu malike zaten ait olanlar
+            // (başka bir malike ait olan bölümler burada listelenmez — o değişiklik bilerek Bağımsız
+            // Bölümler ekranından yapılmalı, yanlışlıkla başka birinden bölüm çalınmasın).
+            ViewBag.AssignableUnits = await _db.Units
+                .Include(u => u.Project)
+                .Where(u => u.OwnerId == null || u.OwnerId == id)
+                .OrderBy(u => u.Project!.Name).ThenBy(u => u.UnitNo)
+                .ToListAsync();
+
             return View(owner);
+        }
+
+        /// <summary>
+        /// Bu malike hangi bağımsız bölümlerin ait olacağını tek ekrandan (Kat Maliki Düzenle) belirler.
+        /// Sadece sahipsiz bölümler ve zaten bu malike ait olan bölümler seçilebilir kapsamdadır —
+        /// başka bir malike ait bir bölüm, unitIds içine sızsa bile buradan çalınamaz.
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignUnits(int ownerId, List<int>? unitIds)
+        {
+            var owner = await _db.Owners.FindAsync(ownerId);
+            if (owner == null) return NotFound();
+
+            unitIds ??= new List<int>();
+
+            var assignableUnits = await _db.Units
+                .Where(u => u.OwnerId == null || u.OwnerId == ownerId)
+                .ToListAsync();
+
+            foreach (var unit in assignableUnits)
+            {
+                var shouldOwn = unitIds.Contains(unit.Id);
+                if (shouldOwn && unit.OwnerId != ownerId)
+                {
+                    unit.OwnerId = ownerId;
+                    unit.UpdatedAt = DateTime.Now;
+                }
+                else if (!shouldOwn && unit.OwnerId == ownerId)
+                {
+                    unit.OwnerId = null;
+                    unit.UpdatedAt = DateTime.Now;
+                }
+            }
+
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "Bağımsız bölüm ataması güncellendi.";
+            return RedirectToAction(nameof(Edit), new { id = ownerId });
         }
 
         /// <summary>
