@@ -33,7 +33,7 @@
                 <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="SaveGeneral" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
-                    <input type="hidden" name="embed" value="@embed" />
+                    <input type="hidden" name="embed" value="@(embed ? "true" : "false")" />
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Genel ilerleme (%)</label>
@@ -77,7 +77,7 @@
                         <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="SeedDefaultStages" method="post" class="d-inline pp-seed-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@Model.Id" />
-                            <input type="hidden" name="embed" value="@embed" />
+                            <input type="hidden" name="embed" value="@(embed ? "true" : "false")" />
                             <button type="submit" class="btn btn-sm btn-outline-primary">
                                 <iconify-icon icon="iconamoon:lightning-1-duotone"></iconify-icon>
                                 Standart aşamaları ekle
@@ -135,7 +135,7 @@
                                             <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="UpdateStageStatus" method="post" class="d-flex gap-1">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="stageId" value="@s.Id" />
-                                                <input type="hidden" name="embed" value="@embed" />
+                                                <input type="hidden" name="embed" value="@(embed ? "true" : "false")" />
                                                 <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                                                     <option value="0" selected="@(s.Status == ProjectStageStatus.Pending)">Bekliyor</option>
                                                     <option value="1" selected="@(s.Status == ProjectStageStatus.InProgress)">Devam ediyor</option>
@@ -151,7 +151,7 @@
                                                   onsubmit="return confirm('Bu iş adımı silinsin mi?')">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="stageId" value="@s.Id" />
-                                                <input type="hidden" name="embed" value="@embed" />
+                                                <input type="hidden" name="embed" value="@(embed ? "true" : "false")" />
                                                 <button type="submit" class="btn btn-sm btn-link text-danger p-0">
                                                     <iconify-icon icon="iconamoon:trash-duotone"></iconify-icon>
                                                 </button>
@@ -190,7 +190,7 @@
             <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="AddStage" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Id" />
-                <input type="hidden" name="embed" value="@embed" />
+                <input type="hidden" name="embed" value="@(embed ? "true" : "false")" />
                 <div class="mb-3">
                     <label class="form-label fw-semibold small">İş Adımı <span class="text-danger">*</span></label>
                     <input name="name" class="form-control" placeholder="Ör: Kaba İnşaat, Sıva, Boya" required />
@@ -257,7 +257,7 @@
             <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="BulkAddStages" method="post" id="bulkStepsForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Id" />
-                <input type="hidden" name="embed" value="@embed" />
+                <input type="hidden" name="embed" value="@(embed ? "true" : "false")" />
                 <input type="hidden" name="stepsText" id="bulkStepsText" />
 
                 <label class="form-label fw-semibold small">İş Adımları <span class="text-danger">*</span></label>
@@ -311,7 +311,7 @@
                 <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="UpdateStageDetails" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="stageId" value="@s.Id" />
-                    <input type="hidden" name="embed" value="@embed" />
+                    <input type="hidden" name="embed" value="@(embed ? "true" : "false")" />
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">İş Adımı <span class="text-danger">*</span></label>
                         <input name="name" class="form-control" value="@s.Name" required />
@@ -376,7 +376,7 @@
                       enctype="multipart/form-data" class="row g-2 align-items-end mb-4">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
-                    <input type="hidden" name="embed" value="@embed" />
+                    <input type="hidden" name="embed" value="@(embed ? "true" : "false")" />
                     <div class="col-md-4">
                         <label class="form-label small mb-1">Fotoğraf (JPG/PNG/WEBP, max 10 MB)</label>
                         <input type="file" name="photo" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" required />
@@ -421,7 +421,7 @@
                                               onsubmit="return confirm('Bu fotoğraf silinsin mi?')" class="mt-1">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="photoId" value="@ph.Id" />
-                                            <input type="hidden" name="embed" value="@embed" />
+                                            <input type="hidden" name="embed" value="@(embed ? "true" : "false")" />
                                             <button type="submit" class="btn btn-sm btn-link text-danger p-0" style="font-size:.75rem;">Sil</button>
                                         </form>
                                     </div>
