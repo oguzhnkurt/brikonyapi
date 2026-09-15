@@ -35,6 +35,11 @@
                 <iconify-icon icon="iconamoon:cloud-upload-duotone" class="me-1"></iconify-icon>
                 Excel ile Toplu Ekle
             </a>
+            <button type="button" id="btnSendWhatsApp" class="btn btn-success btn-sm" disabled
+                    data-bs-toggle="modal" data-bs-target="#sendWhatsAppModal">
+                <iconify-icon icon="ic:baseline-whatsapp" class="me-1"></iconify-icon>
+                Seçilenlere WhatsApp Gönder<span id="waSelectedCount"></span>
+            </button>
             <a href="/Admin/Owners/Create" class="btn btn-primary btn-sm">
                 <iconify-icon icon="iconamoon:sign-plus-circle-duotone" class="me-1"></iconify-icon>
                 Yeni Kat Maliki
@@ -55,6 +60,9 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
+                            <th style="width:36px">
+                                <input type="checkbox" class="form-check-input" id="selectAllOwners" title="Tümünü seç">
+                            </th>
                             <th>Ad Soyad</th>
                             <th>E-posta</th>
                             <th>Telefon</th>
@@ -68,6 +76,9 @@
                         {
                             var myCommittee = committeeAccess.Where(a => a.OwnerId == o.Id).ToList();
                             <tr>
+                                <td>
+                                    <input type="checkbox" class="form-check-input owner-select" value="@o.Id" data-name="@o.FullName">
+                                </td>
                                 <td>
                                     <strong>@o.FullName</strong>
                                     @if (myCommittee.Any())
@@ -253,6 +264,96 @@
                     </div>
                 </div>
             }
+
+            <div class="modal fade" id="sendWhatsAppModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <iconify-icon icon="ic:baseline-whatsapp" class="text-success me-1"></iconify-icon>
+                                Seçilenlere WhatsApp Gönder
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                        </div>
+                        <form asp-area="Admin" asp-controller="Owners" asp-action="SendWhatsApp" method="post">
+                            @Html.AntiForgeryToken()
+                            <div id="waHiddenOwnerIds"></div>
+                            <div class="modal-body">
+                                <label class="form-label small fw-semibold">Alıcılar</label>
+                                <div id="waRecipientList" class="text-muted small mb-3">Seçili kişi yok.</div>
+
+                                <label class="form-label small fw-semibold">Mesaj</label>
+                                <textarea name="message" class="form-control" rows="4" maxlength="600" required
+                                          placeholder="Mesajınızı yazın…"></textarea>
+                                <div class="text-muted small mt-2">
+                                    Bu mesaj, onaylı bir WhatsApp şablonu içinde ("Sayın [Ad Soyad], [mesajınız]")
+                                    gönderilir — serbest metin olarak değil, Meta'nın kurallarına uygun şekilde iletilir.
+                                    Telefonu kayıtlı olmayan veya WhatsApp bildirimini kapatmış kişiler otomatik atlanır.
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn bk-btn-cancel" data-bs-dismiss="modal">Vazgeç</button>
+                                <button type="submit" class="btn btn-success">
+                                    <iconify-icon icon="ic:baseline-whatsapp" class="me-1"></iconify-icon>
+                                    Gönder
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var selectAll = document.getElementById('selectAllOwners');
+            var btnSend = document.getElementById('btnSendWhatsApp');
+            var countSpan = document.getElementById('waSelectedCount');
+            var hiddenContainer = document.getElementById('waHiddenOwnerIds');
+            var recipientList = document.getElementById('waRecipientList');
+
+            function getChecked() {
+                return Array.prototype.slice.call(document.querySelectorAll('.owner-select:checked'));
+            }
+
+            function refreshState() {
+                var checked = getChecked();
+                if (btnSend) {
+                    btnSend.disabled = checked.length === 0;
+                    countSpan.textContent = checked.length > 0 ? ' (' + checked.length + ')' : '';
+                }
+            }
+
+            document.addEventListener('change', function (e) {
+                if (e.target && e.target.classList && e.target.classList.contains('owner-select')) {
+                    refreshState();
+                }
+                if (e.target === selectAll) {
+                    document.querySelectorAll('.owner-select').forEach(function (cb) { cb.checked = selectAll.checked; });
+                    refreshState();
+                }
+            });
+
+            var modalEl = document.getElementById('sendWhatsAppModal');
+            if (modalEl) {
+                modalEl.addEventListener('show.bs.modal', function () {
+                    var checked = getChecked();
+                    hiddenContainer.innerHTML = '';
+                    checked.forEach(function (cb) {
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'ownerIds';
+                        input.value = cb.value;
+                        hiddenContainer.appendChild(input);
+                    });
+                    recipientList.textContent = checked.length > 0
+                        ? checked.map(function (cb) { return cb.getAttribute('data-name'); }).join(', ')
+                        : 'Seçili kişi yok.';
+                });
+            }
+        })();
+    </script>
+}

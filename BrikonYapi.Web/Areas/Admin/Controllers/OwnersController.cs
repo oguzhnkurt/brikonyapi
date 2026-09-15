@@ -15,11 +15,15 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
     {
         private readonly AppDbContext _db;
         private readonly UserManager<IdentityUser> _users;
+        private readonly WhatsAppService _whatsApp;
+        private readonly IConfiguration _config;
 
-        public OwnersController(AppDbContext db, UserManager<IdentityUser> users)
+        public OwnersController(AppDbContext db, UserManager<IdentityUser> users, WhatsAppService whatsApp, IConfiguration config)
         {
-            _db    = db;
-            _users = users;
+            _db       = db;
+            _users    = users;
+            _whatsApp = whatsApp;
+            _config   = config;
         }
 
         public async Task<IActionResult> Index(int? projectId)
@@ -466,6 +470,90 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             await _db.SaveChangesAsync();
             TempData["Success"] = "Bağımsız bölüm bilgileri güncellendi.";
             return RedirectToAction(nameof(Edit), new { id = ownerId });
+        }
+
+        /// <summary>
+        /// Seçilen kat maliklerine onaylı bir WhatsApp şablonu (WhatsApp:ManualTemplateName) üzerinden
+        /// tek seferlik, serbest metinli bir bildirim gönderir. WhatsApp Business API kuralı gereği
+        /// serbest metin doğrudan gönderilemediği için şablon "Sayın {{1}}, {{2}}" biçiminde olmalı;
+        /// {{1}} malikin adı, {{2}} burada yazılan mesaj metnidir. Telefonu olmayan ya da WhatsApp
+        /// bildirimi kapalı olan malikler atlanır, sonuç TempData ile satır satır raporlanır.
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendWhatsApp(List<int> ownerIds, string message)
+        {
+            if (ownerIds == null || ownerIds.Count == 0)
+            {
+                TempData["Error"] = "Lütfen en az bir kat maliki seçin.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                TempData["Error"] = "Mesaj metni boş olamaz.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var templateName = _config["WhatsApp:ManualTemplateName"];
+            if (string.IsNullOrWhiteSpace(templateName))
+            {
+                TempData["Error"] = "WhatsApp manuel gönderim şablonu henüz yapılandırılmamış (WhatsApp:ManualTemplateName).";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var languageCode = _config["WhatsApp:TemplateLanguage"] ?? "tr";
+            var owners = await _db.Owners.Where(o => ownerIds.Contains(o.Id)).ToListAsync();
+            var prefsById = await _db.OwnerNotificationPreferences
+                .Where(p => ownerIds.Contains(p.OwnerId))
+                .ToDictionaryAsync(p => p.OwnerId);
+
+            var sent = 0;
+            var skipped = 0;
+            var failed = 0;
+
+            foreach (var owner in owners)
+            {
+                if (string.IsNullOrWhiteSpace(owner.Phone))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                // Tercih kaydı yoksa varsayılan açık kabul edilir (bkz. SaveNotificationPreferences dokümantasyonu).
+                if (prefsById.TryGetValue(owner.Id, out var pref) && !pref.WhatsAppEnabled)
+                {
+                    skipped++;
+                    continue;
+                }
+
+                var (success, error) = await _whatsApp.SendTemplateAsync(
+                    owner.Phone!, templateName, languageCode, new[] { owner.FullName, message.Trim() });
+
+                _db.NotificationLogs.Add(new NotificationLog
+                {
+                    OwnerId    = owner.Id,
+                    Channel    = NotificationChannel.WhatsApp,
+                    Subject    = "Manuel bildirim (Admin)",
+                    Message    = message.Trim(),
+                    Status     = success ? NotificationStatus.Sent : NotificationStatus.Failed,
+                    ErrorMessage = error,
+                    SentAt     = success ? DateTime.Now : null,
+                    CreatedAt  = DateTime.Now
+                });
+
+                if (success) sent++; else failed++;
+            }
+
+            await _db.SaveChangesAsync();
+
+            var summary = $"{sent} kişiye gönderildi.";
+            if (failed  > 0) summary += $" {failed} kişide hata oluştu.";
+            if (skipped > 0) summary += $" {skipped} kişide telefon numarası kayıtlı değil, atlandı.";
+
+            if (sent > 0) TempData["Success"] = summary;
+            else TempData["Error"] = summary;
+
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost, ValidateAntiForgeryToken]
