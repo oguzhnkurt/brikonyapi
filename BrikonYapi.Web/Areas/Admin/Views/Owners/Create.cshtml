@@ -28,34 +28,28 @@
                         </div>
 
                         <div class="mb-0">
-                            <label class="bk-label">Telefon</label>
-                            <input asp-for="Phone" class="form-control" placeholder="0532 000 00 00" />
+                            <label class="bk-label">E-posta <span class="text-muted small">(opsiyonel, sadece iletişim için)</span></label>
+                            <input asp-for="Email" type="email" class="form-control" placeholder="ornek@eposta.com" />
                         </div>
                     </div>
 
                     <div class="bk-field-group mb-3">
                         <div class="bk-group-title">Giriş Bilgileri</div>
+                        <div class="alert alert-info small mb-3">
+                            Kat Maliki Portalı'na giriş artık <strong>telefon numarası</strong> (kullanıcı adı) ve
+                            <strong>T.C. Kimlik Numarası</strong> (şifre) ile yapılır.
+                        </div>
                         <div class="mb-3">
-                            <label class="bk-label">E-posta (giriş için kullanılacak) <span class="text-danger">*</span></label>
-                            <input type="email" name="email" class="form-control" required />
+                            <label class="bk-label">Telefon (giriş için kullanılacak) <span class="text-danger">*</span></label>
+                            <input asp-for="Phone" class="form-control" placeholder="05050646941" required />
+                            <div class="form-text bk-hint">11 haneli, başında 0 olacak şekilde. Boşluk/tire yazsanız da sistem otomatik sadeleştirir.</div>
                         </div>
 
                         <div class="mb-0">
-                            <label class="bk-label">Başlangıç Şifresi <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="password" name="password" id="pwField" class="form-control" required minlength="8"
-                                       placeholder="min. 8 karakter, büyük harf ve rakam içermeli" autocomplete="new-password" />
-                                <button type="button" class="btn btn-outline-secondary" id="pwToggle" title="Şifreyi göster">
-                                    <iconify-icon icon="iconamoon:eye-duotone" id="pwToggleIcon"></iconify-icon>
-                                </button>
-                                <button type="button" class="btn btn-outline-primary" id="pwGen">
-                                    <iconify-icon icon="iconamoon:synchronize-duotone" class="me-1"></iconify-icon>Şifre Üret
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary" id="pwCopy" title="Kopyala">
-                                    <iconify-icon icon="iconamoon:copy-duotone"></iconify-icon>
-                                </button>
-                            </div>
-                            <div class="form-text bk-hint" id="pwHint">Bu şifreyi malike güvenli bir şekilde iletin. Daha sonra "Şifre Sıfırla" ile yenileyebilirsiniz.</div>
+                            <label class="bk-label">T.C. Kimlik No (şifre olarak kullanılacak) <span class="text-danger">*</span></label>
+                            <input asp-for="TcKimlikNo" class="form-control" required minlength="11" maxlength="11"
+                                   pattern="[0-9]{11}" placeholder="11 haneli T.C. Kimlik No" autocomplete="off" />
+                            <div class="form-text bk-hint">Malik girişte bu numarayı şifre olarak kullanacak.</div>
                         </div>
                     </div>
 
@@ -83,40 +77,3 @@
     </div>
 </div>
 
-@section Scripts {
-<script>
-(function () {
-    var field = document.getElementById('pwField');
-    var hint  = document.getElementById('pwHint');
-    var seps  = ['!', '*', '.', '?', '-'];
-
-    var toggleBtn = document.getElementById('pwToggle');
-    var toggleIcon = document.getElementById('pwToggleIcon');
-    toggleBtn.addEventListener('click', function () {
-        var showing = field.type === 'text';
-        field.type = showing ? 'password' : 'text';
-        toggleIcon.setAttribute('icon', showing ? 'iconamoon:eye-duotone' : 'iconamoon:eye-off-duotone');
-        toggleBtn.title = showing ? 'Şifreyi göster' : 'Şifreyi gizle';
-    });
-
-    // Sunucudaki OwnerPasswordGenerator ile aynı kalıp: Brikon!4827
-    document.getElementById('pwGen').addEventListener('click', function () {
-        var sep = seps[Math.floor(Math.random() * seps.length)];
-        var num = Math.floor(1000 + Math.random() * 9000);
-        field.value = 'Brikon' + sep + num;
-        field.focus();
-        field.select();
-    });
-
-    document.getElementById('pwCopy').addEventListener('click', function () {
-        if (!field.value) return;
-        field.select();
-        navigator.clipboard.writeText(field.value).then(function () {
-            var old = hint.textContent;
-            hint.textContent = 'Şifre panoya kopyalandı.';
-            setTimeout(function () { hint.textContent = old; }, 2000);
-        });
-    });
-})();
-</script>
-}

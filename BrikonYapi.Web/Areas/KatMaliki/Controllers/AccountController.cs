@@ -1,5 +1,6 @@
 using BrikonYapi.Web.Data;
 using BrikonYapi.Web.Data.Entities;
+using BrikonYapi.Web.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
@@ -38,13 +39,26 @@ namespace BrikonYapi.Web.Areas.KatMaliki.Controllers
             return View();
         }
 
+        /// <summary>Giriş artık e-posta değil telefon numarası ile yapılıyor — Identity'de UserName
+        /// alanı kat malikleri için normalize edilmiş telefon numarasını taşıyor (bkz. PhoneNormalizer,
+        /// Admin/OwnersController). Malik telefonu hangi biçimde yazarsa yazsın (boşluklu, +90'lı vb.)
+        /// burada aynı biçime indirgenip öyle aranıyor.</summary>
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(string email, string password, string? returnUrl = null)
+        public async Task<IActionResult> Login(string phone, string password, string? returnUrl = null)
         {
-            var result = await _signIn.PasswordSignInAsync(email, password, isPersistent: true, lockoutOnFailure: false);
+            var normalizedPhone = PhoneNormalizer.Normalize(phone);
+            if (normalizedPhone == null)
+            {
+                ViewBag.Error = "Telefon numarası geçersiz görünüyor.";
+                ViewBag.ReturnUrl = returnUrl;
+                ViewBag.GoogleEnabled = GoogleEnabled;
+                return View();
+            }
+
+            var result = await _signIn.PasswordSignInAsync(normalizedPhone, password, isPersistent: true, lockoutOnFailure: false);
             if (result.Succeeded)
             {
-                var user = await _users.FindByEmailAsync(email);
+                var user = await _users.FindByNameAsync(normalizedPhone);
                 if (user != null && await _users.IsInRoleAsync(user, "KatMaliki"))
                     return LocalRedirect(returnUrl ?? "/KatMaliki/Progress");
 
@@ -58,7 +72,7 @@ namespace BrikonYapi.Web.Areas.KatMaliki.Controllers
             if (result.IsLockedOut)
                 ViewBag.Error = "Hesabınız pasif durumda. Lütfen yönetici ile iletişime geçin.";
             else
-                ViewBag.Error = "E-posta veya şifre hatalı.";
+                ViewBag.Error = "Telefon numarası veya şifre hatalı.";
 
             ViewBag.ReturnUrl = returnUrl;
             ViewBag.GoogleEnabled = GoogleEnabled;

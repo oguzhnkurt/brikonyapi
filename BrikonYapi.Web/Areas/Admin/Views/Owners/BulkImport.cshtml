@@ -32,8 +32,8 @@
                         <div class="alert alert-info small mb-3">
                             <div class="fw-semibold mb-1">Dosya nasıl olmalı?</div>
                             İlk satır başlık olmalı, veriler 2. satırdan başlamalı. Sütun sırası:
-                            <strong>A: Ad Soyad</strong> · <strong>B: E-posta</strong> · <strong>C: Telefon</strong>.
-                            Telefon boş bırakılabilir.
+                            <strong>A: Ad Soyad</strong> · <strong>B: Telefon</strong> · <strong>C: T.C. Kimlik No</strong> · <strong>D: E-posta</strong>.
+                            Telefon (kullanıcı adı) ve T.C. Kimlik No (şifre) zorunlu; e-posta opsiyonel.
                         </div>
 
                         <div class="d-flex gap-2">
@@ -138,8 +138,8 @@ else
                     <tr>
                         <th style="width:70px;">Satır</th>
                         <th>Ad Soyad</th>
-                        <th>E-posta</th>
-                        <th>Şifre</th>
+                        <th>Telefon (kullanıcı adı)</th>
+                        <th>Şifre (T.C. No)</th>
                         <th>Durum</th>
                         <th></th>
                     </tr>
@@ -150,7 +150,7 @@ else
                         <tr class="@(row.Success ? "" : "table-danger")">
                             <td class="text-muted">@row.RowNumber</td>
                             <td>@row.FullName</td>
-                            <td>@row.Email</td>
+                            <td>@row.Phone</td>
                             <td>
                                 @if (row.Success)
                                 {

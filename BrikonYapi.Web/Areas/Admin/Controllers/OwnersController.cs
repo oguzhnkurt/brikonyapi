@@ -60,29 +60,39 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
         public IActionResult Create() => View(new Owner());
 
+        /// <summary>Kat Maliki Portalı'na giriş artık telefon numarası (kullanıcı adı) + T.C. Kimlik No
+        /// (şifre) ile yapılıyor — bkz. KatMaliki/AccountController.Login, PhoneNormalizer.
+        /// E-posta artık sadece iletişim bilgisi, giriş için kullanılmıyor.</summary>
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Owner owner, string email, string password)
+        public async Task<IActionResult> Create(Owner owner)
         {
             ModelState.Remove("UserId");
             ModelState.Remove(nameof(Owner.Units));
 
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            var normalizedPhone = PhoneNormalizer.Normalize(owner.Phone);
+            if (normalizedPhone == null)
             {
-                TempData["Error"] = "E-posta ve şifre zorunludur.";
+                TempData["Error"] = "Telefon numarası geçersiz — 05XXXXXXXXX biçiminde, 11 haneli olmalı.";
+                return View(owner);
+            }
+
+            if (!PhoneNormalizer.IsValidTcKimlikNo(owner.TcKimlikNo))
+            {
+                TempData["Error"] = "T.C. Kimlik No geçersiz — 11 haneli olmalı ve 0 ile başlayamaz.";
                 return View(owner);
             }
 
             if (!ModelState.IsValid) return View(owner);
 
-            var existingUser = await _users.FindByEmailAsync(email);
+            var existingUser = await _users.FindByNameAsync(normalizedPhone);
             if (existingUser != null)
             {
-                TempData["Error"] = "Bu e-posta adresiyle zaten bir kullanıcı kayıtlı.";
+                TempData["Error"] = "Bu telefon numarasıyla zaten bir kullanıcı kayıtlı.";
                 return View(owner);
             }
 
-            var user = new IdentityUser { UserName = email, Email = email, EmailConfirmed = true };
-            var createResult = await _users.CreateAsync(user, password);
+            var user = new IdentityUser { UserName = normalizedPhone, Email = owner.Email, EmailConfirmed = true };
+            var createResult = await _users.CreateAsync(user, owner.TcKimlikNo);
             if (!createResult.Succeeded)
             {
                 TempData["Error"] = string.Join(" ", createResult.Errors.Select(e => e.Description));
@@ -92,7 +102,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             await _users.AddToRoleAsync(user, "KatMaliki");
 
             owner.UserId = user.Id;
-            owner.Email  = email;
+            owner.Phone  = normalizedPhone;
             owner.CreatedAt = DateTime.Now;
             _db.Owners.Add(owner);
             await _db.SaveChangesAsync();
@@ -114,23 +124,26 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             var ws = wb.Worksheets.Add("Kat Malikleri");
 
             ws.Cell(1, 1).Value = "Ad Soyad";
-            ws.Cell(1, 2).Value = "E-posta";
-            ws.Cell(1, 3).Value = "Telefon";
+            ws.Cell(1, 2).Value = "Telefon (giriş için kullanıcı adı)";
+            ws.Cell(1, 3).Value = "T.C. Kimlik No (giriş şifresi)";
+            ws.Cell(1, 4).Value = "E-posta (opsiyonel)";
 
-            var header = ws.Range(1, 1, 1, 3);
+            var header = ws.Range(1, 1, 1, 4);
             header.Style.Font.Bold = true;
             header.Style.Fill.BackgroundColor = XLColor.FromHtml("#E6F4FB");
 
             // Örnek satırlar — kullanıcı bunların üzerine yazar.
             ws.Cell(2, 1).Value = "Ahmet Yılmaz";
-            ws.Cell(2, 2).Value = "ahmet.yilmaz@ornek.com";
-            ws.Cell(2, 3).Value = "0532 000 00 00";
+            ws.Cell(2, 2).Value = "0532 000 00 00";
+            ws.Cell(2, 3).Value = "12345678901";
+            ws.Cell(2, 4).Value = "ahmet.yilmaz@ornek.com";
 
             ws.Cell(3, 1).Value = "Ayşe Demir";
-            ws.Cell(3, 2).Value = "ayse.demir@ornek.com";
-            ws.Cell(3, 3).Value = "0533 111 11 11";
+            ws.Cell(3, 2).Value = "0533 111 11 11";
+            ws.Cell(3, 3).Value = "98765432109";
+            ws.Cell(3, 4).Value = "ayse.demir@ornek.com";
 
-            ws.Columns(1, 3).AdjustToContents();
+            ws.Columns(1, 4).AdjustToContents();
 
             using var ms = new MemoryStream();
             wb.SaveAs(ms);
@@ -169,42 +182,54 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 var ws = wb.Worksheets.First();
 
                 var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
-                // 1. satır başlık kabul edilir.
+                // 1. satır başlık kabul edilir. Kolon sırası: Ad Soyad, Telefon, T.C. Kimlik No, E-posta(opsiyonel).
                 for (var r = 2; r <= lastRow; r++)
                 {
-                    var fullName = ws.Cell(r, 1).GetString().Trim();
-                    var email    = ws.Cell(r, 2).GetString().Trim();
-                    var phone    = ws.Cell(r, 3).GetString().Trim();
+                    var fullName  = ws.Cell(r, 1).GetString().Trim();
+                    var phoneRaw  = ws.Cell(r, 2).GetString().Trim();
+                    var tcKimlik  = ws.Cell(r, 3).GetString().Trim();
+                    var email     = ws.Cell(r, 4).GetString().Trim();
 
                     // Tamamen boş satırları sessizce atla (Excel'in sonundaki boşluklar).
-                    if (fullName.Length == 0 && email.Length == 0 && phone.Length == 0) continue;
+                    if (fullName.Length == 0 && phoneRaw.Length == 0 && tcKimlik.Length == 0 && email.Length == 0) continue;
 
                     var row = new OwnerImportRow
                     {
                         RowNumber = r,
                         FullName  = fullName,
                         Email     = email,
-                        Phone     = string.IsNullOrWhiteSpace(phone) ? null : phone
+                        Phone     = string.IsNullOrWhiteSpace(phoneRaw) ? null : phoneRaw
                     };
                     result.Rows.Add(row);
 
                     if (fullName.Length == 0) { row.Error = "Ad Soyad boş."; continue; }
-                    if (email.Length == 0)    { row.Error = "E-posta boş."; continue; }
-                    if (!email.Contains('@') || email.Contains(' '))
+
+                    var normalizedPhone = PhoneNormalizer.Normalize(phoneRaw);
+                    if (normalizedPhone == null)
                     {
-                        row.Error = "E-posta geçersiz görünüyor.";
+                        row.Error = "Telefon geçersiz — 05XXXXXXXXX biçiminde, 11 haneli olmalı.";
                         continue;
                     }
 
-                    if (await _users.FindByEmailAsync(email) != null)
+                    if (!PhoneNormalizer.IsValidTcKimlikNo(tcKimlik))
                     {
-                        row.Error = "Bu e-posta ile zaten bir kullanıcı var.";
+                        row.Error = "T.C. Kimlik No geçersiz — 11 haneli olmalı ve 0 ile başlayamaz.";
                         continue;
                     }
 
-                    var password = OwnerPasswordGenerator.Generate();
-                    var user = new IdentityUser { UserName = email, Email = email, EmailConfirmed = true };
-                    var createResult = await _users.CreateAsync(user, password);
+                    if (await _users.FindByNameAsync(normalizedPhone) != null)
+                    {
+                        row.Error = "Bu telefon numarasıyla zaten bir kullanıcı var.";
+                        continue;
+                    }
+
+                    var user = new IdentityUser
+                    {
+                        UserName = normalizedPhone,
+                        Email = string.IsNullOrWhiteSpace(email) ? null : email,
+                        EmailConfirmed = true
+                    };
+                    var createResult = await _users.CreateAsync(user, tcKimlik);
                     if (!createResult.Succeeded)
                     {
                         row.Error = string.Join(" ", createResult.Errors.Select(e => e.Description));
@@ -215,17 +240,19 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
                     var newOwner = new Owner
                     {
-                        FullName  = fullName,
-                        Email     = email,
-                        Phone     = row.Phone,
-                        UserId    = user.Id,
-                        IsActive  = true,
-                        CreatedAt = DateTime.Now
+                        FullName   = fullName,
+                        Email      = string.IsNullOrWhiteSpace(email) ? null : email,
+                        Phone      = normalizedPhone,
+                        TcKimlikNo = tcKimlik,
+                        UserId     = user.Id,
+                        IsActive   = true,
+                        CreatedAt  = DateTime.Now
                     };
                     _db.Owners.Add(newOwner);
                     await _db.SaveChangesAsync();
 
-                    row.Password = password;
+                    row.Password = tcKimlik;
+                    row.Phone    = normalizedPhone;
                     row.OwnerId  = newOwner.Id;
                     row.Success  = true;
                 }
@@ -244,7 +271,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             // Şifre listesini indirebilmek için sonucu tek kullanımlık olarak sakla.
             TempData["ImportPasswords"] = System.Text.Json.JsonSerializer.Serialize(
-                result.Rows.Where(x => x.Success).Select(x => new { x.FullName, x.Email, x.Password }));
+                result.Rows.Where(x => x.Success).Select(x => new { x.FullName, x.Phone, x.Password }));
 
             return View(result);
         }
@@ -261,8 +288,8 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             var ws = wb.Worksheets.Add("Giriş Bilgileri");
 
             ws.Cell(1, 1).Value = "Ad Soyad";
-            ws.Cell(1, 2).Value = "E-posta (kullanıcı adı)";
-            ws.Cell(1, 3).Value = "Şifre";
+            ws.Cell(1, 2).Value = "Telefon (kullanıcı adı)";
+            ws.Cell(1, 3).Value = "Şifre (T.C. Kimlik No)";
 
             var header = ws.Range(1, 1, 1, 3);
             header.Style.Font.Bold = true;
@@ -271,7 +298,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             for (var i = 0; i < rows.Count; i++)
             {
                 ws.Cell(i + 2, 1).Value = rows[i].FullName;
-                ws.Cell(i + 2, 2).Value = rows[i].Email;
+                ws.Cell(i + 2, 2).Value = rows[i].Phone;
                 ws.Cell(i + 2, 3).Value = rows[i].Password;
             }
 
@@ -287,7 +314,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         private class PasswordRow
         {
             public string FullName { get; set; } = "";
-            public string Email    { get; set; } = "";
+            public string Phone    { get; set; } = "";
             public string Password { get; set; } = "";
         }
 
@@ -472,24 +499,72 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        /// <summary>Telefon (giriş kullanıcı adı) veya T.C. Kimlik No (giriş şifresi) değiştiyse
+        /// Identity hesabını da senkronize eder. Telefon değişmediyse ya da yeni değer geçersizse
+        /// dokunulmaz (mevcut girişi bozmamak için sessizce eski değer korunur, admin'e uyarı gösterilir).</summary>
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Owner owner)
         {
             var existing = await _db.Owners.FindAsync(id);
             if (existing == null) return NotFound();
 
+            var user = await _users.FindByIdAsync(existing.UserId);
+            var warnings = new List<string>();
+
+            // Telefon (=UserName) değişti mi?
+            var normalizedPhone = PhoneNormalizer.Normalize(owner.Phone);
+            if (normalizedPhone == null)
+            {
+                warnings.Add("Telefon numarası geçersiz görünüyor, giriş bilgisi değiştirilmedi.");
+            }
+            else if (user != null && !string.Equals(user.UserName, normalizedPhone, StringComparison.OrdinalIgnoreCase))
+            {
+                var conflict = await _users.FindByNameAsync(normalizedPhone);
+                if (conflict != null && conflict.Id != user.Id)
+                {
+                    warnings.Add("Bu telefon numarası başka bir hesapta kayıtlı, giriş bilgisi değiştirilmedi.");
+                }
+                else
+                {
+                    user.UserName = normalizedPhone;
+                    user.NormalizedUserName = normalizedPhone.ToUpperInvariant();
+                    await _users.UpdateAsync(user);
+                }
+            }
+            existing.Phone = normalizedPhone ?? existing.Phone;
+
+            // T.C. Kimlik No (=şifre) değişti mi?
+            if (!string.IsNullOrWhiteSpace(owner.TcKimlikNo) && owner.TcKimlikNo != existing.TcKimlikNo)
+            {
+                if (!PhoneNormalizer.IsValidTcKimlikNo(owner.TcKimlikNo))
+                {
+                    warnings.Add("T.C. Kimlik No geçersiz (11 haneli olmalı), şifre değiştirilmedi.");
+                }
+                else if (user != null)
+                {
+                    var token = await _users.GeneratePasswordResetTokenAsync(user);
+                    var resetResult = await _users.ResetPasswordAsync(user, token, owner.TcKimlikNo);
+                    if (resetResult.Succeeded)
+                        existing.TcKimlikNo = owner.TcKimlikNo;
+                    else
+                        warnings.Add("Şifre güncellenemedi: " + string.Join(" ", resetResult.Errors.Select(e => e.Description)));
+                }
+            }
+
             existing.FullName = owner.FullName;
-            existing.Phone    = owner.Phone;
+            existing.Email    = owner.Email;
             existing.IsActive = owner.IsActive;
             existing.UpdatedAt = DateTime.Now;
 
             // Hesap pasife alınırsa girişini de kilitle
-            var user = await _users.FindByIdAsync(existing.UserId);
             if (user != null)
                 await _users.SetLockoutEndDateAsync(user, existing.IsActive ? null : DateTimeOffset.MaxValue);
 
             await _db.SaveChangesAsync();
-            TempData["Success"] = "Kat maliki bilgileri güncellendi.";
+
+            TempData["Success"] = warnings.Count == 0
+                ? "Kat maliki bilgileri güncellendi."
+                : "Kat maliki bilgileri güncellendi. Uyarı: " + string.Join(" ", warnings);
             return RedirectToAction(nameof(Index));
         }
 
@@ -518,21 +593,29 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(Edit), new { id = ownerId });
         }
 
+        /// <summary>Malikin şifresini yeniden T.C. Kimlik No'suna sıfırlar (giriş şeması: telefon +
+        /// TC No — bkz. KatMaliki/AccountController). TC No kayıtlı değilse önce Düzenle ekranından
+        /// girilmesi gerekir, rastgele bir şifre üretilmez.</summary>
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword(int id)
         {
             var owner = await _db.Owners.FindAsync(id);
             if (owner == null) return NotFound();
 
+            if (!PhoneNormalizer.IsValidTcKimlikNo(owner.TcKimlikNo))
+            {
+                TempData["Error"] = "Bu malikin T.C. Kimlik No'su kayıtlı değil. Önce Düzenle ekranından girin, şifre otomatik olarak buna sıfırlanacaktır.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var user = await _users.FindByIdAsync(owner.UserId);
             if (user == null) return NotFound();
 
-            var newPassword = "Kat" + Random.Shared.Next(100000, 999999) + "!";
             var token  = await _users.GeneratePasswordResetTokenAsync(user);
-            var result = await _users.ResetPasswordAsync(user, token, newPassword);
+            var result = await _users.ResetPasswordAsync(user, token, owner.TcKimlikNo!);
 
             if (result.Succeeded)
-                TempData["Success"] = $"Yeni şifre: {newPassword} (bu şifreyi malike güvenli bir şekilde iletin, tekrar gösterilmeyecektir).";
+                TempData["Success"] = $"Şifre T.C. Kimlik No'suna sıfırlandı ({owner.FullName} — giriş: {user.UserName} / {owner.TcKimlikNo}).";
             else
                 TempData["Error"] = "Şifre sıfırlanamadı: " + string.Join(" ", result.Errors.Select(e => e.Description));
 
