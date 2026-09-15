@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Bağımsız Bölümler";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var selectedProjectId = (int?)ViewBag.SelectedProjectId;
 }
 
 <div class="card">
@@ -18,6 +19,20 @@
                     }
                 </select>
             </form>
+            @if (selectedProjectId.HasValue)
+            {
+                <a href="/Admin/ProjectProgress/Manage/@selectedProjectId" class="btn btn-outline-info btn-sm" title="Bu projenin inşaat aşamaları, genel ilerleme yüzdesi ve saha fotoğraflarını yönet">
+                    <iconify-icon icon="mdi:crane" class="me-1"></iconify-icon>
+                    İnşaat İlerlemesi
+                </a>
+            }
+            else
+            {
+                <a href="/Admin/ProjectProgress" class="btn btn-outline-info btn-sm" title="Proje bazında inşaat aşamaları, genel ilerleme yüzdesi ve saha fotoğraflarını yönet">
+                    <iconify-icon icon="mdi:crane" class="me-1"></iconify-icon>
+                    İnşaat İlerlemesi
+                </a>
+            }
             <a href="/Admin/Units/Create" class="btn btn-primary btn-sm">
                 <iconify-icon icon="iconamoon:sign-plus-circle-duotone" class="me-1"></iconify-icon>
                 Yeni Bağımsız Bölüm
@@ -33,6 +48,9 @@
                 özel taksitleri tek tek elle girersiniz, <strong>"Şablon Uygula"</strong> ile ise önceden hazırlanmış
                 bir ödeme planı şablonunu (örn. %10 peşinat + 24 ay taksit) o bölüme otomatik uygularsınız.
                 İkisini aynı bölüme birden uygulamayın — taksitler mükerrer oluşur.
+                Buradaki "İlerleme" sütunu sadece bu bölümün kendi ilerleme yüzdesidir; projenin genel inşaat
+                aşamaları (temel, karkas vb.), teslim tarihi ve saha fotoğrafları için üstteki
+                <strong>"İnşaat İlerlemesi"</strong> butonunu kullanın.
             </div>
         </div>
     </div>
