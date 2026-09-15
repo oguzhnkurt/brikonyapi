@@ -289,7 +289,8 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
   text-transform:uppercase; color:rgba(255,255,255,.75); margin-bottom:.35rem;
 }
 .owner-portal-text h3 {
-  color:#fff; font-size:1.35rem; font-weight:700; margin:0; max-width:640px;
+  color:#fff; font-size:2rem; font-weight:800; margin:0; max-width:640px;
+  text-transform:uppercase; letter-spacing:.01em; line-height:1.1;
 }
 .btn-owner-portal {
   display:inline-flex; align-items:center; gap:.55rem;
@@ -304,7 +305,7 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
 .btn-owner-portal:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.18); color:var(--c-primary); }
 @media (max-width:768px) {
   .owner-portal-inner { flex-direction:column; align-items:flex-start; }
-  .owner-portal-text h3 { font-size:1.1rem; }
+  .owner-portal-text h3 { font-size:1.5rem; }
 }
 
 /* Hamburger */
