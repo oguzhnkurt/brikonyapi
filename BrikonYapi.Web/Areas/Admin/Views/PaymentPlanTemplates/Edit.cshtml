@@ -133,6 +133,7 @@
     var addBtn = document.getElementById('tplAddRow');
     var totalEl = document.getElementById('tplTotalPct');
     var existingItems = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items.OrderBy(i => i.OrderIndex).Select(i => new { label = i.Label, percentage = i.Percentage, projectStageId = i.ProjectStageId, monthOffset = i.MonthOffset })));
+    var initialIsStage = @Html.Raw(isStage ? "true" : "false");
 
     function renumber() {
         rowsWrap.querySelectorAll('.tpl-row').forEach(function (row, i) {
@@ -188,6 +189,9 @@
     existingItems.forEach(function (item) { rowsWrap.appendChild(newRow(item)); });
     if (existingItems.length === 0) rowsWrap.appendChild(newRow(null));
     renumber();
+    // Sayfa ilk yüklendiğinde de "İnşaat Aşaması" / "Ay" sütunlarından doğru olanı gizle
+    // (aksi halde satır hücreleri her zaman görünür kalır, sadece başlık gizlenir — dar boş bir sütun görünümüne yol açar).
+    setType(initialIsStage);
 })();
 </script>
 }
