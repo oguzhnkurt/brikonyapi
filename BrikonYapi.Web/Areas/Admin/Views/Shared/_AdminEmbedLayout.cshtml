@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="tr" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Brikon Yapı Admin</title>
+
+    <!-- Bu layout, bir Admin sayfasını başka bir Admin ekranının içine (ör. offcanvas panel + iframe)
+         gömmek için kullanılır: aynı CSS/JS'i yükler ama sidebar/topbar'ı çizmez, sadece içeriği verir.
+         Bkz. ProjectProgressController.Manage(embed:true) ve Units/Index.cshtml'deki "İnşaat İlerlemesi" paneli. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
+
+    <link href="/admin-assets/css/vendor.min.css" rel="stylesheet" />
+    <link href="/admin-assets/css/icons.min.css" rel="stylesheet" />
+    <link href="/admin-assets/css/app.min.css" rel="stylesheet" />
+    <link href="/admin-assets/css/brikon-admin-theme.css" rel="stylesheet" />
+    <script src="/admin-assets/js/config.js"></script>
+    @await RenderSectionAsync("Styles", required: false)
+    <style>
+        /* Sidebar/topbar olmadığı için Reback'in .wrapper tabanlı margin/padding kurallarına ihtiyaç yok. */
+        body { background: var(--bs-body-bg, #f5f6f8); }
+        .pp-embed-body { padding: 1rem 1.25rem 2rem; }
+    </style>
+</head>
+<body>
+
+<div class="pp-embed-body">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+            <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-2 fs-18 align-middle"></iconify-icon>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+            <iconify-icon icon="iconamoon:close-circle-1-duotone" class="me-2 fs-18 align-middle"></iconify-icon>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @RenderBody()
+
+</div>
+
+<script src="/admin-assets/js/vendor.min.js"></script>
+<script src="/admin-assets/js/brikon-admin-datepicker.js"></script>
+<script src="/admin-assets/js/app.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

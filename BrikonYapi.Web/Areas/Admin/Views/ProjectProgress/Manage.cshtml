@@ -2,19 +2,27 @@
 @model Project
 @{
     ViewData["Title"] = "İlerleme Yönetimi";
-    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var embed = ViewBag.Embed as bool? ?? false;
+    // embed=true: Bağımsız Bölümler ekranındaki "İnşaat İlerlemesi" panelinin iframe'i buraya bakar —
+    // sidebar/topbar'sız minimal düzen kullanılır (bkz. _AdminEmbedLayout, ProjectProgressController.Manage).
+    Layout = embed
+        ? "~/Areas/Admin/Views/Shared/_AdminEmbedLayout.cshtml"
+        : "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
     var stages = ViewBag.Stages as List<ProjectStage> ?? new();
     var photos = ViewBag.Photos as List<SitePhoto> ?? new();
     var tr = new System.Globalization.CultureInfo("tr-TR");
     var totalWeight = stages.Sum(s2 => s2.WeightPercentage);
 }
 
-<div class="d-flex align-items-center gap-2 mb-3">
-    <a href="/Admin/ProjectProgress" class="btn btn-sm btn-outline-secondary">
-        <iconify-icon icon="iconamoon:arrow-left-2"></iconify-icon> Geri
-    </a>
-    <h5 class="mb-0">@Model.Name</h5>
-</div>
+@if (!embed)
+{
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <a href="/Admin/ProjectProgress" class="btn btn-sm btn-outline-secondary">
+            <iconify-icon icon="iconamoon:arrow-left-2"></iconify-icon> Geri
+        </a>
+        <h5 class="mb-0">@Model.Name</h5>
+    </div>
+}
 
 <div class="row g-3">
     <!-- Genel bilgiler -->
@@ -25,6 +33,7 @@
                 <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="SaveGeneral" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="embed" value="@embed" />
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Genel ilerleme (%)</label>
@@ -68,6 +77,7 @@
                         <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="SeedDefaultStages" method="post" class="d-inline pp-seed-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="embed" value="@embed" />
                             <button type="submit" class="btn btn-sm btn-outline-primary">
                                 <iconify-icon icon="iconamoon:lightning-1-duotone"></iconify-icon>
                                 Standart aşamaları ekle
@@ -125,6 +135,7 @@
                                             <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="UpdateStageStatus" method="post" class="d-flex gap-1">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="stageId" value="@s.Id" />
+                                                <input type="hidden" name="embed" value="@embed" />
                                                 <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                                                     <option value="0" selected="@(s.Status == ProjectStageStatus.Pending)">Bekliyor</option>
                                                     <option value="1" selected="@(s.Status == ProjectStageStatus.InProgress)">Devam ediyor</option>
@@ -140,6 +151,7 @@
                                                   onsubmit="return confirm('Bu iş adımı silinsin mi?')">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="stageId" value="@s.Id" />
+                                                <input type="hidden" name="embed" value="@embed" />
                                                 <button type="submit" class="btn btn-sm btn-link text-danger p-0">
                                                     <iconify-icon icon="iconamoon:trash-duotone"></iconify-icon>
                                                 </button>
@@ -178,6 +190,7 @@
             <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="AddStage" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="embed" value="@embed" />
                 <div class="mb-3">
                     <label class="form-label fw-semibold small">İş Adımı <span class="text-danger">*</span></label>
                     <input name="name" class="form-control" placeholder="Ör: Kaba İnşaat, Sıva, Boya" required />
@@ -244,6 +257,7 @@
             <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="BulkAddStages" method="post" id="bulkStepsForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="embed" value="@embed" />
                 <input type="hidden" name="stepsText" id="bulkStepsText" />
 
                 <label class="form-label fw-semibold small">İş Adımları <span class="text-danger">*</span></label>
@@ -297,6 +311,7 @@
                 <form asp-area="Admin" asp-controller="ProjectProgress" asp-action="UpdateStageDetails" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="stageId" value="@s.Id" />
+                    <input type="hidden" name="embed" value="@embed" />
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">İş Adımı <span class="text-danger">*</span></label>
                         <input name="name" class="form-control" value="@s.Name" required />
@@ -361,6 +376,7 @@
                       enctype="multipart/form-data" class="row g-2 align-items-end mb-4">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="embed" value="@embed" />
                     <div class="col-md-4">
                         <label class="form-label small mb-1">Fotoğraf (JPG/PNG/WEBP, max 10 MB)</label>
                         <input type="file" name="photo" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" required />
@@ -405,6 +421,7 @@
                                               onsubmit="return confirm('Bu fotoğraf silinsin mi?')" class="mt-1">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="photoId" value="@ph.Id" />
+                                            <input type="hidden" name="embed" value="@embed" />
                                             <button type="submit" class="btn btn-sm btn-link text-danger p-0" style="font-size:.75rem;">Sil</button>
                                         </form>
                                     </div>

@@ -57,7 +57,11 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             return View(projects);
         }
 
-        public async Task<IActionResult> Manage(int id)
+        /// <summary>embed=true iken sidebar/topbar'sız minimal düzende render edilir — Bağımsız Bölümler
+        /// ekranındaki "İnşaat İlerlemesi" panelinin iframe'i bu şekilde çağırır (bkz. _AdminEmbedLayout).
+        /// Bu ekrandaki tüm POST aksiyonları da embed durumunu koruyarak buraya geri döner, aksi halde
+        /// panel içindeki bir kayıttan sonra iframe aniden tam sayfaya (sidebar'lı) geçerdi.</summary>
+        public async Task<IActionResult> Manage(int id, bool embed = false)
         {
             var project = await _db.Projects.FirstOrDefaultAsync(p => p.Id == id);
             if (project == null) return NotFound();
@@ -72,12 +76,14 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 .OrderByDescending(s => s.TakenAt)
                 .ToListAsync();
 
+            ViewBag.Embed = embed;
+
             return View(project);
         }
 
         // ── Genel bilgiler ───────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveGeneral(int id, int overallProgress, DateTime? estimatedDelivery, string? virtualTourUrl)
+        public async Task<IActionResult> SaveGeneral(int id, int overallProgress, DateTime? estimatedDelivery, string? virtualTourUrl, bool embed = false)
         {
             var project = await _db.Projects.FirstOrDefaultAsync(p => p.Id == id);
             if (project == null) return NotFound();
@@ -89,7 +95,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
                 {
                     TempData["Error"] = "Sanal tur bağlantısı https:// ile başlayan tam bir adres olmalıdır.";
-                    return RedirectToAction(nameof(Manage), new { id });
+                    return RedirectToAction(nameof(Manage), new { id, embed });
                 }
                 url = uri.AbsoluteUri;
             }
@@ -101,7 +107,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             await _db.SaveChangesAsync();
             TempData["Success"] = "Proje ilerleme bilgileri kaydedildi.";
-            return RedirectToAction(nameof(Manage), new { id });
+            return RedirectToAction(nameof(Manage), new { id, embed });
         }
 
         // ── Aşamalar ─────────────────────────────────────────────
@@ -109,14 +115,14 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         public async Task<IActionResult> AddStage(
             int id, string name, int orderIndex,
             int weightPercentage = 0, DateTime? plannedStartDate = null, DateTime? plannedEndDate = null,
-            decimal? estimatedBudget = null, int progressPercentage = 0)
+            decimal? estimatedBudget = null, int progressPercentage = 0, bool embed = false)
         {
             if (!await _db.Projects.AnyAsync(p => p.Id == id)) return NotFound();
 
             if (string.IsNullOrWhiteSpace(name))
             {
                 TempData["Error"] = "Aşama adı zorunludur.";
-                return RedirectToAction(nameof(Manage), new { id });
+                return RedirectToAction(nameof(Manage), new { id, embed });
             }
 
             var clampedProgress = Math.Clamp(progressPercentage, 0, 100);
@@ -138,14 +144,15 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             await _db.SaveChangesAsync();
             TempData["Success"] = "İş adımı eklendi.";
-            return RedirectToAction(nameof(Manage), new { id });
+            return RedirectToAction(nameof(Manage), new { id, embed });
         }
 
         /// <summary>Bir iş adımının tüm alanlarını (SantiyePro tarzı "İş Adımı Düzenle" formundan) günceller.</summary>
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStageDetails(
             int stageId, string name, int orderIndex, int weightPercentage,
-            DateTime? plannedStartDate, DateTime? plannedEndDate, decimal? estimatedBudget, int progressPercentage)
+            DateTime? plannedStartDate, DateTime? plannedEndDate, decimal? estimatedBudget, int progressPercentage,
+            bool embed = false)
         {
             var stage = await _db.ProjectStages.FirstOrDefaultAsync(s => s.Id == stageId);
             if (stage == null) return NotFound();
@@ -153,7 +160,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             if (string.IsNullOrWhiteSpace(name))
             {
                 TempData["Error"] = "Aşama adı zorunludur.";
-                return RedirectToAction(nameof(Manage), new { id = stage.ProjectId });
+                return RedirectToAction(nameof(Manage), new { id = stage.ProjectId, embed });
             }
 
             stage.Name = name.Trim();
@@ -174,11 +181,11 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             await _db.SaveChangesAsync();
             TempData["Success"] = "İş adımı güncellendi.";
-            return RedirectToAction(nameof(Manage), new { id = stage.ProjectId });
+            return RedirectToAction(nameof(Manage), new { id = stage.ProjectId, embed });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateStageStatus(int stageId, ProjectStageStatus status)
+        public async Task<IActionResult> UpdateStageStatus(int stageId, ProjectStageStatus status, bool embed = false)
         {
             var stage = await _db.ProjectStages.FirstOrDefaultAsync(s => s.Id == stageId);
             if (stage == null) return NotFound();
@@ -209,11 +216,11 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             }
 
             TempData["Success"] = "Aşama durumu güncellendi.";
-            return RedirectToAction(nameof(Manage), new { id = stage.ProjectId });
+            return RedirectToAction(nameof(Manage), new { id = stage.ProjectId, embed });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteStage(int stageId)
+        public async Task<IActionResult> DeleteStage(int stageId, bool embed = false)
         {
             var stage = await _db.ProjectStages.FirstOrDefaultAsync(s => s.Id == stageId);
             if (stage == null) return NotFound();
@@ -229,19 +236,19 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             await _db.SaveChangesAsync();
 
             TempData["Success"] = "Aşama silindi.";
-            return RedirectToAction(nameof(Manage), new { id = projectId });
+            return RedirectToAction(nameof(Manage), new { id = projectId, embed });
         }
 
         /// <summary>Projeye standart kentsel dönüşüm aşamalarını tek tuşla ekler.</summary>
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> SeedDefaultStages(int id)
+        public async Task<IActionResult> SeedDefaultStages(int id, bool embed = false)
         {
             if (!await _db.Projects.AnyAsync(p => p.Id == id)) return NotFound();
 
             if (await _db.ProjectStages.AnyAsync(s => s.ProjectId == id))
             {
                 TempData["Error"] = "Bu projede zaten aşama tanımlı. Önce mevcut aşamaları silin.";
-                return RedirectToAction(nameof(Manage), new { id });
+                return RedirectToAction(nameof(Manage), new { id, embed });
             }
 
             var defaults = new[]
@@ -265,7 +272,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             await _db.SaveChangesAsync();
             TempData["Success"] = "Standart inşaat aşamaları eklendi. Durumlarını buradan güncelleyebilirsiniz.";
-            return RedirectToAction(nameof(Manage), new { id });
+            return RedirectToAction(nameof(Manage), new { id, embed });
         }
 
         /// <summary>Yandan açılan "Standart Aşama Listesini Düzenle" panelinde hazırlanan iş adımı listesini
@@ -273,7 +280,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         /// isimli (büyük/küçük harf duyarsız) bir adım zaten varsa o satır atlanır, panel tekrar tekrar
         /// kullanılabilir.</summary>
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> BulkAddStages(int id, string stepsText)
+        public async Task<IActionResult> BulkAddStages(int id, string stepsText, bool embed = false)
         {
             if (!await _db.Projects.AnyAsync(p => p.Id == id)) return NotFound();
 
@@ -287,7 +294,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             if (!lines.Any())
             {
                 TempData["Error"] = "En az bir iş adımı girin.";
-                return RedirectToAction(nameof(Manage), new { id });
+                return RedirectToAction(nameof(Manage), new { id, embed });
             }
 
             var existingStages = await _db.ProjectStages.Where(s => s.ProjectId == id).ToListAsync();
@@ -315,33 +322,33 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             TempData["Success"] = added > 0
                 ? $"{added} iş adımı eklendi."
                 : "Girilen iş adımlarının tamamı zaten mevcut, yeni kayıt eklenmedi.";
-            return RedirectToAction(nameof(Manage), new { id });
+            return RedirectToAction(nameof(Manage), new { id, embed });
         }
 
         // ── Saha fotoğrafları ────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(12 * 1024 * 1024)]
-        public async Task<IActionResult> AddPhoto(int id, IFormFile photo, string? caption, DateTime? takenAt, bool is360)
+        public async Task<IActionResult> AddPhoto(int id, IFormFile photo, string? caption, DateTime? takenAt, bool is360, bool embed = false)
         {
             if (!await _db.Projects.AnyAsync(p => p.Id == id)) return NotFound();
 
             if (photo == null || photo.Length == 0)
             {
                 TempData["Error"] = "Lütfen bir fotoğraf seçin.";
-                return RedirectToAction(nameof(Manage), new { id });
+                return RedirectToAction(nameof(Manage), new { id, embed });
             }
 
             if (photo.Length > MaxImageBytes)
             {
                 TempData["Error"] = "Fotoğraf 10 MB'ı aşamaz.";
-                return RedirectToAction(nameof(Manage), new { id });
+                return RedirectToAction(nameof(Manage), new { id, embed });
             }
 
             var ext = Path.GetExtension(photo.FileName).ToLowerInvariant();
             if (!AllowedImageExt.Contains(ext))
             {
                 TempData["Error"] = "Sadece JPG, PNG veya WEBP yükleyebilirsiniz.";
-                return RedirectToAction(nameof(Manage), new { id });
+                return RedirectToAction(nameof(Manage), new { id, embed });
             }
 
             var dir = Path.Combine(_env.WebRootPath, "uploads", "site-photos");
@@ -365,11 +372,11 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             await _db.SaveChangesAsync();
             TempData["Success"] = "Saha fotoğrafı eklendi.";
-            return RedirectToAction(nameof(Manage), new { id });
+            return RedirectToAction(nameof(Manage), new { id, embed });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeletePhoto(int photoId)
+        public async Task<IActionResult> DeletePhoto(int photoId, bool embed = false)
         {
             var photo = await _db.SitePhotos.FirstOrDefaultAsync(p => p.Id == photoId);
             if (photo == null) return NotFound();
@@ -391,7 +398,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             await _db.SaveChangesAsync();
 
             TempData["Success"] = "Saha fotoğrafı silindi.";
-            return RedirectToAction(nameof(Manage), new { id = projectId });
+            return RedirectToAction(nameof(Manage), new { id = projectId, embed });
         }
     }
 }

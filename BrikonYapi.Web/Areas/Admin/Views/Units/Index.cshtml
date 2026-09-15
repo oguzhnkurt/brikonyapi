@@ -21,10 +21,13 @@
             </form>
             @if (selectedProjectId.HasValue)
             {
-                <a href="/Admin/ProjectProgress/Manage/@selectedProjectId" class="btn btn-outline-info btn-sm" title="Bu projenin inşaat aşamaları, genel ilerleme yüzdesi ve saha fotoğraflarını yönet">
+                var selectedProjectName = ((SelectList)ViewBag.Projects).FirstOrDefault(p => p.Selected)?.Text ?? "";
+                <button type="button" class="btn btn-outline-info btn-sm" id="progressPanelBtn"
+                        data-project-id="@selectedProjectId" data-project-name="@selectedProjectName"
+                        title="Bu projenin inşaat aşamaları, genel ilerleme yüzdesi ve saha fotoğraflarını yönet">
                     <iconify-icon icon="mdi:crane" class="me-1"></iconify-icon>
                     İnşaat İlerlemesi
-                </a>
+                </button>
             }
             else
             {
@@ -146,3 +149,58 @@
         }
     </div>
 </div>
+
+<!-- İnşaat İlerlemesi paneli: /Admin/ProjectProgress/Manage ekranını (sidebar'sız embed modunda)
+     bir iframe içinde sağdan kayan panelde gösterir — ayrı bir sayfaya gitmeden proje aşamaları,
+     genel ilerleme ve saha fotoğrafları buradan yönetilebilir. row'un dışında; Bootstrap'ın
+     ".row > *" kuralı position:relative dayattığı için offcanvas'ın position:fixed'ini eziyordu
+     (bkz. PaymentPlanTemplates/Manage'deki aynı not). -->
+<div class="offcanvas offcanvas-end pp-embed-panel" tabindex="-1" id="progressPanel" aria-labelledby="progressPanelTitle">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="progressPanelTitle">
+            <iconify-icon icon="mdi:crane" class="me-1 text-info"></iconify-icon>
+            <span id="progressPanelProjectName">İnşaat İlerlemesi</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <iframe id="progressPanelFrame" src="about:blank" style="width:100%; height:100%; border:0;"></iframe>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    /* Reback'in .offcanvas.offcanvas-end{width:var(--bs-offcanvas-width)} kuralı iki sınıflı
+       (daha yüksek özgüllük) olduğu için doğrudan width yazmak kaybediyordu — aynı CSS
+       değişkenini eziyoruz (bkz. ProjectProgress/Manage.cshtml'deki .pp-stage-panel notu). */
+    .pp-embed-panel { --bs-offcanvas-width: min(1100px, 96vw); }
+</style>
+}
+
+@section Scripts {
+<script>
+(function () {
+    var btn = document.getElementById('progressPanelBtn');
+    var panelEl = document.getElementById('progressPanel');
+    var frame = document.getElementById('progressPanelFrame');
+    var titleEl = document.getElementById('progressPanelProjectName');
+    if (!btn || !panelEl || !frame) return;
+
+    btn.addEventListener('click', function () {
+        var projectId = btn.getAttribute('data-project-id');
+        var projectName = btn.getAttribute('data-project-name') || 'İnşaat İlerlemesi';
+        titleEl.textContent = projectName;
+        // Panel her açılışta tazelensin diye src'yi burada set ediyoruz (lazy-load — sayfa
+        // ilk yüklenirken gereksiz yere bir iframe daha çekmesin).
+        frame.src = '/Admin/ProjectProgress/Manage/' + projectId + '?embed=true';
+        var offcanvas = bootstrap.Offcanvas.getOrCreateInstance(panelEl);
+        offcanvas.show();
+    });
+
+    // Panel kapanınca iframe'i boşalt — açık kalan yüklü sayfa gereksiz yere arkada durmasın.
+    panelEl.addEventListener('hidden.bs.offcanvas', function () {
+        frame.src = 'about:blank';
+    });
+})();
+</script>
+}
