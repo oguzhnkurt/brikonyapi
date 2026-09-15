@@ -11,6 +11,13 @@
     int historyTotalPages = ViewBag.HistoryTotalPages ?? 1;
     int historyTotalCount = ViewBag.HistoryTotalCount ?? 0;
     string reminderCheckpoints = ViewBag.ReminderCheckpoints;
+    string reminderMessageTemplate = ViewBag.ReminderMessageTemplate;
+    var reminderDaysSelected = (reminderCheckpoints ?? "")
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(x => int.TryParse(x, out var n) ? n : (int?)null)
+        .Where(n => n.HasValue)
+        .Select(n => n!.Value)
+        .ToHashSet();
     bool whatsAppConfigured = ViewBag.WhatsAppConfigured;
     var tr = new System.Globalization.CultureInfo("tr-TR");
 
@@ -56,8 +63,8 @@
 }
 
 <div class="row g-3 mb-3">
-    <div class="col-lg-7">
-        <div class="card bk-form-card border-0 h-100">
+    <div class="col-12">
+        <div class="card bk-form-card border-0">
             <div class="card-body bk-form-body">
                 <div class="bk-group-title mb-2">
                     <iconify-icon icon="ic:baseline-whatsapp" class="text-success me-1"></iconify-icon>
@@ -132,36 +139,87 @@
             </div>
         </div>
     </div>
+</div>
 
-    <div class="col-lg-5">
-        <div class="card bk-form-card border-0 h-100">
-            <div class="card-body bk-form-body">
-                <div class="bk-group-title mb-2">
-                    <iconify-icon icon="mdi:clock-alert-outline" class="me-1"></iconify-icon>
-                    Otomatik Hatırlatıcı
-                </div>
-                <form asp-area="Admin" asp-controller="Notifications" asp-action="SaveReminderSettings" method="post">
-                    @Html.AntiForgeryToken()
-                    <label class="bk-label">Vadeye kaç gün kala hatırlatma gönderilsin?</label>
-                    <input type="text" name="checkpoints" class="form-control" value="@reminderCheckpoints" placeholder="Örn: 7,1" />
-                    <div class="form-text bk-hint">
-                        Virgülle ayırın (örn: "7,1" → vadeye 7 gün ve 1 gün kala). Her gece otomatik kontrol edilir,
-                        vadesi bu günlere denk gelen ödemeler için tekrar gönderilmez.
+<div class="card bk-form-card border-0 mb-3">
+    <div class="card-body bk-form-body">
+        <div class="bk-group-title mb-2">
+            <iconify-icon icon="mdi:clock-alert-outline" class="me-1"></iconify-icon>
+            Otomatik Hatırlatıcı
+        </div>
+        <div class="text-muted small mb-3">
+            Ödeme vadesinden önce, seçilen günlerde malike otomatik olarak (her gece kontrol edilir) bir hatırlatma gönderilir.
+            SMS ve e-posta aşağıdaki mesaj şablonuyla gönderilir; WhatsApp için ayrıca onaylı bir şablon adı sunucu ayarlarından
+            (<code>WhatsApp:ReminderTemplateName</code>) tanımlanmış olmalı.
+        </div>
+
+        <form asp-area="Admin" asp-controller="Notifications" asp-action="SaveReminderSettings" method="post" id="reminderForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="checkpoints" id="checkpointsInput" value="@reminderCheckpoints" />
+
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    <label class="bk-label">Vadeye kaç gün/hafta kala hatırlatılsın?</label>
+                    <div class="d-flex flex-wrap gap-2" id="dayPresets">
+                        @foreach (var (days, label) in new (int, string)[] { (1, "1 gün"), (3, "3 gün"), (7, "1 hafta"), (14, "2 hafta"), (30, "1 ay") })
+                        {
+                            <button type="button" class="btn btn-sm day-chip @(reminderDaysSelected.Contains(days) ? "btn-primary" : "btn-outline-secondary")" data-days="@days">
+                                @label
+                            </button>
+                        }
                     </div>
-                    <button type="submit" class="btn bk-btn-save btn-sm mt-3">
-                        <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
-                        Kaydet
-                    </button>
-                </form>
 
-                <hr class="my-3" />
+                    <div class="d-flex flex-wrap gap-2 mt-2" id="customDayChips">
+                        @{
+                            var presetDays = new[] { 1, 3, 7, 14, 30 };
+                            var customDays = reminderDaysSelected.Where(d => !presetDays.Contains(d)).OrderByDescending(d => d);
+                        }
+                        @foreach (var d in customDays)
+                        {
+                            <span class="btn btn-sm btn-primary day-chip-custom" data-days="@d">
+                                @d gün
+                                <iconify-icon icon="mdi:close" class="ms-1 remove-custom-day"></iconify-icon>
+                            </span>
+                        }
+                    </div>
 
-                <div class="text-muted small">
-                    <iconify-icon icon="iconamoon:information-circle-duotone" class="text-warning me-1"></iconify-icon>
-                    Her kat malikinin bildirim tercihleri (SMS/E-posta/WhatsApp açık-kapalı) ve telefon numarası
-                    <a href="/Admin/Owners">Kat Malikleri</a> ekranındaki "Bildirimler" butonundan düzenlenir.
+                    <div class="input-group input-group-sm mt-2" style="max-width:220px">
+                        <input type="number" min="1" max="365" class="form-control" id="customDayInput" placeholder="Özel gün sayısı" />
+                        <button type="button" class="btn btn-outline-primary" id="btnAddCustomDay">
+                            <iconify-icon icon="iconamoon:sign-plus-circle-duotone"></iconify-icon>
+                        </button>
+                    </div>
+
+                    <div class="form-text bk-hint mt-2">
+                        Bir veya birden fazla seçebilirsiniz. Vadesi bu günlere denk gelen ödemeler için aynı gün tekrar gönderilmez.
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <label class="bk-label">Mesaj Şablonu</label>
+                    <textarea name="messageTemplate" id="messageTemplateInput" class="form-control" rows="3" maxlength="500">@reminderMessageTemplate</textarea>
+                    <div class="form-text bk-hint">
+                        Kullanılabilir yer tutucular:
+                        <code>{ad}</code> malik adı, <code>{aciklama}</code> taksit açıklaması,
+                        <code>{ne_zaman}</code> "yarın" / "1 hafta içinde" gibi ifade, <code>{vade}</code> vade tarihi, <code>{tutar}</code> tutar.
+                    </div>
+
+                    <div class="mt-2 p-2 bg-light rounded small" id="templatePreview" style="white-space:pre-wrap;"></div>
                 </div>
             </div>
+
+            <button type="submit" class="btn bk-btn-save btn-sm mt-3">
+                <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                Kaydet
+            </button>
+        </form>
+
+        <hr class="my-3" />
+
+        <div class="text-muted small">
+            <iconify-icon icon="iconamoon:information-circle-duotone" class="text-warning me-1"></iconify-icon>
+            Her kat malikinin bildirim tercihleri (SMS/E-posta/WhatsApp açık-kapalı) ve telefon numarası
+            <a href="/Admin/Owners">Kat Malikleri</a> ekranındaki "Bildirimler" butonundan düzenlenir.
         </div>
     </div>
 </div>
@@ -371,6 +429,90 @@
                     loadHistoryPage(e.state.historyUrl, false);
                 }
             });
+
+            // Otomatik Hatırlatıcı: gün/hafta seçici artık chip'lerle çalışıyor (elle "7,1" yazmak yerine).
+            // Seçili günler (hazır seçenekler + eklenen özel günler) form gönderilmeden hemen önce
+            // gizli "checkpoints" alanına virgülle ayrılmış olarak yazılır.
+            var checkpointsInput = document.getElementById('checkpointsInput');
+            var customDayChips = document.getElementById('customDayChips');
+            var customDayInput = document.getElementById('customDayInput');
+            var messageTemplateInput = document.getElementById('messageTemplateInput');
+            var templatePreview = document.getElementById('templatePreview');
+
+            function getSelectedDays() {
+                var days = [];
+                document.querySelectorAll('.day-chip.btn-primary').forEach(function (btn) {
+                    days.push(parseInt(btn.getAttribute('data-days'), 10));
+                });
+                document.querySelectorAll('.day-chip-custom').forEach(function (chip) {
+                    days.push(parseInt(chip.getAttribute('data-days'), 10));
+                });
+                return Array.from(new Set(days)).sort(function (a, b) { return b - a; });
+            }
+
+            function syncCheckpointsInput() {
+                checkpointsInput.value = getSelectedDays().join(',');
+            }
+
+            document.querySelectorAll('.day-chip').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    btn.classList.toggle('btn-primary');
+                    btn.classList.toggle('btn-outline-secondary');
+                    syncCheckpointsInput();
+                });
+            });
+
+            function addCustomDayChip(days) {
+                if (!days || days < 1) return;
+                var existing = getSelectedDays();
+                if (existing.indexOf(days) !== -1) return;
+
+                var chip = document.createElement('span');
+                chip.className = 'btn btn-sm btn-primary day-chip-custom';
+                chip.setAttribute('data-days', days);
+                chip.innerHTML = days + ' gün <iconify-icon icon="mdi:close" class="ms-1 remove-custom-day"></iconify-icon>';
+                customDayChips.appendChild(chip);
+                syncCheckpointsInput();
+            }
+
+            document.getElementById('btnAddCustomDay').addEventListener('click', function () {
+                var val = parseInt(customDayInput.value, 10);
+                addCustomDayChip(val);
+                customDayInput.value = '';
+            });
+
+            customDayInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('btnAddCustomDay').click();
+                }
+            });
+
+            customDayChips.addEventListener('click', function (e) {
+                var remove = e.target.closest && e.target.closest('.remove-custom-day');
+                if (!remove) return;
+                remove.closest('.day-chip-custom').remove();
+                syncCheckpointsInput();
+            });
+
+            function renderTemplatePreview() {
+                var sample = messageTemplateInput.value
+                    .replace(/\{ad\}/g, 'Ahmet Yılmaz')
+                    .replace(/\{aciklama\}/g, 'Taksit 3/12')
+                    .replace(/\{ne_zaman\}/g, '1 hafta içinde')
+                    .replace(/\{vade\}/g, '20.09.2026')
+                    .replace(/\{tutar\}/g, '₺250.000');
+                templatePreview.textContent = sample || ' ';
+            }
+
+            messageTemplateInput.addEventListener('input', renderTemplatePreview);
+            renderTemplatePreview();
+
+            document.getElementById('reminderForm').addEventListener('submit', function () {
+                syncCheckpointsInput();
+            });
+
+            syncCheckpointsInput();
         })();
     </script>
 }

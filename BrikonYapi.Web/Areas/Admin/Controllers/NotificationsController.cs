@@ -18,6 +18,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
     public class NotificationsController : Controller
     {
         private const string ReminderCheckpointsKey = "ReminderCheckpoints";
+        private const string ReminderMessageTemplateKey = "ReminderMessageTemplate";
         private static readonly int[] AllowedPageSizes = { 25, 50, 100 };
 
         private readonly AppDbContext _db;
@@ -63,6 +64,10 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             var checkpointsRaw = await _settings.GetAsync(ReminderCheckpointsKey);
             ViewBag.ReminderCheckpoints = string.IsNullOrWhiteSpace(checkpointsRaw) ? "7,1" : checkpointsRaw;
+
+            var templateRaw = await _settings.GetAsync(ReminderMessageTemplateKey);
+            ViewBag.ReminderMessageTemplate = string.IsNullOrWhiteSpace(templateRaw) ? PaymentNotificationService.DefaultReminderMessageTemplate : templateRaw;
+
             ViewBag.WhatsAppConfigured = _whatsApp.IsConfigured && !string.IsNullOrWhiteSpace(_config["WhatsApp:ManualTemplateName"]);
 
             return View(owners);
@@ -151,11 +156,12 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
         /// <summary>
         /// Otomatik ödeme hatırlatıcısının kaç gün önceden (ör. "7,1" → vadeye 7 gün ve 1 gün kala)
-        /// tetikleneceğini kaydeder. PaymentReminderBackgroundService bu değeri bir sonraki
-        /// çalışmasında (en geç 24 saat içinde, uygulama yeniden başlatılırsa hemen) okur.
+        /// tetikleneceğini ve gönderilecek mesaj şablonunu kaydeder. PaymentReminderBackgroundService
+        /// ve PaymentNotificationService.NotifyReminderAsync bu değerleri bir sonraki çalışmada
+        /// (en geç 24 saat içinde, uygulama yeniden başlatılırsa hemen) okur.
         /// </summary>
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveReminderSettings(string checkpoints)
+        public async Task<IActionResult> SaveReminderSettings(string checkpoints, string? messageTemplate)
         {
             var days = (checkpoints ?? "")
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -168,11 +174,19 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             if (days.Count == 0)
             {
-                TempData["Error"] = "Geçerli en az bir gün sayısı girin (örn: 7,1).";
+                TempData["Error"] = "Geçerli en az bir gün sayısı seçin (örn: 7 gün, 1 gün).";
                 return RedirectToAction(nameof(Index));
             }
 
-            await _settings.SaveAllAsync(new Dictionary<string, string> { [ReminderCheckpointsKey] = string.Join(",", days) });
+            var template = string.IsNullOrWhiteSpace(messageTemplate)
+                ? PaymentNotificationService.DefaultReminderMessageTemplate
+                : messageTemplate.Trim();
+
+            await _settings.SaveAllAsync(new Dictionary<string, string>
+            {
+                [ReminderCheckpointsKey] = string.Join(",", days),
+                [ReminderMessageTemplateKey] = template
+            });
 
             TempData["Success"] = $"Otomatik hatırlatıcı ayarları güncellendi: vadeye {string.Join(", ", days)} gün kala hatırlatma gönderilecek.";
             return RedirectToAction(nameof(Index));

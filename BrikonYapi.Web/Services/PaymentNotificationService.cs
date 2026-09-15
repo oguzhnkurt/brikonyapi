@@ -12,19 +12,29 @@ namespace BrikonYapi.Web.Services
     /// </summary>
     public class PaymentNotificationService
     {
+        /// <summary>
+        /// Otomatik hatırlatıcının varsayılan mesaj şablonu — admin panelinden (Bildirimler ekranı)
+        /// hiç değiştirilmemişse veya SiteSetting kaydı boşsa kullanılır. Yer tutucular:
+        /// {ad} malik adı, {aciklama} taksit açıklaması, {ne_zaman} "yarın"/"1 hafta içinde" gibi ifade,
+        /// {vade} vade tarihi (gg.aa.yyyy), {tutar} para birimiyle formatlanmış tutar.
+        /// </summary>
+        public const string DefaultReminderMessageTemplate = "{aciklama} taksitinizin vadesi {ne_zaman} ({vade}) doluyor. Tutar: {tutar}.";
+
         private readonly AppDbContext _db;
         private readonly SmsService _sms;
         private readonly EmailService _email;
         private readonly WhatsAppService _whatsapp;
+        private readonly SiteSettingService _settings;
         private readonly IConfiguration _config;
         private readonly ILogger<PaymentNotificationService> _logger;
 
-        public PaymentNotificationService(AppDbContext db, SmsService sms, EmailService email, WhatsAppService whatsapp, IConfiguration config, ILogger<PaymentNotificationService> logger)
+        public PaymentNotificationService(AppDbContext db, SmsService sms, EmailService email, WhatsAppService whatsapp, SiteSettingService settings, IConfiguration config, ILogger<PaymentNotificationService> logger)
         {
             _db = db;
             _sms = sms;
             _email = email;
             _whatsapp = whatsapp;
+            _settings = settings;
             _config = config;
             _logger = logger;
         }
@@ -124,7 +134,7 @@ namespace BrikonYapi.Web.Services
         /// bildirim konusuna dahil edilir — böylece PaymentReminderBackgroundService'in "bu kontrol
         /// noktası için daha önce gönderildi mi?" kontrolü (NotificationLog.Subject üzerinden) her
         /// kontrol noktasını birbirinden bağımsız olarak tekilleştirebilir.</summary>
-        public Task NotifyReminderAsync(Owner owner, PaymentSchedule schedule, int daysBefore)
+        public async Task NotifyReminderAsync(Owner owner, PaymentSchedule schedule, int daysBefore)
         {
             var desc = string.IsNullOrWhiteSpace(schedule.Description) ? "Taksit" : schedule.Description;
             var whenText = daysBefore switch
@@ -132,9 +142,19 @@ namespace BrikonYapi.Web.Services
                 <= 0 => "bugün",
                 1 => "yarın",
                 7 => "1 hafta içinde",
+                14 => "2 hafta içinde",
+                30 => "1 ay içinde",
                 _ => $"{daysBefore} gün içinde"
             };
-            var message = $"{desc} taksitinizin vadesi {whenText} ({schedule.DueDate:dd.MM.yyyy}) doluyor. Tutar: {Money(schedule)}.";
+
+            var templateRaw = await _settings.GetAsync("ReminderMessageTemplate");
+            var template = string.IsNullOrWhiteSpace(templateRaw) ? DefaultReminderMessageTemplate : templateRaw;
+            var message = template
+                .Replace("{ad}", owner.FullName)
+                .Replace("{aciklama}", desc)
+                .Replace("{ne_zaman}", whenText)
+                .Replace("{vade}", schedule.DueDate.ToString("dd.MM.yyyy"))
+                .Replace("{tutar}", Money(schedule));
             var subject = $"Ödeme Hatırlatması ({daysBefore} gün kala) — Brikon Yapı";
 
             // WhatsApp:ReminderTemplateName appsettings'te tanımlıysa (hesap açılıp şablon Meta'da
@@ -145,7 +165,7 @@ namespace BrikonYapi.Web.Services
                 ? null
                 : new WhatsAppTemplate(templateName, new[] { owner.FullName, Money(schedule), schedule.DueDate.ToString("dd.MM.yyyy") });
 
-            return NotifyOwnerAsync(owner, schedule, subject, message, whatsapp);
+            await NotifyOwnerAsync(owner, schedule, subject, message, whatsapp);
         }
 
         /// <summary>Bir inşaat aşaması "Tamamlandı" olarak işaretlendiğinde, o aşamaya bağlı ve henüz
