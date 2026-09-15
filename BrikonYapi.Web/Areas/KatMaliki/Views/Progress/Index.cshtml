@@ -30,7 +30,7 @@
     <!-- Genel ilerleme kartı -->
     <div class="km-card km-prog-summary mb-4 @(isFirstProject ? "km-prog-summary-first" : "")">
         <div class="km-prog-unit">
-            <iconify-icon icon="mdi:home-city-outline"></iconify-icon>
+            <span class="km-prog-unit-icon"><iconify-icon icon="mdi:home-city-outline"></iconify-icon></span>
             <span class="km-prog-unit-text">
                 <strong>@p.Project.Name</strong>
                 @if (!string.IsNullOrWhiteSpace(unitLabel))
@@ -43,7 +43,7 @@
                 }
             </span>
         </div>
-        <div class="d-flex justify-content-between align-items-start gap-3 mt-2">
+        <div class="d-flex justify-content-between align-items-start gap-3 mt-3">
             <div>
                 <div class="km-prog-label">Genel ilerleme</div>
                 <div class="km-prog-value">%@p.OverallProgress</div>
@@ -91,23 +91,41 @@
 
         @foreach (var pt in Model.PaymentTotals)
         {
-            <div class="km-home-pay-cards mb-3">
-                <div class="km-home-pay-card">
-                    <span class="km-home-pay-icon is-paid"><iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon></span>
-                    <span class="km-home-pay-label">Ödenen @(Model.PaymentTotals.Count > 1 ? $"({pt.Currency})" : "")</span>
-                    <span class="km-home-pay-value is-paid">@pt.Symbol@pt.Paid.ToString("N0", tr)</span>
+            var ptTotal = pt.Paid + pt.Remaining;
+            var ptPct = ptTotal > 0 ? (double)(pt.Paid / ptTotal * 100) : 0;
+            <div class="km-pay-card mb-3">
+                <div class="km-pay-card-top">
+                    <span class="km-pay-card-title">
+                        <iconify-icon icon="iconamoon:wallet-duotone"></iconify-icon>
+                        Ödeme Durumu @(Model.PaymentTotals.Count > 1 ? $"({pt.Currency})" : "")
+                    </span>
+                    <span class="km-pay-card-pct">%@(Math.Round(ptPct)) tamamlandı</span>
                 </div>
-                <div class="km-home-pay-card">
-                    <span class="km-home-pay-icon is-remaining"><iconify-icon icon="iconamoon:credit-card-duotone"></iconify-icon></span>
-                    <span class="km-home-pay-label">Kalan @(Model.PaymentTotals.Count > 1 ? $"({pt.Currency})" : "")</span>
-                    <span class="km-home-pay-value">@pt.Symbol@pt.Remaining.ToString("N0", tr)</span>
+                <div class="km-pay-progress">
+                    <div class="km-pay-progress-fill" style="width:@(ptPct.ToString("0.##", tr))%"></div>
                 </div>
+                <div class="km-pay-stats">
+                    <div class="km-pay-stat">
+                        <span class="km-pay-stat-icon is-paid"><iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon></span>
+                        <span class="km-pay-stat-text">
+                            <span class="km-pay-stat-label">Ödenen</span>
+                            <span class="km-pay-stat-value is-paid">@pt.Symbol@pt.Paid.ToString("N0", tr)</span>
+                        </span>
+                    </div>
+                    <div class="km-pay-stat-divider"></div>
+                    <div class="km-pay-stat">
+                        <span class="km-pay-stat-icon is-remaining"><iconify-icon icon="iconamoon:credit-card-duotone"></iconify-icon></span>
+                        <span class="km-pay-stat-text">
+                            <span class="km-pay-stat-label">Kalan</span>
+                            <span class="km-pay-stat-value">@pt.Symbol@pt.Remaining.ToString("N0", tr)</span>
+                        </span>
+                    </div>
+                </div>
+                <a href="/KatMaliki/Dashboard" class="km-pay-card-link">
+                    Tüm ödemeleri gör <iconify-icon icon="iconamoon:arrow-right-2"></iconify-icon>
+                </a>
             </div>
         }
-
-        <a href="/KatMaliki/Dashboard" class="km-home-link mb-4">
-            Tüm ödemeleri gör <iconify-icon icon="iconamoon:arrow-right-2"></iconify-icon>
-        </a>
     }
 
     <!-- İnşaat aşamaları -->
@@ -230,21 +248,30 @@
 
 @section Styles {
 <style>
-    .km-card { background:#fff; border-radius:16px; padding:1.25rem 1.35rem; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+    .km-card { background:#fff; border-radius:20px; padding:1.25rem 1.35rem; box-shadow:0 4px 18px rgba(20,40,60,.07); }
 
     /* İlk proje kartı, üstteki başlık (KmGreeting) ile görsel olarak birleşsin diye hafifçe yukarı çekilir */
     .km-prog-summary-first { margin-top:-1.6rem; position:relative; z-index:2; }
+    .km-prog-summary {
+        background:linear-gradient(180deg, #ffffff 0%, #f7fbfd 100%);
+        border:1px solid #eef3f6;
+    }
 
-    .km-prog-unit { display:flex; align-items:center; gap:.6rem; padding-bottom:.9rem; margin-bottom:.9rem; border-bottom:1px solid #f1f3f5; }
-    .km-prog-unit iconify-icon { font-size:1.3rem; color:var(--c-primary); flex-shrink:0; }
+    .km-prog-unit { display:flex; align-items:center; gap:.75rem; padding-bottom:.9rem; margin-bottom:.9rem; border-bottom:1px solid #f1f3f5; }
+    .km-prog-unit-icon {
+        width:40px; height:40px; flex-shrink:0; border-radius:12px;
+        background:linear-gradient(135deg, rgba(0,130,180,.12), rgba(0,160,227,.12));
+        display:flex; align-items:center; justify-content:center;
+    }
+    .km-prog-unit-icon iconify-icon { font-size:1.25rem; color:var(--c-primary); }
     .km-prog-unit-text { display:flex; flex-direction:column; gap:.05rem; font-size:.98rem; min-width:0; }
     .km-prog-unit-sub { font-size:.82rem; color:#9aa3ac; font-weight:500; }
 
-    .km-prog-label { font-size:.82rem; color:#8a939c; font-weight:600; }
-    .km-prog-value { font-size:2.2rem; font-weight:800; color:var(--c-primary); line-height:1.1; }
-    .km-prog-delivery { font-size:1rem; font-weight:700; }
-    .km-prog-bar { height:10px; background:#eef0f2; border-radius:10px; overflow:hidden; }
-    .km-prog-bar-fill { height:100%; background:linear-gradient(90deg,var(--c-primary),var(--c-secondary)); border-radius:10px; transition:width .6s ease; }
+    .km-prog-label { font-size:.78rem; color:#8a939c; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
+    .km-prog-value { font-size:2.3rem; font-weight:800; color:var(--c-primary); line-height:1.1; }
+    .km-prog-delivery { font-size:1rem; font-weight:700; color:#2B2A29; }
+    .km-prog-bar { height:12px; background:#eef0f2; border-radius:20px; overflow:hidden; }
+    .km-prog-bar-fill { height:100%; background:linear-gradient(90deg,var(--c-primary),var(--c-secondary)); border-radius:20px; transition:width .6s ease; }
     .km-prog-current { font-size:.92rem; color:#4a5158; display:flex; align-items:center; gap:.4rem; }
     .km-prog-current iconify-icon { color:var(--c-primary); font-size:1.15rem; }
 
@@ -318,26 +345,40 @@
     }
     .km-home-banner iconify-icon { font-size:1.3rem; flex-shrink:0; }
 
-    .km-home-pay-cards { display:flex; gap:.7rem; }
-    .km-home-pay-card {
-        flex:1; background:#fff; border-radius:14px; padding:.95rem 1rem; box-shadow:0 2px 8px rgba(0,0,0,.05);
-        display:flex; flex-direction:column; gap:.15rem;
+    /* Ödeme durumu kartı: ayrı ayrı çirkin kutucuklar yerine tek, marka renkli, oranlı bir kart */
+    .km-pay-card {
+        background:#fff; border-radius:20px; padding:1.15rem 1.25rem 1rem;
+        box-shadow:0 4px 18px rgba(20,40,60,.07); border:1px solid #eef3f6;
     }
-    .km-home-pay-icon {
-        width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center;
-        font-size:1.15rem; margin-bottom:.3rem;
-    }
-    .km-home-pay-icon.is-paid      { background:#e6f7ed; color:#1e9e5a; }
-    .km-home-pay-icon.is-remaining { background:#e6f4fb; color:var(--c-primary); }
-    .km-home-pay-label { font-size:.8rem; color:#9aa3ac; font-weight:600; }
-    .km-home-pay-value { font-size:1.3rem; font-weight:800; color:var(--c-primary); }
-    .km-home-pay-value.is-paid { color:#1e9e5a; }
+    .km-pay-card-top { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.65rem; }
+    .km-pay-card-title { display:flex; align-items:center; gap:.4rem; font-size:.92rem; font-weight:700; color:#2B2A29; }
+    .km-pay-card-title iconify-icon { font-size:1.15rem; color:var(--c-primary); }
+    .km-pay-card-pct { font-size:.78rem; font-weight:700; color:#1e9e5a; white-space:nowrap; }
 
-    .km-home-link {
-        display:flex; align-items:center; justify-content:center; gap:.3rem;
-        color:var(--c-primary); font-weight:700; font-size:.95rem; text-decoration:none; padding:.4rem;
+    .km-pay-progress { height:8px; background:#eef0f2; border-radius:20px; overflow:hidden; margin-bottom:1rem; }
+    .km-pay-progress-fill { height:100%; background:linear-gradient(90deg,#1e9e5a,#3fc47c); border-radius:20px; transition:width .6s ease; }
+
+    .km-pay-stats { display:flex; align-items:center; gap:.8rem; }
+    .km-pay-stat { flex:1; display:flex; align-items:center; gap:.7rem; min-width:0; }
+    .km-pay-stat-icon {
+        width:38px; height:38px; flex-shrink:0; border-radius:11px; display:flex; align-items:center; justify-content:center;
+        font-size:1.2rem;
     }
-    .km-home-link iconify-icon { font-size:1.1rem; }
+    .km-pay-stat-icon.is-paid      { background:#e6f7ed; color:#1e9e5a; }
+    .km-pay-stat-icon.is-remaining { background:#e6f4fb; color:var(--c-primary); }
+    .km-pay-stat-text { display:flex; flex-direction:column; gap:.05rem; min-width:0; }
+    .km-pay-stat-label { font-size:.78rem; color:#9aa3ac; font-weight:600; }
+    .km-pay-stat-value { font-size:1.15rem; font-weight:800; color:var(--c-primary); line-height:1.2; }
+    .km-pay-stat-value.is-paid { color:#1e9e5a; }
+    .km-pay-stat-divider { width:1px; align-self:stretch; background:#f1f3f5; }
+
+    .km-pay-card-link {
+        display:flex; align-items:center; justify-content:center; gap:.3rem;
+        color:var(--c-primary); font-weight:700; font-size:.88rem; text-decoration:none;
+        margin-top:.95rem; padding-top:.85rem; border-top:1px solid #f1f3f5;
+    }
+    .km-pay-card-link iconify-icon { font-size:1.05rem; }
+
     .km-home-link-sm { color:var(--c-primary); font-weight:700; font-size:.85rem; text-decoration:none; display:inline-flex; align-items:center; gap:.2rem; }
     .km-home-link-sm iconify-icon { font-size:1rem; }
 
@@ -375,6 +416,8 @@
         .km-prog-value { font-size:1.9rem; }
         .km-photo-card { flex-basis:210px; }
         .km-prog-summary-first { margin-top:-1.2rem; }
+        .km-pay-stat-value { font-size:1.05rem; }
+        .km-pay-stat-icon { width:34px; height:34px; font-size:1.05rem; }
     }
 
     /* Bilgisayardan girenlerde sütun daralıp ortalandığı için (bkz. _KatMalikiLayout),
