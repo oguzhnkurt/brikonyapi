@@ -137,6 +137,15 @@
                                                 Şifre Sıfırla
                                             </button>
                                         </form>
+                                        <form asp-area="Admin" asp-controller="Owners" asp-action="Delete" method="post" class="d-inline"
+                                              onsubmit="return confirm('Bu kat maliki kalıcı olarak silinecek. Bu işlem geri alınamaz. Emin misiniz?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@o.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <iconify-icon icon="iconamoon:trash-duotone"></iconify-icon>
+                                                Sil
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

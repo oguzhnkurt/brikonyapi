@@ -576,5 +576,40 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        /// <summary>
+        /// Kat malikini kalıcı olarak siler. Bağımsız bölümleri (Unit) silmez, sadece sahipsiz bırakır
+        /// (Unit.OwnerId → null, veritabanı düzeyinde SetNull olarak yapılandırılmış) — böylece bölüm
+        /// başka bir malike yeniden atanabilir. Bildirim kaydı/erişim/anket oyu gibi bu malike ait diğer
+        /// kayıtlar veritabanı düzeyinde otomatik silinir (Cascade). Girişte kullandığı hesabı (AspNetUsers)
+        /// da ayrıca siler — bu, Owner tablosuyla gerçek bir FK ilişkisi olmadığı için EF'in otomatik
+        /// halledemeyeceği ayrı bir adımdır.
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var owner = await _db.Owners.FindAsync(id);
+            if (owner == null) return NotFound();
+
+            var fullName = owner.FullName;
+            var userId = owner.UserId;
+
+            try
+            {
+                _db.Owners.Remove(owner);
+                await _db.SaveChangesAsync();
+
+                var user = await _users.FindByIdAsync(userId);
+                if (user != null) await _users.DeleteAsync(user);
+
+                TempData["Success"] = $"{fullName} kalıcı olarak silindi. Varsa bağımsız bölümleri sahipsiz (atanmamış) durumda kaldı.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Kat maliki silinemedi: " + ex.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
