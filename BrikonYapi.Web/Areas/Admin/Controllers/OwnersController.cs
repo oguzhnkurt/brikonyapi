@@ -213,7 +213,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
                     await _users.AddToRoleAsync(user, "KatMaliki");
 
-                    _db.Owners.Add(new Owner
+                    var newOwner = new Owner
                     {
                         FullName  = fullName,
                         Email     = email,
@@ -221,10 +221,12 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                         UserId    = user.Id,
                         IsActive  = true,
                         CreatedAt = DateTime.Now
-                    });
+                    };
+                    _db.Owners.Add(newOwner);
                     await _db.SaveChangesAsync();
 
                     row.Password = password;
+                    row.OwnerId  = newOwner.Id;
                     row.Success  = true;
                 }
             }

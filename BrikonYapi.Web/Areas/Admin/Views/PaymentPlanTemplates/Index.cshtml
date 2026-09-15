@@ -69,6 +69,17 @@
         </div>
     </div>
 }
+else
+{
+    <div class="alert alert-primary small d-flex gap-2 align-items-start">
+        <iconify-icon icon="mdi:home-city-outline" class="fs-18 flex-shrink-0"></iconify-icon>
+        <div>
+            Seçeceğiniz şablon <strong>malike değil, doğrudan bu bağımsız bölüme</strong> uygulanacak:
+            <strong>@unit.Project?.Name — @unit.UnitNo</strong>@(unit.Owner != null ? $" (malik: {unit.Owner.FullName})" : " (sahipsiz bölüm)").
+            Şablonu seçtiğinizde bu bölüm için taksitler (Ödeme Kalemi) otomatik oluşturulur.
+        </div>
+    </div>
+}
 
 @if (!Model.Any())
 {

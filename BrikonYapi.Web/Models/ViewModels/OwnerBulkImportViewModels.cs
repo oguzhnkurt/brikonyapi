@@ -13,6 +13,9 @@ namespace BrikonYapi.Web.Models.ViewModels
         /// <summary>Hesap açıldıysa üretilen şifre; açılmadıysa boş.</summary>
         public string? Password { get; set; }
 
+        /// <summary>Hesap açıldıysa oluşturulan Owner.Id — "Bölüm Ata" hızlı linki için.</summary>
+        public int? OwnerId { get; set; }
+
         public bool Success { get; set; }
 
         /// <summary>Başarısızsa sebebi (ör. "Bu e-posta zaten kayıtlı").</summary>

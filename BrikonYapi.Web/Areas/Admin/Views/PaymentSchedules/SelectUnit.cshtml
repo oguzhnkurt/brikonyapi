@@ -63,7 +63,18 @@
                             <tr data-search="@($"{u.UnitNo} {u.BlockNo} {ownerName}".ToLowerInvariant())">
                                 <td>@u.Project?.Name</td>
                                 <td><strong>@u.UnitNo</strong> <span class="text-muted small">@u.BlockNo</span></td>
-                                <td>@ownerName</td>
+                                <td>
+                                    @if (u.Owner != null)
+                                    {
+                                        @u.Owner.FullName
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning-emphasis">
+                                            <iconify-icon icon="mdi:account-alert-outline" class="me-1"></iconify-icon>Sahipsiz
+                                        </span>
+                                    }
+                                </td>
                                 <td>
                                     @if (total == 0)
                                     {

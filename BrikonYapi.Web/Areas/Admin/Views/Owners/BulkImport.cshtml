@@ -67,8 +67,9 @@
                         <div class="fw-semibold text-body mb-1">Notlar</div>
                         <ul class="ps-3 mb-0">
                             <li>Zaten kayıtlı bir e-posta varsa o satır atlanır, diğerleri işlenir.</li>
-                            <li>Bağımsız bölüm ataması sonradan
-                                <a href="/Admin/Units">Bağımsız Bölümler</a> ekranından yapılır.</li>
+                            <li>Toplu yükleme bölüm ataması yapmaz — işlem bitince her malikin
+                                "Bölüm Ata" linkinden veya <a href="/Admin/Units">Bağımsız Bölümler</a>
+                                ekranından sonradan atarsınız.</li>
                             <li>Şifreler bir daha gösterilmez; listeyi indirmeyi unutmayın.</li>
                         </ul>
                     </div>
@@ -121,6 +122,12 @@ else
             <strong>Şifreler yalnızca bu ekranda gösterilir.</strong> Sayfadan ayrılmadan önce listeyi indirin.
             Sonradan ihtiyaç olursa Kat Malikleri ekranından "Şifre Sıfırla" ile yeni şifre üretebilirsiniz.
         </div>
+
+        <div class="alert alert-info small">
+            <strong>@Model.CreatedCount malik bölüm atanmadan eklendi.</strong> Toplu yükleme bağımsız bölüm
+            ataması yapmaz — her malik için bölüm sonradan tek tek atanmalı. Aşağıdaki tabloda her satırın
+            yanındaki "Bölüm Ata" linkinden doğrudan o malikin atama ekranına gidebilirsiniz.
+        </div>
     }
 
     <div class="card">
@@ -134,6 +141,7 @@ else
                         <th>E-posta</th>
                         <th>Şifre</th>
                         <th>Durum</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -161,6 +169,14 @@ else
                                 else
                                 {
                                     <span class="badge bg-danger-subtle text-danger">@row.Error</span>
+                                }
+                            </td>
+                            <td>
+                                @if (row.Success && row.OwnerId.HasValue)
+                                {
+                                    <a href="/Admin/Owners/Edit/@row.OwnerId" class="btn btn-sm btn-outline-primary">
+                                        <iconify-icon icon="mdi:home-city-outline" class="me-1"></iconify-icon>Bölüm Ata
+                                    </a>
                                 }
                             </td>
                         </tr>
