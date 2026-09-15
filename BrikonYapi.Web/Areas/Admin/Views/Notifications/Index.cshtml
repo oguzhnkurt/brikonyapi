@@ -166,8 +166,9 @@
     </div>
 </div>
 
-<div class="card bk-form-card border-0">
+<div class="card bk-form-card border-0" id="historyCard">
     <div class="card-body bk-form-body">
+        <div id="historyContainer">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
             <div class="bk-group-title mb-0">
                 <iconify-icon icon="mdi:history" class="me-1"></iconify-icon>
@@ -184,7 +185,7 @@
                     @foreach (var size in new[] { 25, 50, 100 })
                     {
                         <a href="/Admin/Notifications?page=1&amp;pageSize=@size"
-                           class="btn btn-sm @(historyPageSize == size ? "btn-primary" : "btn-outline-secondary")">@size</a>
+                           class="btn btn-sm history-page-link @(historyPageSize == size ? "btn-primary" : "btn-outline-secondary")">@size</a>
                     }
                 </div>
             }
@@ -233,7 +234,7 @@
                 <nav class="d-flex justify-content-center mt-3">
                     <ul class="pagination pagination-sm mb-0">
                         <li class="page-item @(historyPage <= 1 ? "disabled" : "")">
-                            <a class="page-link" href="/Admin/Notifications?page=@(historyPage - 1)&pageSize=@historyPageSize">
+                            <a class="page-link history-page-link" href="/Admin/Notifications?page=@(historyPage - 1)&pageSize=@historyPageSize">
                                 <iconify-icon icon="iconamoon:arrow-left-2-duotone"></iconify-icon>
                             </a>
                         </li>
@@ -244,7 +245,7 @@
                         }
                         @if (startPage > 1)
                         {
-                            <li class="page-item"><a class="page-link" href="/Admin/Notifications?page=1&pageSize=@historyPageSize">1</a></li>
+                            <li class="page-item"><a class="page-link history-page-link" href="/Admin/Notifications?page=1&pageSize=@historyPageSize">1</a></li>
                             @if (startPage > 2)
                             {
                                 <li class="page-item disabled"><span class="page-link">…</span></li>
@@ -253,7 +254,7 @@
                         @for (var p = startPage; p <= endPage; p++)
                         {
                             <li class="page-item @(p == historyPage ? "active" : "")">
-                                <a class="page-link" href="/Admin/Notifications?page=@p&pageSize=@historyPageSize">@p</a>
+                                <a class="page-link history-page-link" href="/Admin/Notifications?page=@p&pageSize=@historyPageSize">@p</a>
                             </li>
                         }
                         @if (endPage < historyTotalPages)
@@ -262,10 +263,10 @@
                             {
                                 <li class="page-item disabled"><span class="page-link">…</span></li>
                             }
-                            <li class="page-item"><a class="page-link" href="/Admin/Notifications?page=@historyTotalPages&pageSize=@historyPageSize">@historyTotalPages</a></li>
+                            <li class="page-item"><a class="page-link history-page-link" href="/Admin/Notifications?page=@historyTotalPages&pageSize=@historyPageSize">@historyTotalPages</a></li>
                         }
                         <li class="page-item @(historyPage >= historyTotalPages ? "disabled" : "")">
-                            <a class="page-link" href="/Admin/Notifications?page=@(historyPage + 1)&pageSize=@historyPageSize">
+                            <a class="page-link history-page-link" href="/Admin/Notifications?page=@(historyPage + 1)&pageSize=@historyPageSize">
                                 <iconify-icon icon="iconamoon:arrow-right-2-duotone"></iconify-icon>
                             </a>
                         </li>
@@ -273,6 +274,7 @@
                 </nav>
             }
         }
+        </div>
     </div>
 </div>
 
@@ -332,6 +334,42 @@
                     input.value = cb.value;
                     hiddenContainer.appendChild(input);
                 });
+            });
+
+            // Gönderim geçmişi sayfalama: tıklanınca tüm sayfayı yeniden yüklemek yerine
+            // sadece geçmiş bölümünü sunucudan getirip yerinde değiştirir — böylece kullanıcının
+            // sayfadaki scroll konumu (ör. tablonun ortasında) korunur, en tepeye atlamaz.
+            var historyContainer = document.getElementById('historyContainer');
+
+            function loadHistoryPage(url, pushState) {
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (res) { return res.text(); })
+                    .then(function (html) {
+                        var doc = new DOMParser().parseFromString(html, 'text/html');
+                        var fresh = doc.getElementById('historyContainer');
+                        if (fresh) {
+                            historyContainer.innerHTML = fresh.innerHTML;
+                            if (pushState) window.history.pushState({ historyUrl: url }, '', url);
+                        }
+                    })
+                    .catch(function () {
+                        // Ağ hatası vb. durumda normal tam sayfa geçişine düş.
+                        window.location.href = url;
+                    });
+            }
+
+            document.addEventListener('click', function (e) {
+                var link = e.target.closest && e.target.closest('.history-page-link');
+                if (!link) return;
+                if (link.closest('.disabled')) { e.preventDefault(); return; }
+                e.preventDefault();
+                loadHistoryPage(link.getAttribute('href'), true);
+            });
+
+            window.addEventListener('popstate', function (e) {
+                if (e.state && e.state.historyUrl) {
+                    loadHistoryPage(e.state.historyUrl, false);
+                }
             });
         })();
     </script>
