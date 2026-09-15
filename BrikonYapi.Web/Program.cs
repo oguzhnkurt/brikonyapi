@@ -68,11 +68,12 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(o =>
     o.Password.RequireDigit          = true;
     o.Password.RequiredLength        = 8;
     o.Password.RequireNonAlphanumeric= false;
-    // Kat Maliki şifresi artık T.C. Kimlik No (11 haneli, tamamen rakam) — büyük harf şartı
-    // olsaydı bu şifreler asla geçerli olamazdı, o yüzden kapatıldı. Admin/Yönetici hesapları
-    // yine güçlü (harf+rakam) şifreler üretmeye devam ediyor (OwnerPasswordGenerator), sadece
-    // artık bunun zorunlu olmaması anlamına geliyor.
+    // Kat Maliki şifresi artık T.C. Kimlik No (11 haneli, tamamen rakam) — büyük/küçük harf
+    // şartı olsaydı bu şifreler asla geçerli olamazdı, o yüzden ikisi de kapatıldı. Admin/Yönetici
+    // hesapları yine güçlü (harf+rakam) şifreler üretmeye devam ediyor (OwnerPasswordGenerator),
+    // sadece artık bunun zorunlu olmaması anlamına geliyor.
     o.Password.RequireUppercase      = false;
+    o.Password.RequireLowercase      = false;
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
