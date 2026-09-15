@@ -223,8 +223,8 @@
         </div>
         <div class="text-muted small mb-3">
             Ödeme vadesinden önce, seçilen günlerde malike otomatik olarak (her gece kontrol edilir) bir hatırlatma gönderilir.
-            SMS ve e-posta aşağıdaki mesaj şablonuyla gönderilir; WhatsApp için ayrıca onaylı bir şablon adı sunucu ayarlarından
-            (<code>WhatsApp:ReminderTemplateName</code>) tanımlanmış olmalı.
+            SMS ve e-posta kanalları şu an için devre dışı — hatırlatma yalnızca WhatsApp üzerinden, aşağıdaki mesaj şablonuyla
+            gönderilir; bunun için onaylı bir şablon adı sunucu ayarlarından (<code>WhatsApp:ReminderTemplateName</code>) tanımlanmış olmalı.
         </div>
 
         <form asp-area="Admin" asp-controller="Notifications" asp-action="SaveReminderSettings" method="post" id="reminderForm">

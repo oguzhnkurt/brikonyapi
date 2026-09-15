@@ -213,9 +213,7 @@
                 </div>
 
                 var myPref = notificationPrefs.FirstOrDefault(p => p.OwnerId == o.Id);
-                // Hiç kayıt yoksa (malik henüz Profilim'den ayar değiştirmediyse) varsayılanları göster: hepsi açık.
-                var smsOn      = myPref?.SmsEnabled      ?? true;
-                var emailOn    = myPref?.EmailEnabled    ?? true;
+                // SMS ve e-posta şu an için devre dışı — yalnızca WhatsApp açık. Kayıt yoksa varsayılan: WhatsApp açık.
                 var whatsappOn = myPref?.WhatsAppEnabled ?? true;
 
                 <div class="modal fade" id="notificationModal-@o.Id" tabindex="-1" aria-hidden="true">
@@ -232,17 +230,15 @@
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="ownerId" value="@o.Id" />
                                 <div class="modal-body">
-                                    <label class="form-label small fw-semibold">Telefon (SMS ve WhatsApp için gerekli)</label>
+                                    <label class="form-label small fw-semibold">Telefon (WhatsApp için gerekli)</label>
                                     <input type="tel" name="phone" class="form-control mb-3" value="@o.Phone" placeholder="05XX XXX XX XX" />
 
+                                    <input type="hidden" name="smsEnabled" value="false" />
+                                    <input type="hidden" name="emailEnabled" value="false" />
+
                                     <label class="form-label small fw-semibold">Bildirim Kanalları</label>
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="sms-@o.Id" name="smsEnabled" value="true" checked="@smsOn" />
-                                        <label class="form-check-label" for="sms-@o.Id">SMS</label>
-                                    </div>
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="email-@o.Id" name="emailEnabled" value="true" checked="@emailOn" />
-                                        <label class="form-check-label" for="email-@o.Id">E-posta</label>
+                                    <div class="text-muted small mb-2">
+                                        SMS ve e-posta bildirimleri şu an için devre dışı — yalnızca WhatsApp üzerinden gönderiliyor.
                                     </div>
                                     <div class="form-check form-switch mb-1">
                                         <input class="form-check-input" type="checkbox" role="switch" id="wa-@o.Id" name="whatsAppEnabled" value="true" checked="@whatsappOn" />
@@ -254,7 +250,7 @@
                                     <div class="text-muted small mt-2">
                                         WhatsApp bildirimleri, sunucu tarafında 360dialog API anahtarı tanımlanana kadar
                                         gönderilmez (bu anahtar kod ayarlarından girilir, bu ekrandan değil).
-                                        Telefon numarası boşsa SMS ve WhatsApp otomatik atlanır.
+                                        Telefon numarası boşsa WhatsApp otomatik atlanır.
                                     </div>
                                 </div>
                                 <div class="modal-footer">

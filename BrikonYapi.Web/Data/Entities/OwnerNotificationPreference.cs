@@ -12,8 +12,9 @@ namespace BrikonYapi.Web.Data.Entities
 
         // ── Bildirim kanalları ────────────────────────────────
         public bool PushEnabled { get; set; } = true;
-        public bool SmsEnabled { get; set; } = true;
-        public bool EmailEnabled { get; set; } = true;
+        // SMS ve e-posta şu an için devre dışı bırakıldı (yalnızca WhatsApp aktif) — bkz. NotificationsController/Owners modalı.
+        public bool SmsEnabled { get; set; } = false;
+        public bool EmailEnabled { get; set; } = false;
         public bool WhatsAppEnabled { get; set; } = true;
 
         // ── Bildirim tipleri ──────────────────────────────────
