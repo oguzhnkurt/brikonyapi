@@ -55,14 +55,7 @@
                             </div>
                         </div>
 
-                        <div class="mb-0">
-                            <label class="bk-label">İlerleme Yüzdesi (%)</label>
-                            <input asp-for="ProgressPercentage" type="number" min="0" max="100" class="form-control" />
-                            @if (Model.ProgressUpdatedAt.HasValue)
-                            {
-                                <div class="form-text bk-hint">Son güncelleme: @Model.ProgressUpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</div>
-                            }
-                        </div>
+                        <input asp-for="ProgressPercentage" type="hidden" />
                     </div>
 
                     <div class="bk-field-group mb-3">
