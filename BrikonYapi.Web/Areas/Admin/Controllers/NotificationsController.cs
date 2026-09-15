@@ -18,7 +18,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
     public class NotificationsController : Controller
     {
         private const string ReminderCheckpointsKey = "ReminderCheckpoints";
-        private const int HistoryPageSize = 50;
+        private static readonly int[] AllowedPageSizes = { 25, 50, 100 };
 
         private readonly AppDbContext _db;
         private readonly WhatsAppService _whatsApp;
@@ -33,8 +33,11 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             _config   = config;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 25)
         {
+            if (!AllowedPageSizes.Contains(pageSize)) pageSize = 25;
+            if (page < 1) page = 1;
+
             var owners = await _db.Owners
                 .Where(o => o.IsActive)
                 .Include(o => o.Units).ThenInclude(u => u.Project)
@@ -43,12 +46,20 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             ViewBag.NotificationPrefs = await _db.OwnerNotificationPreferences.ToListAsync();
 
-            var history = await _db.NotificationLogs
-                .Include(n => n.Owner)
-                .OrderByDescending(n => n.CreatedAt)
-                .Take(HistoryPageSize)
+            var historyQuery = _db.NotificationLogs.Include(n => n.Owner).OrderByDescending(n => n.CreatedAt);
+            var totalCount = await historyQuery.CountAsync();
+            var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
+            if (page > totalPages) page = totalPages;
+
+            var history = await historyQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
             ViewBag.History = history;
+            ViewBag.HistoryPage = page;
+            ViewBag.HistoryPageSize = pageSize;
+            ViewBag.HistoryTotalPages = totalPages;
+            ViewBag.HistoryTotalCount = totalCount;
 
             var checkpointsRaw = await _settings.GetAsync(ReminderCheckpointsKey);
             ViewBag.ReminderCheckpoints = string.IsNullOrWhiteSpace(checkpointsRaw) ? "7,1" : checkpointsRaw;

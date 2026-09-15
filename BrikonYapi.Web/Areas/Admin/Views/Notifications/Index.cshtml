@@ -6,6 +6,10 @@
 
     var prefs = (List<OwnerNotificationPreference>)(ViewBag.NotificationPrefs ?? new List<OwnerNotificationPreference>());
     var history = (List<NotificationLog>)(ViewBag.History ?? new List<NotificationLog>());
+    int historyPage = ViewBag.HistoryPage ?? 1;
+    int historyPageSize = ViewBag.HistoryPageSize ?? 25;
+    int historyTotalPages = ViewBag.HistoryTotalPages ?? 1;
+    int historyTotalCount = ViewBag.HistoryTotalCount ?? 0;
     string reminderCheckpoints = ViewBag.ReminderCheckpoints;
     bool whatsAppConfigured = ViewBag.WhatsAppConfigured;
     var tr = new System.Globalization.CultureInfo("tr-TR");
@@ -164,9 +168,26 @@
 
 <div class="card bk-form-card border-0">
     <div class="card-body bk-form-body">
-        <div class="bk-group-title mb-2">
-            <iconify-icon icon="mdi:history" class="me-1"></iconify-icon>
-            Gönderim Geçmişi
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+            <div class="bk-group-title mb-0">
+                <iconify-icon icon="mdi:history" class="me-1"></iconify-icon>
+                Gönderim Geçmişi
+                @if (historyTotalCount > 0)
+                {
+                    <span class="text-muted small fw-normal">(@historyTotalCount kayıt)</span>
+                }
+            </div>
+            @if (historyTotalCount > 0)
+            {
+                <div class="d-flex align-items-center gap-1">
+                    <span class="text-muted small me-1">Sayfa başına:</span>
+                    @foreach (var size in new[] { 25, 50, 100 })
+                    {
+                        <a href="/Admin/Notifications?page=1&amp;pageSize=@size"
+                           class="btn btn-sm @(historyPageSize == size ? "btn-primary" : "btn-outline-secondary")">@size</a>
+                    }
+                </div>
+            }
         </div>
 
         @if (!history.Any())
@@ -206,6 +227,51 @@
                     </tbody>
                 </table>
             </div>
+
+            @if (historyTotalPages > 1)
+            {
+                <nav class="d-flex justify-content-center mt-3">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(historyPage <= 1 ? "disabled" : "")">
+                            <a class="page-link" href="/Admin/Notifications?page=@(historyPage - 1)&pageSize=@historyPageSize">
+                                <iconify-icon icon="iconamoon:arrow-left-2-duotone"></iconify-icon>
+                            </a>
+                        </li>
+                        @{
+                            var startPage = Math.Max(1, historyPage - 2);
+                            var endPage = Math.Min(historyTotalPages, startPage + 4);
+                            startPage = Math.Max(1, endPage - 4);
+                        }
+                        @if (startPage > 1)
+                        {
+                            <li class="page-item"><a class="page-link" href="/Admin/Notifications?page=1&pageSize=@historyPageSize">1</a></li>
+                            @if (startPage > 2)
+                            {
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            }
+                        }
+                        @for (var p = startPage; p <= endPage; p++)
+                        {
+                            <li class="page-item @(p == historyPage ? "active" : "")">
+                                <a class="page-link" href="/Admin/Notifications?page=@p&pageSize=@historyPageSize">@p</a>
+                            </li>
+                        }
+                        @if (endPage < historyTotalPages)
+                        {
+                            @if (endPage < historyTotalPages - 1)
+                            {
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            }
+                            <li class="page-item"><a class="page-link" href="/Admin/Notifications?page=@historyTotalPages&pageSize=@historyPageSize">@historyTotalPages</a></li>
+                        }
+                        <li class="page-item @(historyPage >= historyTotalPages ? "disabled" : "")">
+                            <a class="page-link" href="/Admin/Notifications?page=@(historyPage + 1)&pageSize=@historyPageSize">
+                                <iconify-icon icon="iconamoon:arrow-right-2-duotone"></iconify-icon>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
         }
     </div>
 </div>
