@@ -70,10 +70,11 @@
                                 }
                             </td>
                             <td class="text-end">
-                                <a href="/Admin/ProjectProgress/Manage/@p.Id" class="btn btn-sm btn-outline-primary">
+                                <button type="button" class="btn btn-sm btn-outline-primary progressPanelBtn"
+                                        data-project-id="@p.Id" data-project-name="@p.Name">
                                     <iconify-icon icon="iconamoon:settings-duotone"></iconify-icon>
                                     Yönet
-                                </a>
+                                </button>
                             </td>
                         </tr>
                     }
@@ -82,3 +83,51 @@
         </div>
     </div>
 </div>
+
+<!-- İlerleme Yönetimi paneli: Units/Index.cshtml'deki #progressPanel ile aynı desen — ayrı sayfaya
+     gitmeden /Admin/ProjectProgress/Manage'i (embed modunda) sağdan açılan panelde gösterir. Bu sayfa
+     zaten Manage action'ının kendi listesi olduğu için burada da aynı tutarlılık sağlanıyor. -->
+<div class="offcanvas offcanvas-end pp-embed-panel" tabindex="-1" id="progressPanel" aria-labelledby="progressPanelTitle">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="progressPanelTitle">
+            <iconify-icon icon="mdi:crane" class="me-1 text-info"></iconify-icon>
+            <span id="progressPanelProjectName">İnşaat İlerlemesi</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <iframe id="progressPanelFrame" src="about:blank" style="width:100%; height:100%; border:0;"></iframe>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    .pp-embed-panel { --bs-offcanvas-width: min(1100px, 96vw); }
+</style>
+}
+
+@section Scripts {
+<script>
+(function () {
+    var panelEl = document.getElementById('progressPanel');
+    var frame = document.getElementById('progressPanelFrame');
+    var titleEl = document.getElementById('progressPanelProjectName');
+    if (!panelEl || !frame) return;
+
+    document.querySelectorAll('.progressPanelBtn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var projectId = btn.getAttribute('data-project-id');
+            var projectName = btn.getAttribute('data-project-name') || 'İnşaat İlerlemesi';
+            titleEl.textContent = projectName;
+            frame.src = '/Admin/ProjectProgress/Manage/' + projectId + '?embed=true';
+            var offcanvas = bootstrap.Offcanvas.getOrCreateInstance(panelEl);
+            offcanvas.show();
+        });
+    });
+
+    panelEl.addEventListener('hidden.bs.offcanvas', function () {
+        frame.src = 'about:blank';
+    });
+})();
+</script>
+}
