@@ -19,16 +19,15 @@ namespace BrikonYapi.Web.Services
     public class PaymentReminderBackgroundService : BackgroundService
     {
         private const string OverdueSubject = "Gecikmiş Ödeme — Brikon Yapı";
+        private const string ReminderCheckpointsKey = "ReminderCheckpoints";
         private static readonly int[] DefaultReminderCheckpoints = { 7, 1 };
 
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly IConfiguration _config;
         private readonly ILogger<PaymentReminderBackgroundService> _logger;
 
-        public PaymentReminderBackgroundService(IServiceScopeFactory scopeFactory, IConfiguration config, ILogger<PaymentReminderBackgroundService> logger)
+        public PaymentReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogger<PaymentReminderBackgroundService> logger)
         {
             _scopeFactory = scopeFactory;
-            _config = config;
             _logger = logger;
         }
 
@@ -53,9 +52,16 @@ namespace BrikonYapi.Web.Services
                 using var scope = _scopeFactory.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 var notify = scope.ServiceProvider.GetRequiredService<PaymentNotificationService>();
+                var settings = scope.ServiceProvider.GetRequiredService<SiteSettingService>();
 
-                var checkpoints = _config.GetSection("PaymentNotifications:ReminderCheckpoints").Get<int[]>();
-                if (checkpoints == null || checkpoints.Length == 0) checkpoints = DefaultReminderCheckpoints;
+                var checkpointsRaw = await settings.GetAsync(ReminderCheckpointsKey);
+                var checkpoints = (checkpointsRaw ?? "")
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(x => int.TryParse(x, out var n) ? n : (int?)null)
+                    .Where(n => n.HasValue && n.Value > 0)
+                    .Select(n => n!.Value)
+                    .ToArray();
+                if (checkpoints.Length == 0) checkpoints = DefaultReminderCheckpoints;
                 // Büyükten küçüğe sırala: aynı gün birden fazla kontrol noktasına birden denk gelinirse
                 // (ör. uygulama birkaç gün kapalı kalmışsa) en erken/az acil olandan başlanır.
                 checkpoints = checkpoints.OrderByDescending(d => d).ToArray();

@@ -124,6 +124,16 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Notifications" ? "active" : "")"
+                       href="/Admin/Notifications">
+                        <span class="nav-icon">
+                            <iconify-icon icon="mdi:bell-outline"></iconify-icon>
+                        </span>
+                        <span class="nav-text">Bildirimler</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Units" ? "active" : "")"
                        href="/Admin/Units">
                         <span class="nav-icon">

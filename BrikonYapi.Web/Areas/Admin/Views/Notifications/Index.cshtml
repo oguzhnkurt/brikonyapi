@@ -1,0 +1,272 @@
+@using BrikonYapi.Web.Data.Entities
+@model List<Owner>
+@{
+    ViewData["Title"] = "Bildirimler";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    var prefs = (List<OwnerNotificationPreference>)(ViewBag.NotificationPrefs ?? new List<OwnerNotificationPreference>());
+    var history = (List<NotificationLog>)(ViewBag.History ?? new List<NotificationLog>());
+    string reminderCheckpoints = ViewBag.ReminderCheckpoints;
+    bool whatsAppConfigured = ViewBag.WhatsAppConfigured;
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+
+    string ChannelLabel(NotificationChannel c) => c switch
+    {
+        NotificationChannel.WhatsApp => "WhatsApp",
+        NotificationChannel.Sms      => "SMS",
+        _                             => "E-posta"
+    };
+
+    string StatusBadge(NotificationStatus s) => s switch
+    {
+        NotificationStatus.Sent   => "<span class=\"badge bg-success-subtle text-success\">Gönderildi</span>",
+        NotificationStatus.Failed => "<span class=\"badge bg-danger-subtle text-danger\">Başarısız</span>",
+        _                          => "<span class=\"badge bg-warning-subtle text-warning\">Bekliyor</span>"
+    };
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2 bk-page-header">
+    <div>
+        <h5 class="mb-0">
+            <iconify-icon icon="mdi:bell-outline" class="me-1"></iconify-icon>
+            Bildirimler
+        </h5>
+        <span class="text-muted small">Kat maliklerine manuel WhatsApp gönderin, geçmişi görün, otomatik hatırlatıcıyı ayarlayın.</span>
+    </div>
+    <a href="/Admin/Owners" class="btn btn-outline-secondary btn-sm">
+        <iconify-icon icon="iconamoon:arrow-left-2-duotone" class="me-1"></iconify-icon>
+        Kat Maliklerine Dön
+    </a>
+</div>
+
+@if (!whatsAppConfigured)
+{
+    <div class="alert alert-light border small text-muted d-flex gap-2 align-items-start mb-3">
+        <iconify-icon icon="iconamoon:information-circle-duotone" class="fs-18 text-warning flex-shrink-0"></iconify-icon>
+        <div>
+            WhatsApp gönderimi henüz tam yapılandırılmamış (360dialog API anahtarı ve/veya onaylı şablon adı eksik).
+            Sunucu ayarlarından (Coolify ortam değişkenleri) <code>WhatsApp:ApiKey</code> ve
+            <code>WhatsApp:ManualTemplateName</code> girilmeden gönderim yapılamaz.
+        </div>
+    </div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-7">
+        <div class="card bk-form-card border-0 h-100">
+            <div class="card-body bk-form-body">
+                <div class="bk-group-title mb-2">
+                    <iconify-icon icon="ic:baseline-whatsapp" class="text-success me-1"></iconify-icon>
+                    Manuel WhatsApp Gönder
+                </div>
+
+                <form asp-area="Admin" asp-controller="Notifications" asp-action="SendWhatsApp" method="post" id="sendForm">
+                    @Html.AntiForgeryToken()
+                    <div id="hiddenOwnerIds"></div>
+
+                    <div class="mb-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <label class="bk-label mb-0">Alıcılar</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="text" id="ownerSearch" class="form-control form-control-sm" style="width:200px" placeholder="İsimde ara…" />
+                            <button type="button" id="btnSelectAll" class="btn btn-sm btn-outline-secondary">Tümünü Seç</button>
+                            <button type="button" id="btnClearAll" class="btn btn-sm btn-outline-secondary">Temizle</button>
+                        </div>
+                    </div>
+
+                    <div class="border rounded" style="max-height:280px; overflow-y:auto;">
+                        <table class="table table-sm table-hover align-middle mb-0" id="ownerTable">
+                            <tbody>
+                                @foreach (var o in Model)
+                                {
+                                    var pref = prefs.FirstOrDefault(p => p.OwnerId == o.Id);
+                                    var waOn = pref?.WhatsAppEnabled ?? true;
+                                    var hasPhone = !string.IsNullOrWhiteSpace(o.Phone);
+                                    var disabled = !hasPhone || !waOn;
+                                    <tr class="owner-row" data-name="@o.FullName.ToLower()">
+                                        <td style="width:32px">
+                                            <input type="checkbox" class="form-check-input owner-check" value="@o.Id" data-name="@o.FullName"
+                                                   @(disabled ? "disabled" : "") />
+                                        </td>
+                                        <td>
+                                            @o.FullName
+                                            @if (!hasPhone)
+                                            {
+                                                <span class="badge bg-secondary-subtle text-secondary ms-1">Telefon yok</span>
+                                            }
+                                            else if (!waOn)
+                                            {
+                                                <span class="badge bg-secondary-subtle text-secondary ms-1">WhatsApp kapalı</span>
+                                            }
+                                        </td>
+                                        <td class="text-muted small text-end">
+                                            @(o.Units.Any() ? string.Join(", ", o.Units.Select(u => u.Project?.Name + " " + u.UnitNo)) : "Atanmamış")
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-muted small mt-1"><span id="selectedCount">0</span> kişi seçili</div>
+
+                    <div class="mt-3">
+                        <label class="bk-label">Mesaj</label>
+                        <textarea name="message" class="form-control" rows="3" maxlength="600" required
+                                  placeholder="Mesajınızı yazın…"></textarea>
+                        <div class="form-text bk-hint">
+                            Bu mesaj, onaylı bir WhatsApp şablonu içinde ("Sayın [Ad Soyad], [mesajınız]") gönderilir —
+                            serbest metin olarak değil, Meta'nın kurallarına uygun şekilde iletilir.
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-success btn-sm" id="btnSubmitSend" disabled>
+                            <iconify-icon icon="ic:baseline-whatsapp" class="me-1"></iconify-icon>
+                            Gönder
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card bk-form-card border-0 h-100">
+            <div class="card-body bk-form-body">
+                <div class="bk-group-title mb-2">
+                    <iconify-icon icon="mdi:clock-alert-outline" class="me-1"></iconify-icon>
+                    Otomatik Hatırlatıcı
+                </div>
+                <form asp-area="Admin" asp-controller="Notifications" asp-action="SaveReminderSettings" method="post">
+                    @Html.AntiForgeryToken()
+                    <label class="bk-label">Vadeye kaç gün kala hatırlatma gönderilsin?</label>
+                    <input type="text" name="checkpoints" class="form-control" value="@reminderCheckpoints" placeholder="Örn: 7,1" />
+                    <div class="form-text bk-hint">
+                        Virgülle ayırın (örn: "7,1" → vadeye 7 gün ve 1 gün kala). Her gece otomatik kontrol edilir,
+                        vadesi bu günlere denk gelen ödemeler için tekrar gönderilmez.
+                    </div>
+                    <button type="submit" class="btn bk-btn-save btn-sm mt-3">
+                        <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                        Kaydet
+                    </button>
+                </form>
+
+                <hr class="my-3" />
+
+                <div class="text-muted small">
+                    <iconify-icon icon="iconamoon:information-circle-duotone" class="text-warning me-1"></iconify-icon>
+                    Her kat malikinin bildirim tercihleri (SMS/E-posta/WhatsApp açık-kapalı) ve telefon numarası
+                    <a href="/Admin/Owners">Kat Malikleri</a> ekranındaki "Bildirimler" butonundan düzenlenir.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card bk-form-card border-0">
+    <div class="card-body bk-form-body">
+        <div class="bk-group-title mb-2">
+            <iconify-icon icon="mdi:history" class="me-1"></iconify-icon>
+            Gönderim Geçmişi
+        </div>
+
+        @if (!history.Any())
+        {
+            <div class="text-muted small py-3 text-center">Henüz gönderilmiş bir bildirim yok.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Kat Maliki</th>
+                            <th>Kanal</th>
+                            <th>Mesaj</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var h in history)
+                        {
+                            <tr>
+                                <td class="text-muted small">@h.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@(h.Owner?.FullName ?? "—")</td>
+                                <td>
+                                    @if (h.Channel == NotificationChannel.WhatsApp)
+                                    {
+                                        <iconify-icon icon="ic:baseline-whatsapp" class="text-success"></iconify-icon>
+                                    }
+                                    @ChannelLabel(h.Channel)
+                                </td>
+                                <td class="small" style="max-width:320px; white-space:normal;">@h.Message</td>
+                                <td>@Html.Raw(StatusBadge(h.Status))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var hiddenContainer = document.getElementById('hiddenOwnerIds');
+            var selectedCountEl = document.getElementById('selectedCount');
+            var btnSubmit = document.getElementById('btnSubmitSend');
+            var search = document.getElementById('ownerSearch');
+
+            function getChecked() {
+                return Array.prototype.slice.call(document.querySelectorAll('.owner-check:checked'));
+            }
+
+            function refresh() {
+                var checked = getChecked();
+                selectedCountEl.textContent = checked.length;
+                btnSubmit.disabled = checked.length === 0;
+            }
+
+            document.addEventListener('change', function (e) {
+                if (e.target && e.target.classList && e.target.classList.contains('owner-check')) {
+                    refresh();
+                }
+            });
+
+            document.getElementById('btnSelectAll').addEventListener('click', function () {
+                document.querySelectorAll('.owner-row').forEach(function (row) {
+                    if (row.style.display === 'none') return;
+                    var cb = row.querySelector('.owner-check');
+                    if (cb && !cb.disabled) cb.checked = true;
+                });
+                refresh();
+            });
+
+            document.getElementById('btnClearAll').addEventListener('click', function () {
+                document.querySelectorAll('.owner-check').forEach(function (cb) { cb.checked = false; });
+                refresh();
+            });
+
+            search.addEventListener('input', function () {
+                var q = search.value.trim().toLowerCase();
+                document.querySelectorAll('.owner-row').forEach(function (row) {
+                    row.style.display = row.getAttribute('data-name').indexOf(q) === -1 ? 'none' : '';
+                });
+            });
+
+            var form = document.getElementById('sendForm');
+            form.addEventListener('submit', function () {
+                var checked = getChecked();
+                hiddenContainer.innerHTML = '';
+                checked.forEach(function (cb) {
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'ownerIds';
+                    input.value = cb.value;
+                    hiddenContainer.appendChild(input);
+                });
+            });
+        })();
+    </script>
+}
