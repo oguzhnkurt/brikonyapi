@@ -109,6 +109,46 @@
         transition: opacity .15s, transform .15s;
     }
     .owner-pick-card.selected .owner-pick-check { opacity: 1; transform: scale(1); }
+
+    /* Mesaj şablonu önizlemesi: sohbet balonu gibi, WhatsApp'ta göründüğü hale yakın */
+    .bk-tpl-preview-wrap { margin-top: .85rem; }
+    .bk-tpl-preview-label {
+        font-size: .68rem; font-weight: 700; color: #9aa3b0;
+        text-transform: uppercase; letter-spacing: .04em;
+        margin-bottom: .45rem; display: flex; align-items: center; gap: .35rem;
+    }
+    .bk-tpl-preview-row { display: flex; align-items: flex-end; gap: .5rem; }
+    .bk-tpl-preview-avatar {
+        flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+        background: #25d366; color: #fff; display: flex; align-items: center;
+        justify-content: center; font-size: .95rem;
+    }
+    .bk-tpl-preview-bubble {
+        position: relative;
+        background: #e9fbe0;
+        border: 1px solid #d3f3c4;
+        border-radius: 12px;
+        padding: .65rem .85rem;
+        font-size: .84rem;
+        line-height: 1.5;
+        color: #253339;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-width: 520px;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+    }
+    .bk-tpl-preview-bubble::before {
+        content: "";
+        position: absolute;
+        left: -7px;
+        bottom: 9px;
+        width: 0; height: 0;
+        border-top: 7px solid transparent;
+        border-bottom: 7px solid transparent;
+        border-right: 8px solid #e9fbe0;
+        filter: drop-shadow(-1px 0 0 #d3f3c4);
+    }
+    .bk-tpl-preview-bubble:empty::before { display: none; }
 </style>
 }
 
@@ -200,7 +240,16 @@
                             Bu mesaj, onaylı bir WhatsApp şablonu içinde ("Sayın [Ad Soyad], [mesajınız]") gönderilir —
                             serbest metin olarak değil, Meta'nın kurallarına uygun şekilde iletilir.
                         </div>
-                        <div class="mt-2 p-2 bg-light rounded small" id="manualTemplatePreview" style="white-space:pre-wrap;"></div>
+                        <div class="bk-tpl-preview-wrap">
+                            <div class="bk-tpl-preview-label">
+                                <iconify-icon icon="mdi:eye-outline"></iconify-icon>
+                                Malik bu mesajı böyle görecek
+                            </div>
+                            <div class="bk-tpl-preview-row">
+                                <div class="bk-tpl-preview-avatar"><iconify-icon icon="ic:baseline-whatsapp"></iconify-icon></div>
+                                <div class="bk-tpl-preview-bubble" id="manualTemplatePreview"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mt-3">
@@ -278,7 +327,16 @@
                         <code>{ne_zaman}</code> "yarın" / "1 hafta içinde" gibi ifade, <code>{vade}</code> vade tarihi, <code>{tutar}</code> tutar.
                     </div>
 
-                    <div class="mt-2 p-2 bg-light rounded small" id="templatePreview" style="white-space:pre-wrap;"></div>
+                    <div class="bk-tpl-preview-wrap">
+                        <div class="bk-tpl-preview-label">
+                            <iconify-icon icon="mdi:eye-outline"></iconify-icon>
+                            Malik bu mesajı böyle görecek
+                        </div>
+                        <div class="bk-tpl-preview-row">
+                            <div class="bk-tpl-preview-avatar"><iconify-icon icon="ic:baseline-whatsapp"></iconify-icon></div>
+                            <div class="bk-tpl-preview-bubble" id="templatePreview"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
