@@ -23,8 +23,9 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         }
 
         // ── Liste ────────────────────────────────────────────────
-        // unitId dolu geldiğinde (Owner sayfasındaki "Ödeme Planı Şablonu Uygula" linki) liste otomatik
-        // olarak o bölümün projesine filtrelenir ve her satırdaki "Uygula" linki o bölümü hedefler.
+        // unitId dolu geldiğinde (Owner/Unit sayfasındaki "Şablon Uygula" linki) liste o bölümün kendi
+        // projesindeki TÜM şablonları + diğer projelerdeki takvim/aylık bazlı şablonları gösterir (çapraz
+        // proje) ve her satırdaki "Uygula" linki o bölümü hedefler.
         public async Task<IActionResult> Index(int? projectId, int? unitId)
         {
             Unit? unit = null;
@@ -39,7 +40,19 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             ViewBag.Unit = unit;
 
             var query = _db.PaymentPlanTemplates.Include(t => t.Project).Include(t => t.Items).AsQueryable();
-            if (projectId.HasValue) query = query.Where(t => t.ProjectId == projectId);
+            if (unit != null)
+            {
+                // Bir bölüm üzerinden gelindiğinde: hakediş/aşama bazlı şablonlar yalnızca kendi projesinden
+                // gösterilir (kalemler o projenin iş adımlarına bağlı), ama takvim/aylık bazlı şablonlar
+                // projeden bağımsız olduğu için TÜM projelerden listelenir — böylece bu bölümün kendi
+                // projesinde hiç şablon olmasa bile başka bir projede hazırlanmış bir takvim şablonu
+                // görülüp uygulanabilir (bkz. Assign action'daki çapraz proje desteği).
+                query = query.Where(t => t.ProjectId == projectId || t.PlanType == PaymentPlanType.CalendarBased);
+            }
+            else if (projectId.HasValue)
+            {
+                query = query.Where(t => t.ProjectId == projectId);
+            }
 
             var templates = await query.OrderBy(t => t.Project!.Name).ThenBy(t => t.Name).ToListAsync();
             return View(templates);
@@ -215,13 +228,17 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             if (unitId.HasValue)
             {
-                var lockedUnit = await _db.Units.Include(u => u.Owner).Include(u => u.Project)
-                    .FirstOrDefaultAsync(u => u.Id == unitId && u.ProjectId == template.ProjectId);
+                // Hakediş/aşama bazlı şablonlarda bölüm şablonun kendi projesinde olmak zorunda (aşamalar o
+                // projeye özel); takvim/aylık bazlı şablonlarda ise bölüm HANGİ projede olursa olsun kilitli
+                // hedef olarak kabul edilir — çapraz proje uygulaması budur (bkz. Index action'daki not).
+                var lockedUnitQuery = _db.Units.Include(u => u.Owner).Include(u => u.Project).Where(u => u.Id == unitId);
+                if (isStageBased) lockedUnitQuery = lockedUnitQuery.Where(u => u.ProjectId == template.ProjectId);
+                var lockedUnit = await lockedUnitQuery.FirstOrDefaultAsync();
                 if (lockedUnit == null) return NotFound();
                 ViewBag.LockedUnit = lockedUnit;
                 ViewBag.Units = new List<Unit> { lockedUnit };
-                ViewBag.SelectedProjectId = template.ProjectId;
-                ViewBag.SelectedProjectName = template.Project?.Name;
+                ViewBag.SelectedProjectId = lockedUnit.ProjectId;
+                ViewBag.SelectedProjectName = lockedUnit.Project?.Name;
             }
             else
             {
