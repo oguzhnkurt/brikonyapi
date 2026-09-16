@@ -40,19 +40,15 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             ViewBag.Unit = unit;
 
             var query = _db.PaymentPlanTemplates.Include(t => t.Project).Include(t => t.Items).AsQueryable();
-            if (unit != null)
-            {
-                // Bir bölüm üzerinden gelindiğinde: hakediş/aşama bazlı şablonlar yalnızca kendi projesinden
-                // gösterilir (kalemler o projenin iş adımlarına bağlı), ama takvim/aylık bazlı şablonlar
-                // projeden bağımsız olduğu için TÜM projelerden listelenir — böylece bu bölümün kendi
-                // projesinde hiç şablon olmasa bile başka bir projede hazırlanmış bir takvim şablonu
-                // görülüp uygulanabilir (bkz. Assign action'daki çapraz proje desteği).
-                query = query.Where(t => t.ProjectId == projectId || t.PlanType == PaymentPlanType.CalendarBased);
-            }
-            else if (projectId.HasValue)
+            if (unit == null && projectId.HasValue)
             {
                 query = query.Where(t => t.ProjectId == projectId);
             }
+            // Bir bölüm üzerinden gelindiğinde (unit != null) proje filtresi UYGULANMAZ — admin buradan
+            // sistemdeki TÜM şablonları görüp içlerinden seçebilsin diye. Hangi şablonun bu bölüme
+            // uygulanabilir olduğu (hakediş/aşama bazlı şablonlar yalnızca kendi projesine, takvim/aylık
+            // bazlı şablonlar her projeye) view'da IsApplicableToUnit ile hesaplanıp kart üzerinde
+            // gösterilir/kilitlenir (bkz. Index.cshtml).
 
             var templates = await query.OrderBy(t => t.Project!.Name).ThenBy(t => t.Name).ToListAsync();
             return View(templates);

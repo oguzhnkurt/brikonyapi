@@ -107,8 +107,12 @@ else
         @foreach (var t in Model)
         {
             var totalPct = t.Items.Sum(i => i.Percentage);
+            // Hakediş/aşama bazlı şablonlar kalemleri şablonun kendi projesindeki iş adımlarına bağlı
+            // olduğu için sadece o projedeki bölümlere uygulanabilir; takvim/aylık bazlı şablonlar
+            // projeden bağımsız olduğu için her bölüme uygulanabilir.
+            var applicable = unit == null || t.PlanType == PaymentPlanType.CalendarBased || t.ProjectId == unit.ProjectId;
             <div class="col-md-6 col-lg-4">
-                <div class="card border-0 bk-form-card h-100">
+                <div class="card border-0 bk-form-card h-100 @(applicable ? "" : "opacity-75")">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
@@ -139,10 +143,26 @@ else
                                 <li class="text-muted">+ @(t.Items.Count - 4) kalem daha…</li>
                             }
                         </ul>
+                        @if (unit != null && !applicable)
+                        {
+                            <div class="alert alert-light border small text-muted py-2 px-2 mb-2 d-flex gap-1 align-items-start">
+                                <iconify-icon icon="mdi:lock-outline" class="fs-16 flex-shrink-0"></iconify-icon>
+                                <span>Hakediş/aşama bazlı olduğu için yalnızca <strong>@t.Project?.Name</strong> projesindeki bölümlere uygulanabilir.</span>
+                            </div>
+                        }
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <a href="/Admin/PaymentPlanTemplates/Assign?templateId=@t.Id@(unit != null ? "&unitId=" + unit.Id : "")" class="btn bk-btn-save flex-grow-1">
-                                <iconify-icon icon="mdi:check-circle-outline" class="me-1"></iconify-icon>Uygula
-                            </a>
+                            @if (unit != null && !applicable)
+                            {
+                                <button type="button" class="btn btn-outline-secondary flex-grow-1" disabled title="Bu şablon başka bir projeye özel, bu bölüme uygulanamaz">
+                                    <iconify-icon icon="mdi:lock-outline" class="me-1"></iconify-icon>Uygulanamaz
+                                </button>
+                            }
+                            else
+                            {
+                                <a href="/Admin/PaymentPlanTemplates/Assign?templateId=@t.Id@(unit != null ? "&unitId=" + unit.Id : "")" class="btn bk-btn-save flex-grow-1">
+                                    <iconify-icon icon="mdi:check-circle-outline" class="me-1"></iconify-icon>Uygula
+                                </a>
+                            }
                             <a href="/Admin/PaymentPlanTemplates/Edit/@t.Id" class="btn btn-outline-secondary bk-btn-icon" title="Düzenle">
                                 <iconify-icon icon="mdi:pencil-outline"></iconify-icon>
                             </a>
