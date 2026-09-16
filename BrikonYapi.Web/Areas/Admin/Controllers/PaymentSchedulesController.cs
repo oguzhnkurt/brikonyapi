@@ -125,6 +125,20 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(Create), new { fundDebtorId = debtor.Id });
         }
 
+        /// <summary>Bir fon borçlusunu ve varsa buna bağlı tüm ödeme kalemlerini siler (cascade).</summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteFundDebtor(int id)
+        {
+            var debtor = await _db.FundDebtors.FindAsync(id);
+            if (debtor == null) return NotFound();
+
+            _db.FundDebtors.Remove(debtor);
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = "Fon borçlusu silindi.";
+            return RedirectToAction(nameof(Index));
+        }
+
         public async Task<IActionResult> Create(int? unitId, int? fundDebtorId)
         {
             if (fundDebtorId != null)

@@ -200,18 +200,28 @@
                                             }
                                         </td>
                                         <td class="text-end">
-                                            @if (total == 0)
-                                            {
-                                                <a href="/Admin/PaymentSchedules/Create?fundDebtorId=@f.Id" class="btn btn-sm btn-primary">
-                                                    Oluştur
-                                                </a>
-                                            }
-                                            else
-                                            {
-                                                <a href="/Admin/PaymentSchedules?fundDebtorId=@f.Id" class="btn btn-sm btn-outline-primary">
-                                                    Görüntüle
-                                                </a>
-                                            }
+                                            <div class="d-flex gap-1 justify-content-end">
+                                                @if (total == 0)
+                                                {
+                                                    <a href="/Admin/PaymentSchedules/Create?fundDebtorId=@f.Id" class="btn btn-sm btn-primary">
+                                                        Oluştur
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <a href="/Admin/PaymentSchedules?fundDebtorId=@f.Id" class="btn btn-sm btn-outline-primary">
+                                                        Görüntüle
+                                                    </a>
+                                                }
+                                                <form asp-area="Admin" asp-controller="PaymentSchedules" asp-action="DeleteFundDebtor" method="post" class="d-inline"
+                                                      onsubmit="return confirm('@(total > 0 ? "Bu fon borçlusunu silerseniz " + total + " ödeme kalemi de silinir. Emin misiniz?" : "Bu fon borçlusunu silmek istediğinize emin misiniz?")')">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@f.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Fon borçlusunu sil">
+                                                        <iconify-icon icon="iconamoon:trash-duotone"></iconify-icon>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 }
