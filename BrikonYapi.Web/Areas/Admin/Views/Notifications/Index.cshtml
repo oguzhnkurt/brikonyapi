@@ -119,45 +119,76 @@
     }
     .owner-pick-card.selected .owner-pick-check { opacity: 1; transform: scale(1); }
 
-    /* Mesaj şablonu önizlemesi: sohbet balonu gibi, WhatsApp'ta göründüğü hale yakın */
-    .bk-tpl-preview-wrap { margin-top: .85rem; }
+    /* Mesaj şablonu önizlemesi: gerçek bir telefon/WhatsApp ekranı gibi — başlık çubuğu +
+       noktalı sohbet arka planı + saat/onay tiki olan bir balon. */
+    .bk-tpl-preview-wrap { margin-top: .85rem; max-width: 380px; }
     .bk-tpl-preview-label {
         font-size: .68rem; font-weight: 700; color: #9aa3b0;
         text-transform: uppercase; letter-spacing: .04em;
         margin-bottom: .45rem; display: flex; align-items: center; gap: .35rem;
     }
-    .bk-tpl-preview-row { display: flex; align-items: flex-end; gap: .5rem; }
+    .bk-tpl-preview-phone {
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid #e3e7ec;
+        box-shadow: 0 1px 3px rgba(16, 24, 40, .05);
+    }
+    .bk-tpl-preview-head {
+        display: flex; align-items: center; gap: .55rem;
+        background: #075e54;
+        padding: .55rem .75rem;
+    }
     .bk-tpl-preview-avatar {
-        flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
-        background: #25d366; color: #fff; display: flex; align-items: center;
-        justify-content: center; font-size: .95rem;
+        flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+        background: rgba(255,255,255,.18); color: #fff; display: flex; align-items: center;
+        justify-content: center; font-size: 1rem;
+    }
+    .bk-tpl-preview-name { font-size: .8rem; font-weight: 700; color: #fff; line-height: 1.2; }
+    .bk-tpl-preview-status { font-size: .65rem; color: rgba(255,255,255,.72); line-height: 1.25; }
+    .bk-tpl-preview-body {
+        background-color: #e5ddd4;
+        background-image:
+            linear-gradient(rgba(0,0,0,.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,.025) 1px, transparent 1px);
+        background-size: 14px 14px;
+        padding: .75rem;
+        min-height: 76px;
+        display: flex; align-items: flex-end;
     }
     .bk-tpl-preview-bubble {
         position: relative;
-        background: #e9fbe0;
-        border: 1px solid #d3f3c4;
-        border-radius: 12px;
-        padding: .65rem .85rem;
+        background: #dcf8c6;
+        border-radius: 10px;
+        padding: .55rem .75rem .6rem;
         font-size: .84rem;
         line-height: 1.5;
-        color: #253339;
+        color: #1f2c34;
         white-space: pre-wrap;
         word-break: break-word;
-        max-width: 520px;
-        box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+        max-width: 100%;
+        box-shadow: 0 1px 1px rgba(16, 24, 40, .08);
     }
     .bk-tpl-preview-bubble::before {
         content: "";
         position: absolute;
-        left: -7px;
-        bottom: 9px;
+        left: -6px;
+        bottom: 8px;
         width: 0; height: 0;
-        border-top: 7px solid transparent;
-        border-bottom: 7px solid transparent;
-        border-right: 8px solid #e9fbe0;
-        filter: drop-shadow(-1px 0 0 #d3f3c4);
+        border-top: 6px solid transparent;
+        border-bottom: 6px solid transparent;
+        border-right: 7px solid #dcf8c6;
     }
-    .bk-tpl-preview-bubble:empty::before { display: none; }
+    .bk-tpl-preview-bubble::after {
+        content: "12:32 \2713\2713";
+        display: block;
+        text-align: right;
+        margin-top: .3rem;
+        font-size: .64rem;
+        color: #7d9e87;
+        letter-spacing: .4px;
+    }
+    .bk-tpl-preview-bubble:empty::before,
+    .bk-tpl-preview-bubble:empty::after { display: none; }
 
     /* Şablon/onay notu: eskiden yoğun, paragraf halinde bir açıklamaydı — okunması zor ve
        teknik görünüyordu. Kısa, ikonlu tek satırlık bir nota indirgendi. */
@@ -168,21 +199,21 @@
     }
     .bk-tpl-note iconify-icon { color: #0082B4; font-size: 1rem; margin-top: .1rem; flex-shrink: 0; }
 
-    /* Mesaj şablonu yer tutucuları: uzun kod dolu bir paragraf yerine okunabilir küçük etiketler. */
-    .bk-placeholder-list {
-        display: flex; flex-wrap: wrap; gap: .4rem;
-        margin-top: .6rem;
+    /* Mesaj şablonuna eklenebilecek yer tutucular: kod dolu bir paragraf yerine,
+       tıklanınca imlecin bulunduğu yere eklenen kompakt token butonları. */
+    .bk-token-bar {
+        display: flex; flex-wrap: wrap; align-items: center; gap: .4rem;
+        margin-bottom: .45rem;
     }
-    .bk-placeholder-chip {
-        display: inline-flex; align-items: center; gap: .35rem;
-        background: #f4f6f8; border: 1px solid #e6e9ed; border-radius: 20px;
-        padding: .3rem .65rem .3rem .5rem;
-        font-size: .74rem; color: #5b6472;
+    .bk-token-bar-label { font-size: .72rem; color: #9aa3b0; margin-right: .1rem; }
+    .bk-token {
+        font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+        background: #f4f6f8; border: 1px solid #e6e9ed; border-radius: 7px;
+        padding: .28rem .55rem; font-size: .74rem; font-weight: 600; color: #0082B4;
+        cursor: pointer; transition: background-color .15s, border-color .15s;
     }
-    .bk-placeholder-chip code {
-        background: #fff; border: 1px solid #dde1e6; border-radius: 6px;
-        padding: .05rem .4rem; font-size: .72rem; color: #0082B4; font-weight: 600;
-    }
+    .bk-token:hover { background: #e7f4f9; border-color: #0082B4; }
+    .bk-token:active { transform: translateY(1px); }
 </style>
 }
 
@@ -287,9 +318,17 @@
                                 <iconify-icon icon="mdi:eye-outline"></iconify-icon>
                                 Malik bu mesajı böyle görecek
                             </div>
-                            <div class="bk-tpl-preview-row">
-                                <div class="bk-tpl-preview-avatar"><iconify-icon icon="ic:baseline-whatsapp"></iconify-icon></div>
-                                <div class="bk-tpl-preview-bubble" id="manualTemplatePreview"></div>
+                            <div class="bk-tpl-preview-phone">
+                                <div class="bk-tpl-preview-head">
+                                    <div class="bk-tpl-preview-avatar"><iconify-icon icon="ic:baseline-whatsapp"></iconify-icon></div>
+                                    <div>
+                                        <div class="bk-tpl-preview-name">Brikon Yapı</div>
+                                        <div class="bk-tpl-preview-status">İşletme hesabı</div>
+                                    </div>
+                                </div>
+                                <div class="bk-tpl-preview-body">
+                                    <div class="bk-tpl-preview-bubble" id="manualTemplatePreview"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -397,23 +436,32 @@
 
                 <div class="col-lg-7">
                     <label class="bk-label">Mesaj Şablonu</label>
-                    <textarea name="messageTemplate" id="messageTemplateInput" class="form-control" rows="3" maxlength="500">@reminderMessageTemplate</textarea>
-                    <div class="bk-placeholder-list">
-                        <span class="bk-placeholder-chip"><code>{ad}</code> Malik adı</span>
-                        <span class="bk-placeholder-chip"><code>{aciklama}</code> Taksit açıklaması</span>
-                        <span class="bk-placeholder-chip"><code>{ne_zaman}</code> "yarın", "1 hafta içinde" gibi ifade</span>
-                        <span class="bk-placeholder-chip"><code>{vade}</code> Vade tarihi</span>
-                        <span class="bk-placeholder-chip"><code>{tutar}</code> Tutar</span>
+                    <div class="bk-token-bar">
+                        <span class="bk-token-bar-label">Eklemek için tıklayın:</span>
+                        <button type="button" class="bk-token" data-token="{ad}" title="Malik adı">{ad}</button>
+                        <button type="button" class="bk-token" data-token="{aciklama}" title="Taksit açıklaması">{aciklama}</button>
+                        <button type="button" class="bk-token" data-token="{ne_zaman}" title='&quot;yarın&quot; / &quot;1 hafta içinde&quot; gibi ifade'>{ne_zaman}</button>
+                        <button type="button" class="bk-token" data-token="{vade}" title="Vade tarihi">{vade}</button>
+                        <button type="button" class="bk-token" data-token="{tutar}" title="Tutar">{tutar}</button>
                     </div>
+                    <textarea name="messageTemplate" id="messageTemplateInput" class="form-control" rows="3" maxlength="500">@reminderMessageTemplate</textarea>
 
                     <div class="bk-tpl-preview-wrap">
                         <div class="bk-tpl-preview-label">
                             <iconify-icon icon="mdi:eye-outline"></iconify-icon>
                             Malik bu mesajı böyle görecek
                         </div>
-                        <div class="bk-tpl-preview-row">
-                            <div class="bk-tpl-preview-avatar"><iconify-icon icon="ic:baseline-whatsapp"></iconify-icon></div>
-                            <div class="bk-tpl-preview-bubble" id="templatePreview"></div>
+                        <div class="bk-tpl-preview-phone">
+                            <div class="bk-tpl-preview-head">
+                                <div class="bk-tpl-preview-avatar"><iconify-icon icon="ic:baseline-whatsapp"></iconify-icon></div>
+                                <div>
+                                    <div class="bk-tpl-preview-name">Brikon Yapı</div>
+                                    <div class="bk-tpl-preview-status">İşletme hesabı</div>
+                                </div>
+                            </div>
+                            <div class="bk-tpl-preview-body">
+                                <div class="bk-tpl-preview-bubble" id="templatePreview"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -773,6 +821,21 @@
 
             messageTemplateInput.addEventListener('input', renderTemplatePreview);
             renderTemplatePreview();
+
+            // Token butonları: tıklanınca imlecin bulunduğu yere ilgili yer tutucuyu ekler.
+            document.querySelectorAll('.bk-token').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var token = btn.getAttribute('data-token');
+                    var start = messageTemplateInput.selectionStart ?? messageTemplateInput.value.length;
+                    var end = messageTemplateInput.selectionEnd ?? messageTemplateInput.value.length;
+                    var val = messageTemplateInput.value;
+                    messageTemplateInput.value = val.slice(0, start) + token + val.slice(end);
+                    messageTemplateInput.focus();
+                    var pos = start + token.length;
+                    messageTemplateInput.setSelectionRange(pos, pos);
+                    renderTemplatePreview();
+                });
+            });
 
             // Otomatik Hatırlatıcı: proje kapsamı seçici ("Tüm Projelerdeki Malikler" / "Seçili Proje(ler)").
             var reminderScopeAllBtn = document.getElementById('reminderScopeAllBtn');
