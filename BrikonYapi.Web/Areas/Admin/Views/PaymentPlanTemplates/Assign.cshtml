@@ -1,10 +1,14 @@
 @using BrikonYapi.Web.Data.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
 @{
     var template = (PaymentPlanTemplate)ViewBag.Template;
     var lockedUnit = (Unit?)ViewBag.LockedUnit;
     var units = (List<Unit>)ViewBag.Units;
     var existingCounts = (Dictionary<int, int>)ViewBag.ExistingCounts;
     var isStage = template.PlanType == PaymentPlanType.StageBased;
+    var projectLocked = (bool)ViewBag.ProjectLocked;
+    var selectedProjectId = (int)ViewBag.SelectedProjectId;
+    var selectedProjectName = (string?)ViewBag.SelectedProjectName;
     ViewData["Title"] = "Ödeme Planı Şablonunu Uygula";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
@@ -18,7 +22,17 @@
                 </div>
                 <div>
                     <h5 class="mb-0">Ödeme Planı Şablonunu Uygula</h5>
-                    <div class="bk-form-hero-subtitle">@template.Project?.Name — @template.Name</div>
+                    <div class="bk-form-hero-subtitle">
+                        @template.Name
+                        @if (selectedProjectId != template.ProjectId)
+                        {
+                            <text> — @template.Project?.Name şablonu, </text><strong>@selectedProjectName</strong><text> projesine uygulanıyor</text>
+                        }
+                        else
+                        {
+                            <text> — @template.Project?.Name</text>
+                        }
+                    </div>
                 </div>
             </div>
             <div class="card-body bk-form-body">
@@ -60,9 +74,43 @@
                     </div>
                 </div>
 
+                @if (lockedUnit == null)
+                {
+                    <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Hedef Proje</div>
+                        @if (projectLocked)
+                        {
+                            <div class="form-control-plaintext small">
+                                <strong>@template.Project?.Name</strong>
+                                @if (isStage)
+                                {
+                                    <span class="text-muted"> — hakediş/aşama bazlı şablonlar, kalemler proje iş adımlarına bağlı olduğu için yalnızca kendi projesine uygulanabilir.</span>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <form method="get" class="d-flex align-items-center gap-2">
+                                <input type="hidden" name="templateId" value="@template.Id" />
+                                <select name="projectId" class="form-select" style="max-width:360px;" onchange="this.form.submit()">
+                                    @foreach (var p in (SelectList)ViewBag.AllProjects)
+                                    {
+                                        <option value="@p.Value" selected="@(p.Selected)">@p.Text</option>
+                                    }
+                                </select>
+                            </form>
+                            <div class="form-text small bk-hint">
+                                Bu şablon takvim/aylık bazlı olduğu için (iş adımına bağlı değil) istediğiniz projeye uygulayabilirsiniz.
+                                Proje değiştirdiğinizde o projenin bağımsız bölümleri aşağıda listelenir.
+                            </div>
+                        }
+                    </div>
+                }
+
                 <form asp-area="Admin" asp-controller="PaymentPlanTemplates" asp-action="Assign" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="templateId" value="@template.Id" />
+                    <input type="hidden" name="projectId" value="@selectedProjectId" />
 
                     <div class="bk-field-group mb-3">
                         <div class="bk-group-title">Atama Tarihi</div>
@@ -89,7 +137,7 @@
                             @if (lockedUnit == null)
                             {
                                 <div class="form-check">
-                                    <input type="checkbox" id="chkAll" class="form-check-input" />
+                                    <input type="checkbox" id="chkAll" class="form-check-input" checked />
                                     <label for="chkAll" class="form-check-label small">Tümünü Seç</label>
                                 </div>
                             }
@@ -120,7 +168,7 @@
                                             <tr class="@(hasContract ? "" : "table-warning")">
                                                 <td>
                                                     <input type="checkbox" name="unitIds" value="@u.Id" class="form-check-input unit-check"
-                                                           checked="@(lockedUnit != null)" disabled="@(!hasContract)" />
+                                                           checked="@(lockedUnit != null || hasContract)" disabled="@(!hasContract)" />
                                                 </td>
                                                 <td class="small">@u.Project?.Name — @u.UnitNo @(!string.IsNullOrEmpty(u.BlockNo) ? $"({u.BlockNo})" : "")</td>
                                                 <td class="small">@(u.Owner?.FullName ?? "Atanmamış")</td>
@@ -163,7 +211,7 @@
                             <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
                             Ödeme Planını Uygula
                         </button>
-                        <a href="/Admin/PaymentPlanTemplates?projectId=@template.ProjectId" class="btn bk-btn-cancel">İptal</a>
+                        <a href="/Admin/PaymentPlanTemplates?projectId=@selectedProjectId" class="btn bk-btn-cancel">İptal</a>
                     </div>
                 </form>
             </div>

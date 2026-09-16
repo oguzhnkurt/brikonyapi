@@ -194,7 +194,13 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         // ── Toplu / Tekil Atama ──────────────────────────────────
         // unitId verilirse yalnız o bölüme atama yapılır (Owner sayfasından manuel atama);
         // verilmezse projedeki tüm aktif bölümler arasından seçim yapılabilir (toplu atama).
-        public async Task<IActionResult> Assign(int templateId, int? unitId)
+        //
+        // projectId: takvim/aylık bazlı şablonlar (iş adımına bağlı olmadıkları için) şablonun kendi
+        // projesi dışında bir projeye de uygulanabilir — admin üstteki proje seçiciyle hedef projeyi
+        // değiştirebilir. Hakediş/aşama bazlı şablonlarda ise her kalem şablonun kendi projesindeki bir
+        // ProjectStage'e bağlı olduğundan, başka bir projede o aşamalar bulunmaz; bu yüzden proje seçimi
+        // her zaman şablonun kendi projesine kilitlenir (ViewBag.ProjectLocked = true).
+        public async Task<IActionResult> Assign(int templateId, int? unitId, int? projectId)
         {
             var template = await _db.PaymentPlanTemplates
                 .Include(t => t.Project)
@@ -204,6 +210,9 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             ViewBag.Template = template;
 
+            var isStageBased = template.PlanType == PaymentPlanType.StageBased;
+            ViewBag.ProjectLocked = isStageBased || unitId.HasValue;
+
             if (unitId.HasValue)
             {
                 var lockedUnit = await _db.Units.Include(u => u.Owner).Include(u => u.Project)
@@ -211,12 +220,19 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 if (lockedUnit == null) return NotFound();
                 ViewBag.LockedUnit = lockedUnit;
                 ViewBag.Units = new List<Unit> { lockedUnit };
+                ViewBag.SelectedProjectId = template.ProjectId;
+                ViewBag.SelectedProjectName = template.Project?.Name;
             }
             else
             {
+                var effectiveProjectId = isStageBased ? template.ProjectId : (projectId ?? template.ProjectId);
                 ViewBag.LockedUnit = null;
+                ViewBag.SelectedProjectId = effectiveProjectId;
+                var allProjects = await _db.Projects.OrderBy(p => p.Name).ToListAsync();
+                ViewBag.AllProjects = new SelectList(allProjects, "Id", "Name", effectiveProjectId);
+                ViewBag.SelectedProjectName = allProjects.FirstOrDefault(p => p.Id == effectiveProjectId)?.Name;
                 ViewBag.Units = await _db.Units.Include(u => u.Owner).Include(u => u.Project)
-                    .Where(u => u.ProjectId == template.ProjectId && u.IsActive)
+                    .Where(u => u.ProjectId == effectiveProjectId && u.IsActive)
                     .OrderBy(u => u.UnitNo).ToListAsync();
             }
 
@@ -233,7 +249,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Assign(int templateId, List<int> unitIds, DateTime assignDate)
+        public async Task<IActionResult> Assign(int templateId, List<int> unitIds, DateTime assignDate, int? projectId)
         {
             var template = await _db.PaymentPlanTemplates
                 .Include(t => t.Items).ThenInclude(i => i.ProjectStage)
@@ -243,11 +259,17 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             if (unitIds == null || unitIds.Count == 0)
             {
                 TempData["Error"] = "En az bir bağımsız bölüm seçmelisiniz.";
-                return RedirectToAction(nameof(Assign), new { templateId });
+                return RedirectToAction(nameof(Assign), new { templateId, projectId });
             }
 
+            // Hakediş/aşama bazlı şablonlar güvenlik amacıyla her zaman kendi projesine kilitli — istemciden
+            // gelen projectId'ye bu tür şablonlarda güvenilmez.
+            var effectiveProjectId = template.PlanType == PaymentPlanType.StageBased
+                ? template.ProjectId
+                : (projectId ?? template.ProjectId);
+
             var units = await _db.Units.Include(u => u.Owner)
-                .Where(u => unitIds.Contains(u.Id) && u.ProjectId == template.ProjectId)
+                .Where(u => unitIds.Contains(u.Id) && u.ProjectId == effectiveProjectId)
                 .ToListAsync();
 
             var skipped = new List<string>();
@@ -318,7 +340,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             if (appliedCount > 0)
                 TempData["Success"] = $"{appliedCount} bölüme, toplam {scheduleCount} taksit içeren ödeme planı uygulandı.";
 
-            return RedirectToAction(nameof(Index), new { projectId = template.ProjectId });
+            return RedirectToAction(nameof(Index), new { projectId = effectiveProjectId });
         }
     }
 }
