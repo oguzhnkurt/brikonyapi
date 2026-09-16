@@ -1,8 +1,14 @@
 @model BrikonYapi.Web.Data.Entities.PaymentSchedule
 @using BrikonYapi.Web.Data.Entities
 @{
-    var unit = (Unit)ViewBag.Unit;
+    var unit = (Unit?)ViewBag.Unit;
+    var fundDebtor = (FundDebtor?)ViewBag.FundDebtor;
     var stages = (List<ProjectStage>)ViewBag.Stages;
+    var projectName = fundDebtor != null ? fundDebtor.Project?.Name : unit!.Project?.Name;
+    var subtitle = fundDebtor != null
+        ? $"{projectName} — Fon: Arsa Sahibi — Malik/Borçlu: {fundDebtor.Name}"
+        : $"{projectName} / {unit!.UnitNo} — Malik: {(unit.Owner?.FullName ?? "Atanmamış")}";
+    var cancelUrl = fundDebtor != null ? $"/Admin/PaymentSchedules?fundDebtorId={fundDebtor.Id}" : $"/Admin/PaymentSchedules?unitId={unit!.Id}";
     ViewData["Title"] = "Yeni Ödeme Kalemi";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
@@ -16,7 +22,7 @@
                 </div>
                 <div>
                     <h5 class="mb-0">Taksitli Ödeme Planı Oluştur</h5>
-                    <div class="bk-form-hero-subtitle">@unit.Project?.Name / @unit.UnitNo — Malik: @(unit.Owner?.FullName ?? "Atanmamış")</div>
+                    <div class="bk-form-hero-subtitle">@subtitle</div>
                 </div>
             </div>
             <div class="card-body bk-form-body">
@@ -36,9 +42,16 @@
                     </div>
                 </div>
 
-                <form asp-area="Admin" asp-controller="PaymentSchedules" asp-action="Create" asp-route-unitId="@unit.Id" method="post" id="pmForm">
+                <form asp-area="Admin" asp-controller="PaymentSchedules" asp-action="Create" method="post" id="pmForm">
                     @Html.AntiForgeryToken()
-                    <input type="hidden" name="unitId" value="@unit.Id" />
+                    @if (fundDebtor != null)
+                    {
+                        <input type="hidden" name="fundDebtorId" value="@fundDebtor.Id" />
+                    }
+                    else
+                    {
+                        <input type="hidden" name="unitId" value="@unit!.Id" />
+                    }
 
                     <!-- ═══ Adım 1: Plan Bilgileri ═══ -->
                     <div id="pmStep1" class="pm-pane">
@@ -194,7 +207,7 @@
                                 <iconify-icon icon="mdi:chevron-left" class="me-1"></iconify-icon>Geri
                             </button>
                             <div class="d-flex gap-2">
-                                <a href="/Admin/PaymentSchedules?unitId=@unit.Id" class="btn bk-btn-cancel">İptal</a>
+                                <a href="@cancelUrl" class="btn bk-btn-cancel">İptal</a>
                                 <button type="submit" class="btn bk-btn-save">
                                     <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
                                     Planı Kaydet

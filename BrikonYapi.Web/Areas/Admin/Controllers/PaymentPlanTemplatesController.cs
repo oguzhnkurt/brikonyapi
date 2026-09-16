@@ -253,8 +253,8 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             // admini uyarmak için sayıyoruz.
             var unitIdsOnScreen = ((List<Unit>)ViewBag.Units).Select(u => u.Id).ToList();
             ViewBag.ExistingCounts = await _db.PaymentSchedules
-                .Where(s => unitIdsOnScreen.Contains(s.UnitId))
-                .GroupBy(s => s.UnitId)
+                .Where(s => s.UnitId != null && unitIdsOnScreen.Contains(s.UnitId.Value))
+                .GroupBy(s => s.UnitId!.Value)
                 .Select(g => new { UnitId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.UnitId, x => x.Count);
 

@@ -1,26 +1,29 @@
 @model List<BrikonYapi.Web.Data.Entities.Unit>
 @using Microsoft.AspNetCore.Mvc.Rendering
+@using BrikonYapi.Web.Data.Entities
 @{
     ViewData["Title"] = "Ödeme Planları";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
     var selectedProjectId = (int?)ViewBag.SelectedProjectId;
     var stats = (Dictionary<int, (int Total, int Paid, int Overdue)>)ViewBag.Stats;
+    var fundDebtors = (List<FundDebtor>)ViewBag.FundDebtors;
+    var fundStats = (Dictionary<int, (int Total, int Paid, int Overdue)>)ViewBag.FundStats;
+    var projects = (SelectList)ViewBag.Projects;
 }
 
 <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
     <div>
         <h4 class="mb-0">Ödeme Planları</h4>
         <div class="text-muted small">
-            Bir bağımsız bölümün taksitlerini görüntülemek, elle taksit eklemek ya da düzenlemek için
-            aşağıdan bölümü seçin. Henüz planı olmayan bölümlere "Şablon Uygula" ile hazır bir ödeme planı
-            uygulayabilir ya da "Oluştur" ile elle taksit girebilirsiniz.
+            Bir bağımsız bölümün taksitlerini görüntülemek için "Bağımsız Bölümler" sekmesini, arsa sahibi gibi
+            bölüme bağlı olmayan fon borçlularının planlarını yönetmek için "Fon Ödemeleri" sekmesini kullanın.
         </div>
     </div>
     <div class="d-flex align-items-center gap-2">
         <form method="get" class="d-flex align-items-center gap-2">
             <select name="projectId" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width:200px">
                 <option value="">Tüm Projeler</option>
-                @foreach (var item in (SelectList)ViewBag.Projects)
+                @foreach (var item in projects)
                 {
                     <option value="@item.Value" selected="@(item.Selected)">@item.Text</option>
                 }
@@ -31,95 +34,231 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body p-0">
-        @if (!Model.Any())
-        {
-            <div class="d-flex flex-column align-items-center justify-content-center text-muted py-5">
-                <span>Önce <a href="/Admin/Units/Create">bağımsız bölüm</a> eklemelisiniz.</span>
+<ul class="nav nav-pills mb-3" id="pmTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="pmTabUnits" data-bs-toggle="pill" data-bs-target="#pmPaneUnits" type="button" role="tab">
+            <iconify-icon icon="mdi:home-city-outline" class="me-1"></iconify-icon>Bağımsız Bölümler
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pmTabFund" data-bs-toggle="pill" data-bs-target="#pmPaneFund" type="button" role="tab">
+            <iconify-icon icon="mdi:account-cash-outline" class="me-1"></iconify-icon>Fon Ödemeleri (Arsa Sahibi vb.)
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="pmPaneUnits" role="tabpanel">
+        <div class="card">
+            <div class="card-body p-0">
+                @if (!Model.Any())
+                {
+                    <div class="d-flex flex-column align-items-center justify-content-center text-muted py-5">
+                        <span>Önce <a href="/Admin/Units/Create">bağımsız bölüm</a> eklemelisiniz.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="unitTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Proje</th>
+                                    <th>Bağımsız Bölüm</th>
+                                    <th>Malik</th>
+                                    <th>Ödeme Planı Durumu</th>
+                                    <th class="text-end">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var u in Model)
+                                {
+                                    var hasStat = stats.TryGetValue(u.Id, out var stat);
+                                    int total = hasStat ? stat.Total : 0;
+                                    int paid = hasStat ? stat.Paid : 0;
+                                    int overdue = hasStat ? stat.Overdue : 0;
+                                    var ownerName = u.Owner?.FullName ?? "Atanmamış";
+                                    <tr data-search="@($"{u.UnitNo} {u.BlockNo} {ownerName}".ToLowerInvariant())">
+                                        <td>@u.Project?.Name</td>
+                                        <td><strong>@u.UnitNo</strong> <span class="text-muted small">@u.BlockNo</span></td>
+                                        <td>
+                                            @if (u.Owner != null)
+                                            {
+                                                @u.Owner.FullName
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning-subtle text-warning-emphasis">
+                                                    <iconify-icon icon="mdi:account-alert-outline" class="me-1"></iconify-icon>Sahipsiz
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (total == 0)
+                                            {
+                                                <span class="badge bg-secondary-subtle text-secondary">Plan yok</span>
+                                            }
+                                            else if (overdue > 0)
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger">@overdue gecikmiş</span>
+                                                <span class="text-muted small">· @paid/@total ödendi</span>
+                                            }
+                                            else if (paid == total)
+                                            {
+                                                <span class="badge bg-success-subtle text-success">Tümü ödendi (@total)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning-subtle text-warning">@paid/@total ödendi</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex gap-1 justify-content-end">
+                                                @if (total == 0)
+                                                {
+                                                    <a href="/Admin/PaymentPlanTemplates?unitId=@u.Id" class="btn btn-sm btn-outline-info" title="Hazır bir ödeme planı şablonunu bu bölüme uygula">
+                                                        <iconify-icon icon="mdi:file-document-multiple-outline"></iconify-icon>
+                                                        Şablon Uygula
+                                                    </a>
+                                                    <a href="/Admin/PaymentSchedules?unitId=@u.Id" class="btn btn-sm btn-primary" title="Bu bölüme taksitleri tek tek elle ekle">
+                                                        Oluştur
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <a href="/Admin/PaymentSchedules?unitId=@u.Id" class="btn btn-sm btn-outline-primary">
+                                                        Görüntüle
+                                                    </a>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </div>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="unitTable">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Proje</th>
-                            <th>Bağımsız Bölüm</th>
-                            <th>Malik</th>
-                            <th>Ödeme Planı Durumu</th>
-                            <th class="text-end">İşlem</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var u in Model)
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="pmPaneFund" role="tabpanel">
+        <div class="d-flex justify-content-end mb-2">
+            <button type="button" class="btn btn-sm bk-btn-save" data-bs-toggle="modal" data-bs-target="#newFundDebtorModal">
+                <iconify-icon icon="mdi:plus-circle-outline" class="me-1"></iconify-icon>Yeni Fon Borçlusu
+            </button>
+        </div>
+        <div class="card">
+            <div class="card-body p-0">
+                @if (fundDebtors.Count == 0)
+                {
+                    <div class="d-flex flex-column align-items-center justify-content-center text-muted py-5">
+                        <span>Henüz fon borçlusu tanımlanmamış. "Yeni Fon Borçlusu" ile arsa sahibi gibi bölüme bağlı olmayan bir taksit planı oluşturabilirsiniz.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Proje</th>
+                                    <th>Fon Türü</th>
+                                    <th>Malik/Borçlu Adı</th>
+                                    <th>Ödeme Planı Durumu</th>
+                                    <th class="text-end">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var f in fundDebtors)
+                                {
+                                    var hasStat = fundStats.TryGetValue(f.Id, out var stat);
+                                    int total = hasStat ? stat.Total : 0;
+                                    int paid = hasStat ? stat.Paid : 0;
+                                    int overdue = hasStat ? stat.Overdue : 0;
+                                    <tr>
+                                        <td>@f.Project?.Name</td>
+                                        <td><span class="badge bg-info-subtle text-info-emphasis">Arsa Sahibi</span></td>
+                                        <td><strong>@f.Name</strong></td>
+                                        <td>
+                                            @if (total == 0)
+                                            {
+                                                <span class="badge bg-secondary-subtle text-secondary">Plan yok</span>
+                                            }
+                                            else if (overdue > 0)
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger">@overdue gecikmiş</span>
+                                                <span class="text-muted small">· @paid/@total ödendi</span>
+                                            }
+                                            else if (paid == total)
+                                            {
+                                                <span class="badge bg-success-subtle text-success">Tümü ödendi (@total)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning-subtle text-warning">@paid/@total ödendi</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            @if (total == 0)
+                                            {
+                                                <a href="/Admin/PaymentSchedules/Create?fundDebtorId=@f.Id" class="btn btn-sm btn-primary">
+                                                    Oluştur
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a href="/Admin/PaymentSchedules?fundDebtorId=@f.Id" class="btn btn-sm btn-outline-primary">
+                                                    Görüntüle
+                                                </a>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="newFundDebtorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="/Admin/PaymentSchedules/CreateFundDebtor" class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header">
+                <h5 class="modal-title"><iconify-icon icon="mdi:account-cash-outline" class="me-1"></iconify-icon>Yeni Fon Borçlusu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="bk-label">Proje <span class="text-danger">*</span></label>
+                    <select name="projectId" class="form-select" required>
+                        <option value="">Seçiniz...</option>
+                        @foreach (var item in projects)
                         {
-                            var hasStat = stats.TryGetValue(u.Id, out var stat);
-                            int total = hasStat ? stat.Total : 0;
-                            int paid = hasStat ? stat.Paid : 0;
-                            int overdue = hasStat ? stat.Overdue : 0;
-                            var ownerName = u.Owner?.FullName ?? "Atanmamış";
-                            <tr data-search="@($"{u.UnitNo} {u.BlockNo} {ownerName}".ToLowerInvariant())">
-                                <td>@u.Project?.Name</td>
-                                <td><strong>@u.UnitNo</strong> <span class="text-muted small">@u.BlockNo</span></td>
-                                <td>
-                                    @if (u.Owner != null)
-                                    {
-                                        @u.Owner.FullName
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-warning-subtle text-warning-emphasis">
-                                            <iconify-icon icon="mdi:account-alert-outline" class="me-1"></iconify-icon>Sahipsiz
-                                        </span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (total == 0)
-                                    {
-                                        <span class="badge bg-secondary-subtle text-secondary">Plan yok</span>
-                                    }
-                                    else if (overdue > 0)
-                                    {
-                                        <span class="badge bg-danger-subtle text-danger">@overdue gecikmiş</span>
-                                        <span class="text-muted small">· @paid/@total ödendi</span>
-                                    }
-                                    else if (paid == total)
-                                    {
-                                        <span class="badge bg-success-subtle text-success">Tümü ödendi (@total)</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-warning-subtle text-warning">@paid/@total ödendi</span>
-                                    }
-                                </td>
-                                <td class="text-end">
-                                    <div class="d-flex gap-1 justify-content-end">
-                                        @if (total == 0)
-                                        {
-                                            <a href="/Admin/PaymentPlanTemplates?unitId=@u.Id" class="btn btn-sm btn-outline-info" title="Hazır bir ödeme planı şablonunu bu bölüme uygula">
-                                                <iconify-icon icon="mdi:file-document-multiple-outline"></iconify-icon>
-                                                Şablon Uygula
-                                            </a>
-                                            <a href="/Admin/PaymentSchedules?unitId=@u.Id" class="btn btn-sm btn-primary" title="Bu bölüme taksitleri tek tek elle ekle">
-                                                Oluştur
-                                            </a>
-                                        }
-                                        else
-                                        {
-                                            <a href="/Admin/PaymentSchedules?unitId=@u.Id" class="btn btn-sm btn-outline-primary">
-                                                Görüntüle
-                                            </a>
-                                        }
-                                    </div>
-                                </td>
-                            </tr>
+                            <option value="@item.Value">@item.Text</option>
                         }
-                    </tbody>
-                </table>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="bk-label">Fon Türü</label>
+                    <input type="text" class="form-control" value="Arsa Sahibi" disabled />
+                    <div class="form-text bk-hint">Şu an yalnızca "Arsa Sahibi" fon türü desteklenmektedir.</div>
+                </div>
+                <div class="mb-1">
+                    <label class="bk-label">Malik/Borçlu Adı <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control" placeholder="Örn: Ahmet Yılmaz" required />
+                    <div class="form-text bk-hint">Kat Malikleri listesinde kayıtlı olması gerekmez — serbest metin olarak girilir.</div>
+                </div>
             </div>
-        }
+            <div class="modal-footer">
+                <button type="button" class="btn bk-btn-cancel" data-bs-dismiss="modal">İptal</button>
+                <button type="submit" class="btn bk-btn-save">Oluştur ve Devam Et</button>
+            </div>
+        </form>
     </div>
 </div>
 

@@ -24,6 +24,7 @@ namespace BrikonYapi.Web.Data
         public DbSet<Unit> Units { get; set; }
         public DbSet<PaymentSchedule> PaymentSchedules { get; set; }
         public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+        public DbSet<FundDebtor> FundDebtors { get; set; }
         public DbSet<PaymentPlanTemplate> PaymentPlanTemplates { get; set; }
         public DbSet<PaymentPlanTemplateItem> PaymentPlanTemplateItems { get; set; }
         public DbSet<NotificationLog> NotificationLogs { get; set; }
@@ -83,6 +84,14 @@ namespace BrikonYapi.Web.Data
             {
                 e.HasOne(p => p.Unit).WithMany(u => u.PaymentSchedules).HasForeignKey(p => p.UnitId).OnDelete(DeleteBehavior.Cascade);
                 e.HasOne(p => p.ProjectStage).WithMany().HasForeignKey(p => p.ProjectStageId).OnDelete(DeleteBehavior.SetNull);
+                e.HasOne(p => p.FundDebtor).WithMany(f => f.PaymentSchedules).HasForeignKey(p => p.FundDebtorId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ── Fon borçluları (bağımsız bölüme bağlı olmayan, proje bazlı taksit planı sahipleri) ──
+            builder.Entity<FundDebtor>(e =>
+            {
+                e.HasOne(f => f.Project).WithMany().HasForeignKey(f => f.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(f => f.ProjectId);
             });
 
             builder.Entity<PaymentTransaction>(e =>

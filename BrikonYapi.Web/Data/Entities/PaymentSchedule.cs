@@ -15,8 +15,15 @@ namespace BrikonYapi.Web.Data.Entities
     {
         public int Id { get; set; }
 
-        [Required] public int UnitId { get; set; }
+        /// <summary>Bağımsız bölüm bazlı ödeme planlarında dolu, fon bazlı planlarda (bkz. FundDebtorId) boş olur.
+        /// İkisinden yalnızca biri set edilmelidir.</summary>
+        public int? UnitId { get; set; }
         public Unit? Unit { get; set; }
+
+        /// <summary>Bir bağımsız bölüme değil, proje bazlı bir fon borçlusuna (ör. Arsa Sahibi) bağlı planlarda dolu olur.
+        /// UnitId ile karşılıklı dışlayıcıdır.</summary>
+        public int? FundDebtorId { get; set; }
+        public FundDebtor? FundDebtor { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }

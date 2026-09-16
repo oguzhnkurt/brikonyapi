@@ -1,8 +1,11 @@
 @model BrikonYapi.Web.Data.Entities.PaymentSchedule
 @using BrikonYapi.Web.Data.Entities
 @{
-    var unit = (Unit)ViewBag.Unit;
+    var unit = (Unit?)ViewBag.Unit;
+    var fundDebtor = (FundDebtor?)ViewBag.FundDebtor;
     var stages = (List<ProjectStage>)ViewBag.Stages;
+    var pmSubtitle = fundDebtor != null ? $"{fundDebtor.Project?.Name} — Fon: Arsa Sahibi — {fundDebtor.Name}" : $"{unit!.Project?.Name} / {unit.UnitNo}";
+    var pmCancelUrl = fundDebtor != null ? $"/Admin/PaymentSchedules?fundDebtorId={fundDebtor.Id}" : $"/Admin/PaymentSchedules?unitId={unit!.Id}";
     ViewData["Title"] = "Ödeme Kalemi Düzenle";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
@@ -16,7 +19,7 @@
                 </div>
                 <div>
                     <h5 class="mb-0">Ödeme Kalemi Düzenle</h5>
-                    <div class="pm-edit-subtitle">@unit.Project?.Name / @unit.UnitNo</div>
+                    <div class="pm-edit-subtitle">@pmSubtitle</div>
                 </div>
             </div>
             <div class="card-body pm-edit-body">
@@ -94,7 +97,7 @@
                             <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
                             Kaydet
                         </button>
-                        <a href="/Admin/PaymentSchedules?unitId=@unit.Id" class="btn pm-btn-cancel">İptal</a>
+                        <a href="@pmCancelUrl" class="btn pm-btn-cancel">İptal</a>
                     </div>
                 </form>
             </div>

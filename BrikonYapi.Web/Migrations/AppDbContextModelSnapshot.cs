@@ -895,6 +895,9 @@ namespace BrikonYapi.Web.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int>("Currency")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -904,6 +907,9 @@ namespace BrikonYapi.Web.Migrations
 
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("FundDebtorId")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("HakedisPercentage")
                         .HasColumnType("integer");
@@ -920,7 +926,7 @@ namespace BrikonYapi.Web.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<int>("UnitId")
+                    b.Property<int?>("UnitId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -928,11 +934,42 @@ namespace BrikonYapi.Web.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FundDebtorId");
+
                     b.HasIndex("ProjectStageId");
 
                     b.HasIndex("UnitId");
 
                     b.ToTable("PaymentSchedules");
+                });
+
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.FundDebtor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("FundType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("FundDebtors");
                 });
 
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentTransaction", b =>
@@ -1916,6 +1953,11 @@ namespace BrikonYapi.Web.Migrations
 
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentSchedule", b =>
                 {
+                    b.HasOne("BrikonYapi.Web.Data.Entities.FundDebtor", "FundDebtor")
+                        .WithMany("PaymentSchedules")
+                        .HasForeignKey("FundDebtorId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("BrikonYapi.Web.Data.Entities.ProjectStage", "ProjectStage")
                         .WithMany()
                         .HasForeignKey("ProjectStageId")
@@ -1924,12 +1966,24 @@ namespace BrikonYapi.Web.Migrations
                     b.HasOne("BrikonYapi.Web.Data.Entities.Unit", "Unit")
                         .WithMany("PaymentSchedules")
                         .HasForeignKey("UnitId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("FundDebtor");
 
                     b.Navigation("ProjectStage");
 
                     b.Navigation("Unit");
+                });
+
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.FundDebtor", b =>
+                {
+                    b.HasOne("BrikonYapi.Web.Data.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentTransaction", b =>
@@ -2075,6 +2129,11 @@ namespace BrikonYapi.Web.Migrations
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentSchedule", b =>
                 {
                     b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.FundDebtor", b =>
+                {
+                    b.Navigation("PaymentSchedules");
                 });
 
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentPlanTemplate", b =>

@@ -1,7 +1,8 @@
 @model List<BrikonYapi.Web.Data.Entities.PaymentSchedule>
 @using BrikonYapi.Web.Data.Entities
 @{
-    var unit = (Unit)ViewBag.Unit;
+    var unit = (Unit?)ViewBag.Unit;
+    var fundDebtor = (FundDebtor?)ViewBag.FundDebtor;
     var tr = new System.Globalization.CultureInfo("tr-TR");
     ViewData["Title"] = "Ödeme Planı";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
@@ -24,17 +25,25 @@
     };
 }
 
+@{
+    var idxTitle = fundDebtor != null ? $"{fundDebtor.Project?.Name} — Fon: Arsa Sahibi" : $"{unit!.Project?.Name} — {unit.UnitNo}";
+    var idxSubtitle = fundDebtor != null ? $"Malik/Borçlu: {fundDebtor.Name}" : $"Malik: {(unit!.Owner?.FullName ?? "Atanmamış")} · İlerleme: %{unit.ProgressPercentage}";
+    var idxCreateUrl = fundDebtor != null ? $"/Admin/PaymentSchedules/Create?fundDebtorId={fundDebtor.Id}" : $"/Admin/PaymentSchedules/Create?unitId={unit!.Id}";
+}
 <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2 bk-page-header">
     <div>
-        <h5 class="mb-0">@unit.Project?.Name — @unit.UnitNo</h5>
-        <span class="text-muted small">Malik: @(unit.Owner?.FullName ?? "Atanmamış") &middot; İlerleme: %@unit.ProgressPercentage</span>
+        <h5 class="mb-0">@idxTitle</h5>
+        <span class="text-muted small">@idxSubtitle</span>
     </div>
     <div class="d-flex gap-2">
-        <a href="/Admin/PaymentPlanTemplates?unitId=@unit.Id" class="btn btn-outline-info btn-sm" title="Hazır bir ödeme planı şablonunu bu bölüme uygula">
-            <iconify-icon icon="mdi:file-document-multiple-outline" class="me-1"></iconify-icon>
-            Şablon Uygula
-        </a>
-        <a href="/Admin/PaymentSchedules/Create?unitId=@unit.Id" class="btn btn-primary btn-sm">
+        @if (unit != null)
+        {
+            <a href="/Admin/PaymentPlanTemplates?unitId=@unit.Id" class="btn btn-outline-info btn-sm" title="Hazır bir ödeme planı şablonunu bu bölüme uygula">
+                <iconify-icon icon="mdi:file-document-multiple-outline" class="me-1"></iconify-icon>
+                Şablon Uygula
+            </a>
+        }
+        <a href="@idxCreateUrl" class="btn btn-primary btn-sm">
             <iconify-icon icon="iconamoon:sign-plus-circle-duotone" class="me-1"></iconify-icon>
             Yeni Ödeme Kalemi
         </a>
@@ -45,8 +54,15 @@
 {
     <div class="card">
         <div class="card-body text-center text-muted py-5">
-            Henüz ödeme kalemi eklenmemiş. Taksitleri elle "Yeni Ödeme Kalemi" ile tek tek girebilir,
-            ya da "Şablon Uygula" ile hazır bir ödeme planı şablonunu bu bölüme uygulayabilirsiniz.
+            @if (unit != null)
+            {
+                <text>Henüz ödeme kalemi eklenmemiş. Taksitleri elle "Yeni Ödeme Kalemi" ile tek tek girebilir,
+                ya da "Şablon Uygula" ile hazır bir ödeme planı şablonunu bu bölüme uygulayabilirsiniz.</text>
+            }
+            else
+            {
+                <text>Henüz ödeme kalemi eklenmemiş. "Yeni Ödeme Kalemi" ile taksitli borç planını oluşturabilirsiniz.</text>
+            }
         </div>
     </div>
 }
@@ -163,7 +179,17 @@ else
     }
 }
 
-<a href="/Admin/Units" class="btn btn-outline-secondary btn-sm">
-    <iconify-icon icon="iconamoon:arrow-left-2-duotone" class="me-1"></iconify-icon>
-    Bağımsız Bölümlere Dön
-</a>
+@if (unit != null)
+{
+    <a href="/Admin/Units" class="btn btn-outline-secondary btn-sm">
+        <iconify-icon icon="iconamoon:arrow-left-2-duotone" class="me-1"></iconify-icon>
+        Bağımsız Bölümlere Dön
+    </a>
+}
+else
+{
+    <a href="/Admin/PaymentSchedules" class="btn btn-outline-secondary btn-sm">
+        <iconify-icon icon="iconamoon:arrow-left-2-duotone" class="me-1"></iconify-icon>
+        Fon Ödemelerine Dön
+    </a>
+}

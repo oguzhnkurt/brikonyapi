@@ -18,9 +18,25 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             _notify = notify;
         }
 
-        // Ünite seçilmemişse tüm bağımsız bölümleri listele (seçim ekranı)
-        public async Task<IActionResult> Index(int? unitId, int? projectId)
+        // Ünite/fon borçlusu seçilmemişse seçim ekranını göster (Bağımsız Bölümler / Fon Ödemeleri sekmeleri)
+        public async Task<IActionResult> Index(int? unitId, int? projectId, int? fundDebtorId)
         {
+            if (fundDebtorId != null)
+            {
+                var debtor = await _db.FundDebtors.Include(f => f.Project).FirstOrDefaultAsync(f => f.Id == fundDebtorId);
+                if (debtor == null) return NotFound();
+
+                var fundSchedules = await _db.PaymentSchedules
+                    .Include(p => p.Transactions)
+                    .Include(p => p.ProjectStage)
+                    .Where(p => p.FundDebtorId == fundDebtorId)
+                    .OrderBy(p => p.DueDate)
+                    .ToListAsync();
+
+                ViewBag.FundDebtor = debtor;
+                return View(fundSchedules);
+            }
+
             if (unitId == null)
             {
                 var query = _db.Units.Include(u => u.Project).Include(u => u.Owner).AsQueryable();
@@ -31,8 +47,8 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 // Her bölümün ödeme planı özetini (kaç kalem, kaçı ödendi/gecikti) tek sorguda çıkarıp
                 // seçim ekranında "plan var mı, durumu ne" bilgisini doğrudan gösterebilmek için.
                 var statsRaw = await _db.PaymentSchedules
-                    .Where(s => unitIds.Contains(s.UnitId))
-                    .GroupBy(s => s.UnitId)
+                    .Where(s => s.UnitId != null && unitIds.Contains(s.UnitId.Value))
+                    .GroupBy(s => s.UnitId!.Value)
                     .Select(g => new
                     {
                         UnitId = g.Key,
@@ -43,7 +59,28 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                     .ToListAsync();
                 var stats = statsRaw.ToDictionary(x => x.UnitId, x => (Total: x.Total, Paid: x.Paid, Overdue: x.Overdue));
 
+                // Fon borçluları (ör. Arsa Sahibi) listesi ve plan özetleri.
+                var fundQuery = _db.FundDebtors.Include(f => f.Project).AsQueryable();
+                if (projectId.HasValue) fundQuery = fundQuery.Where(f => f.ProjectId == projectId);
+                var fundDebtors = await fundQuery.OrderBy(f => f.Project!.Name).ThenBy(f => f.Name).ToListAsync();
+
+                var debtorIds = fundDebtors.Select(f => f.Id).ToList();
+                var fundStatsRaw = await _db.PaymentSchedules
+                    .Where(s => s.FundDebtorId != null && debtorIds.Contains(s.FundDebtorId.Value))
+                    .GroupBy(s => s.FundDebtorId!.Value)
+                    .Select(g => new
+                    {
+                        FundDebtorId = g.Key,
+                        Total = g.Count(),
+                        Paid = g.Count(s => s.Status == PaymentScheduleStatus.Paid),
+                        Overdue = g.Count(s => s.Status == PaymentScheduleStatus.Overdue)
+                    })
+                    .ToListAsync();
+                var fundStats = fundStatsRaw.ToDictionary(x => x.FundDebtorId, x => (Total: x.Total, Paid: x.Paid, Overdue: x.Overdue));
+
                 ViewBag.Stats = stats;
+                ViewBag.FundDebtors = fundDebtors;
+                ViewBag.FundStats = fundStats;
                 ViewBag.Projects = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
                     await _db.Projects.OrderBy(p => p.Name).ToListAsync(), "Id", "Name", projectId);
                 ViewBag.SelectedProjectId = projectId;
@@ -64,8 +101,45 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             return View(schedules);
         }
 
-        public async Task<IActionResult> Create(int unitId)
+        /// <summary>Yeni bir fon borçlusu (ör. Arsa Sahibi) tanımlar ve doğrudan taksit sihirbazına yönlendirir.</summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateFundDebtor(int projectId, string name)
         {
+            var project = await _db.Projects.FindAsync(projectId);
+            if (project == null || string.IsNullOrWhiteSpace(name))
+            {
+                TempData["Error"] = "Proje ve Malik/Borçlu adı gerekli.";
+                return RedirectToAction(nameof(Index), new { projectId });
+            }
+
+            var debtor = new FundDebtor
+            {
+                ProjectId = projectId,
+                FundType = PaymentFundType.ArsaSahibi,
+                Name = name.Trim(),
+                CreatedAt = DateTime.Now
+            };
+            _db.FundDebtors.Add(debtor);
+            await _db.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Create), new { fundDebtorId = debtor.Id });
+        }
+
+        public async Task<IActionResult> Create(int? unitId, int? fundDebtorId)
+        {
+            if (fundDebtorId != null)
+            {
+                var debtor = await _db.FundDebtors.Include(f => f.Project).FirstOrDefaultAsync(f => f.Id == fundDebtorId);
+                if (debtor == null) return NotFound();
+                ViewBag.FundDebtor = debtor;
+                ViewBag.Stages = await _db.ProjectStages
+                    .Where(s => s.ProjectId == debtor.ProjectId)
+                    .OrderBy(s => s.OrderIndex)
+                    .ToListAsync();
+                return View(new PaymentSchedule { FundDebtorId = fundDebtorId, DueDate = DateTime.Today.AddMonths(1) });
+            }
+
+            if (unitId == null) return NotFound();
             var unit = await _db.Units.Include(u => u.Project).FirstOrDefaultAsync(u => u.Id == unitId);
             if (unit == null) return NotFound();
             ViewBag.Unit = unit;
@@ -80,22 +154,39 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         /// Bir veya birden fazla taksidi tek seferde kaydeder ("+ Taksit Ekle" ile eklenen satırlar).
         /// Formdaki her alan aynı isimle tekrarlandığı için (amount, dueDate, ...) ASP.NET Core
         /// bunları otomatik olarak sıraya bağlı listelere bağlar — n. amount ile n. dueDate aynı satıra aittir.
+        /// unitId veya fundDebtorId'den yalnızca biri gönderilir.
         /// </summary>
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
-            int unitId, List<decimal> amount, List<DateTime> dueDate,
+            int? unitId, int? fundDebtorId, List<decimal> amount, List<DateTime> dueDate,
             List<string?> description, List<int?> hakedisPercentage, List<int?> installmentNo,
             List<int?> projectStageId, PaymentCurrency currency = PaymentCurrency.TRY)
         {
-            var unit = await _db.Units.Include(u => u.Project).Include(u => u.Owner).FirstOrDefaultAsync(u => u.Id == unitId);
-            if (unit == null) return NotFound();
+            Unit? unit = null;
+            FundDebtor? debtor = null;
+            int projectIdForStages;
+
+            if (fundDebtorId != null)
+            {
+                debtor = await _db.FundDebtors.Include(f => f.Project).FirstOrDefaultAsync(f => f.Id == fundDebtorId);
+                if (debtor == null) return NotFound();
+                projectIdForStages = debtor.ProjectId;
+            }
+            else if (unitId != null)
+            {
+                unit = await _db.Units.Include(u => u.Project).Include(u => u.Owner).FirstOrDefaultAsync(u => u.Id == unitId);
+                if (unit == null) return NotFound();
+                projectIdForStages = unit.ProjectId;
+            }
+            else return NotFound();
 
             if (amount.Count == 0 || amount.Count != dueDate.Count)
             {
                 TempData["Error"] = "En az bir taksit satırı girmelisiniz.";
                 ViewBag.Unit = unit;
-                ViewBag.Stages = await _db.ProjectStages.Where(s => s.ProjectId == unit.ProjectId).OrderBy(s => s.OrderIndex).ToListAsync();
-                return View(new PaymentSchedule { UnitId = unitId, DueDate = DateTime.Today.AddMonths(1) });
+                ViewBag.FundDebtor = debtor;
+                ViewBag.Stages = await _db.ProjectStages.Where(s => s.ProjectId == projectIdForStages).OrderBy(s => s.OrderIndex).ToListAsync();
+                return View(new PaymentSchedule { UnitId = unitId, FundDebtorId = fundDebtorId, DueDate = DateTime.Today.AddMonths(1) });
             }
 
             // Seçilen aşamaların geçerliliğini önceden çekelim ki her satırda tekrar sorgu atmayalım.
@@ -114,7 +205,8 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
                 var schedule = new PaymentSchedule
                 {
-                    UnitId = unitId,
+                    UnitId = unit?.Id,
+                    FundDebtorId = debtor?.Id,
                     Amount = amount[i],
                     Currency = currency,
                     DueDate = dueDate[i],
@@ -131,23 +223,40 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             await _db.SaveChangesAsync();
 
             // Malike, bölümünün sahibiyse, yeni tanımlanan her taksit için bilgilendirme gönder.
-            if (unit.Owner != null)
+            // Fon borçluları (arsa sahibi vb.) kayıtlı malik olmadığından bildirim gönderilmez.
+            if (unit?.Owner != null)
             {
                 foreach (var schedule in created)
                     await _notify.NotifyNewScheduleAsync(unit.Owner, schedule);
             }
 
             TempData["Success"] = created.Count == 1 ? "Ödeme kalemi eklendi." : $"{created.Count} ödeme kalemi eklendi.";
-            return RedirectToAction(nameof(Index), new { unitId });
+            return unit != null
+                ? RedirectToAction(nameof(Index), new { unitId = unit.Id })
+                : RedirectToAction(nameof(Index), new { fundDebtorId = debtor!.Id });
         }
 
         public async Task<IActionResult> Edit(int id)
         {
-            var schedule = await _db.PaymentSchedules.Include(p => p.Unit).ThenInclude(u => u!.Project).FirstOrDefaultAsync(p => p.Id == id);
+            var schedule = await _db.PaymentSchedules
+                .Include(p => p.Unit).ThenInclude(u => u!.Project)
+                .Include(p => p.FundDebtor).ThenInclude(f => f!.Project)
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (schedule == null) return NotFound();
-            ViewBag.Unit = schedule.Unit;
+
+            int projectId;
+            if (schedule.FundDebtor != null)
+            {
+                ViewBag.FundDebtor = schedule.FundDebtor;
+                projectId = schedule.FundDebtor.ProjectId;
+            }
+            else
+            {
+                ViewBag.Unit = schedule.Unit;
+                projectId = schedule.Unit!.ProjectId;
+            }
             ViewBag.Stages = await _db.ProjectStages
-                .Where(s => s.ProjectId == schedule.Unit!.ProjectId)
+                .Where(s => s.ProjectId == projectId)
                 .OrderBy(s => s.OrderIndex)
                 .ToListAsync();
             return View(schedule);
@@ -156,17 +265,22 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, PaymentSchedule schedule)
         {
-            var existing = await _db.PaymentSchedules.FindAsync(id);
+            var existing = await _db.PaymentSchedules
+                .Include(p => p.Unit)
+                .Include(p => p.FundDebtor)
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (existing == null) return NotFound();
 
             ModelState.Remove("Unit");
+            ModelState.Remove("FundDebtor");
             ModelState.Remove(nameof(PaymentSchedule.Transactions));
             if (!ModelState.IsValid)
             {
-                var unitForView = await _db.Units.Include(u => u.Project).FirstOrDefaultAsync(u => u.Id == existing.UnitId);
-                ViewBag.Unit = unitForView;
-                ViewBag.Stages = unitForView == null ? new List<ProjectStage>()
-                    : await _db.ProjectStages.Where(s => s.ProjectId == unitForView.ProjectId).OrderBy(s => s.OrderIndex).ToListAsync();
+                int? projId = existing.FundDebtor?.ProjectId ?? existing.Unit?.ProjectId;
+                ViewBag.Unit = existing.Unit;
+                ViewBag.FundDebtor = existing.FundDebtor;
+                ViewBag.Stages = projId == null ? new List<ProjectStage>()
+                    : await _db.ProjectStages.Where(s => s.ProjectId == projId).OrderBy(s => s.OrderIndex).ToListAsync();
                 return View(schedule);
             }
 
@@ -187,7 +301,9 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             await _db.SaveChangesAsync();
             TempData["Success"] = "Ödeme kalemi güncellendi.";
-            return RedirectToAction(nameof(Index), new { unitId = existing.UnitId });
+            return existing.UnitId != null
+                ? RedirectToAction(nameof(Index), new { unitId = existing.UnitId })
+                : RedirectToAction(nameof(Index), new { fundDebtorId = existing.FundDebtorId });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -196,10 +312,13 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             var schedule = await _db.PaymentSchedules.FindAsync(id);
             if (schedule == null) return NotFound();
             var unitId = schedule.UnitId;
+            var fundDebtorId = schedule.FundDebtorId;
             _db.PaymentSchedules.Remove(schedule);
             await _db.SaveChangesAsync();
             TempData["Success"] = "Ödeme kalemi silindi.";
-            return RedirectToAction(nameof(Index), new { unitId });
+            return unitId != null
+                ? RedirectToAction(nameof(Index), new { unitId })
+                : RedirectToAction(nameof(Index), new { fundDebtorId });
         }
 
         // ── Havale/EFT bildirimlerini onaylama ───────────────────
@@ -227,7 +346,10 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 await _notify.NotifyTransactionApprovedAsync(owner, tx.PaymentSchedule);
 
             TempData["Success"] = "Ödeme onaylandı.";
-            return RedirectToAction(nameof(Index), new { unitId = tx.PaymentSchedule?.UnitId });
+            var sched = tx.PaymentSchedule;
+            return sched?.UnitId != null
+                ? RedirectToAction(nameof(Index), new { unitId = sched.UnitId })
+                : RedirectToAction(nameof(Index), new { fundDebtorId = sched?.FundDebtorId });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -246,7 +368,10 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 await _notify.NotifyTransactionRejectedAsync(owner, tx.PaymentSchedule, note);
 
             TempData["Success"] = "Bildirim reddedildi.";
-            return RedirectToAction(nameof(Index), new { unitId = tx.PaymentSchedule?.UnitId });
+            var sched = tx.PaymentSchedule;
+            return sched?.UnitId != null
+                ? RedirectToAction(nameof(Index), new { unitId = sched.UnitId })
+                : RedirectToAction(nameof(Index), new { fundDebtorId = sched?.FundDebtorId });
         }
     }
 }
