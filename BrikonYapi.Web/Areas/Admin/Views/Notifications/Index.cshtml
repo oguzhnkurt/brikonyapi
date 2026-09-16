@@ -12,6 +12,14 @@
     int historyTotalCount = ViewBag.HistoryTotalCount ?? 0;
     string reminderCheckpoints = ViewBag.ReminderCheckpoints;
     string reminderMessageTemplate = ViewBag.ReminderMessageTemplate;
+    // Otomatik hatırlatıcının mesajı artık admin tarafından düzenlenemiyor — sabit şablon,
+    // örnek değerlerle doldurulup WhatsApp önizlemesi olarak gösteriliyor.
+    string reminderMessagePreviewText = (reminderMessageTemplate ?? "")
+        .Replace("{ad}", "Ahmet Yılmaz")
+        .Replace("{aciklama}", "Taksit 3/12")
+        .Replace("{ne_zaman}", "1 hafta içinde")
+        .Replace("{vade}", "20.09.2026")
+        .Replace("{tutar}", "₺250.000");
     var reminderDaysSelected = (reminderCheckpoints ?? "")
         .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Select(x => int.TryParse(x, out var n) ? n : (int?)null)
@@ -198,22 +206,6 @@
         line-height: 1.45;
     }
     .bk-tpl-note iconify-icon { color: #0082B4; font-size: 1rem; margin-top: .1rem; flex-shrink: 0; }
-
-    /* Mesaj şablonuna eklenebilecek yer tutucular: kod dolu bir paragraf yerine,
-       tıklanınca imlecin bulunduğu yere eklenen kompakt token butonları. */
-    .bk-token-bar {
-        display: flex; flex-wrap: wrap; align-items: center; gap: .4rem;
-        margin-bottom: .45rem;
-    }
-    .bk-token-bar-label { font-size: .72rem; color: #9aa3b0; margin-right: .1rem; }
-    .bk-token {
-        font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
-        background: #f4f6f8; border: 1px solid #e6e9ed; border-radius: 7px;
-        padding: .28rem .55rem; font-size: .74rem; font-weight: 600; color: #0082B4;
-        cursor: pointer; transition: background-color .15s, border-color .15s;
-    }
-    .bk-token:hover { background: #e7f4f9; border-color: #0082B4; }
-    .bk-token:active { transform: translateY(1px); }
 </style>
 }
 
@@ -435,33 +427,20 @@
                 </div>
 
                 <div class="col-lg-7">
-                    <label class="bk-label">Mesaj Şablonu</label>
-                    <div class="bk-token-bar">
-                        <span class="bk-token-bar-label">Eklemek için tıklayın:</span>
-                        <button type="button" class="bk-token" data-token="{ad}" title="Malik adı">{ad}</button>
-                        <button type="button" class="bk-token" data-token="{aciklama}" title="Taksit açıklaması">{aciklama}</button>
-                        <button type="button" class="bk-token" data-token="{ne_zaman}" title='&quot;yarın&quot; / &quot;1 hafta içinde&quot; gibi ifade'>{ne_zaman}</button>
-                        <button type="button" class="bk-token" data-token="{vade}" title="Vade tarihi">{vade}</button>
-                        <button type="button" class="bk-token" data-token="{tutar}" title="Tutar">{tutar}</button>
+                    <label class="bk-label">Gönderilecek Mesaj</label>
+                    <div class="form-text bk-hint mb-2">
+                        Mesaj metni sabittir ve onaylı bir WhatsApp şablonuna yerleştirilerek gönderilir. Malik aşağıdaki önizlemeyi görecek.
                     </div>
-                    <textarea name="messageTemplate" id="messageTemplateInput" class="form-control" rows="3" maxlength="500">@reminderMessageTemplate</textarea>
-
-                    <div class="bk-tpl-preview-wrap">
-                        <div class="bk-tpl-preview-label">
-                            <iconify-icon icon="mdi:eye-outline"></iconify-icon>
-                            Malik bu mesajı böyle görecek
+                    <div class="bk-tpl-preview-phone">
+                        <div class="bk-tpl-preview-head">
+                            <div class="bk-tpl-preview-avatar"><iconify-icon icon="ic:baseline-whatsapp"></iconify-icon></div>
+                            <div>
+                                <div class="bk-tpl-preview-name">Brikon Yapı</div>
+                                <div class="bk-tpl-preview-status">İşletme hesabı</div>
+                            </div>
                         </div>
-                        <div class="bk-tpl-preview-phone">
-                            <div class="bk-tpl-preview-head">
-                                <div class="bk-tpl-preview-avatar"><iconify-icon icon="ic:baseline-whatsapp"></iconify-icon></div>
-                                <div>
-                                    <div class="bk-tpl-preview-name">Brikon Yapı</div>
-                                    <div class="bk-tpl-preview-status">İşletme hesabı</div>
-                                </div>
-                            </div>
-                            <div class="bk-tpl-preview-body">
-                                <div class="bk-tpl-preview-bubble" id="templatePreview"></div>
-                            </div>
+                        <div class="bk-tpl-preview-body">
+                            <div class="bk-tpl-preview-bubble">@reminderMessagePreviewText</div>
                         </div>
                     </div>
                 </div>
@@ -750,8 +729,6 @@
             var checkpointsInput = document.getElementById('checkpointsInput');
             var customDayChips = document.getElementById('customDayChips');
             var customDayInput = document.getElementById('customDayInput');
-            var messageTemplateInput = document.getElementById('messageTemplateInput');
-            var templatePreview = document.getElementById('templatePreview');
 
             function getSelectedDays() {
                 var days = [];
@@ -809,34 +786,6 @@
                 syncCheckpointsInput();
             });
 
-            function renderTemplatePreview() {
-                var sample = messageTemplateInput.value
-                    .replace(/\{ad\}/g, 'Ahmet Yılmaz')
-                    .replace(/\{aciklama\}/g, 'Taksit 3/12')
-                    .replace(/\{ne_zaman\}/g, '1 hafta içinde')
-                    .replace(/\{vade\}/g, '20.09.2026')
-                    .replace(/\{tutar\}/g, '₺250.000');
-                templatePreview.textContent = sample || ' ';
-            }
-
-            messageTemplateInput.addEventListener('input', renderTemplatePreview);
-            renderTemplatePreview();
-
-            // Token butonları: tıklanınca imlecin bulunduğu yere ilgili yer tutucuyu ekler.
-            document.querySelectorAll('.bk-token').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var token = btn.getAttribute('data-token');
-                    var start = messageTemplateInput.selectionStart ?? messageTemplateInput.value.length;
-                    var end = messageTemplateInput.selectionEnd ?? messageTemplateInput.value.length;
-                    var val = messageTemplateInput.value;
-                    messageTemplateInput.value = val.slice(0, start) + token + val.slice(end);
-                    messageTemplateInput.focus();
-                    var pos = start + token.length;
-                    messageTemplateInput.setSelectionRange(pos, pos);
-                    renderTemplatePreview();
-                });
-            });
-
             // Otomatik Hatırlatıcı: proje kapsamı seçici ("Tüm Projelerdeki Malikler" / "Seçili Proje(ler)").
             var reminderScopeAllBtn = document.getElementById('reminderScopeAllBtn');
             var reminderScopeSelectedBtn = document.getElementById('reminderScopeSelectedBtn');
@@ -868,7 +817,17 @@
             }
 
             reminderScopeAllBtn.addEventListener('click', function () { setReminderScope(true); });
-            reminderScopeSelectedBtn.addEventListener('click', function () { setReminderScope(false); });
+            reminderScopeSelectedBtn.addEventListener('click', function () {
+                if (reminderScopeAll) {
+                    // Henüz "seçili proje" modunda değildik: moda geç ve proje panelini aç.
+                    setReminderScope(false);
+                } else {
+                    // Zaten "seçili proje" modundaydık: tekrar tıklanınca sadece paneli aç/kapat,
+                    // seçili projeler korunur.
+                    var isOpen = reminderProjectPicker.style.display !== 'none';
+                    reminderProjectPicker.style.display = isOpen ? 'none' : 'block';
+                }
+            });
 
             reminderProjectGrid.addEventListener('click', function (e) {
                 var card = e.target.closest && e.target.closest('.owner-pick-card');
