@@ -23,22 +23,22 @@
                     <div class="bk-field-group mb-3">
                         <div class="bk-group-title">Genel Bilgiler</div>
 
-                        <div class="mb-3">
-                            <label class="bk-label">Referans Adı <span class="text-danger">*</span></label>
-                            <input asp-for="Name" class="form-control" placeholder="Örn: TOKİ" />
-                            <span asp-validation-for="Name" class="text-danger small"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="bk-label">Logo (PNG/JPG/WebP, max 5 MB)</label>
-                            <input type="file" name="logo" class="form-control" accept="image/png,image/jpeg,image/webp" />
-                            <div class="form-text bk-hint">Logo otomatik olarak 400px genişliğe ölçeklendirilir ve PNG olarak kaydedilir.</div>
-                        </div>
-
-                        <div class="mb-0">
-                            <label class="bk-label">Sıra Numarası</label>
-                            <input asp-for="OrderIndex" type="number" class="form-control" />
-                            <div class="form-text bk-hint">Küçük sayı önce görünür.</div>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="bk-label">Referans Adı <span class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control" placeholder="Örn: TOKİ" />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="bk-label">Sıra Numarası</label>
+                                <input asp-for="OrderIndex" type="number" class="form-control" />
+                                <div class="form-text bk-hint">Küçük sayı önce görünür.</div>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="bk-label">Logo (PNG/JPG/WebP, max 5 MB)</label>
+                                <input type="file" name="logo" class="form-control" accept="image/png,image/jpeg,image/webp" />
+                                <div class="form-text bk-hint">Logo otomatik olarak 400px genişliğe ölçeklendirilir ve PNG olarak kaydedilir.</div>
+                            </div>
                         </div>
                     </div>
 

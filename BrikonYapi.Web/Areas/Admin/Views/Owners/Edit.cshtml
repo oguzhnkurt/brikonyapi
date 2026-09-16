@@ -29,27 +29,29 @@
 
                     <div class="bk-field-group mb-3">
                         <div class="bk-group-title">Hesap Bilgileri</div>
-                        <div class="mb-3">
-                            <label class="bk-label">Ad Soyad <span class="text-danger">*</span></label>
-                            <input asp-for="FullName" class="form-control" required />
-                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="bk-label">Ad Soyad <span class="text-danger">*</span></label>
+                                <input asp-for="FullName" class="form-control" required />
+                            </div>
 
-                        <div class="mb-3">
-                            <label class="bk-label">Telefon (giriş için kullanıcı adı) <span class="text-danger">*</span></label>
-                            <input asp-for="Phone" class="form-control" placeholder="05050646941" required />
-                            <div class="form-text bk-hint">Değiştirirseniz malikin giriş kullanıcı adı da değişir.</div>
-                        </div>
+                            <div class="col-md-6">
+                                <label class="bk-label">E-posta <span class="text-muted small">(opsiyonel)</span></label>
+                                <input asp-for="Email" type="email" class="form-control" />
+                            </div>
 
-                        <div class="mb-3">
-                            <label class="bk-label">T.C. Kimlik No (giriş şifresi)</label>
-                            <input asp-for="TcKimlikNo" class="form-control" minlength="11" maxlength="11"
-                                   pattern="[0-9]{11}" placeholder="11 haneli T.C. Kimlik No" autocomplete="off" />
-                            <div class="form-text bk-hint">Burayı değiştirip kaydederseniz malikin şifresi de otomatik güncellenir.</div>
-                        </div>
+                            <div class="col-md-6">
+                                <label class="bk-label">Telefon (giriş kullanıcı adı) <span class="text-danger">*</span></label>
+                                <input asp-for="Phone" class="form-control" placeholder="05050646941" required />
+                                <div class="form-text bk-hint">Değiştirirseniz malikin giriş kullanıcı adı da değişir.</div>
+                            </div>
 
-                        <div class="mb-0">
-                            <label class="bk-label">E-posta <span class="text-muted small">(opsiyonel, sadece iletişim için)</span></label>
-                            <input asp-for="Email" type="email" class="form-control" />
+                            <div class="col-md-6">
+                                <label class="bk-label">T.C. Kimlik No (giriş şifresi)</label>
+                                <input asp-for="TcKimlikNo" class="form-control" minlength="11" maxlength="11"
+                                       pattern="[0-9]{11}" placeholder="11 haneli T.C. Kimlik No" autocomplete="off" />
+                                <div class="form-text bk-hint">Değiştirip kaydederseniz malikin şifresi de otomatik güncellenir.</div>
+                            </div>
                         </div>
                     </div>
 

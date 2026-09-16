@@ -26,24 +26,26 @@
 
                     <div class="bk-field-group mb-3">
                         <div class="bk-group-title">Giriş Bilgileri</div>
-                        <div class="mb-3">
-                            <label class="bk-label">E-posta (giriş için kullanılacak) <span class="text-danger">*</span></label>
-                            <input type="email" name="email" class="form-control" required />
-                        </div>
-
-                        <div class="mb-0">
-                            <label class="bk-label">Başlangıç Şifresi <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="text" name="password" id="pwField" class="form-control" required minlength="8"
-                                       placeholder="min. 8 karakter, büyük harf ve rakam içermeli" />
-                                <button type="button" class="btn btn-outline-primary" id="pwGen">
-                                    <iconify-icon icon="iconamoon:synchronize-duotone" class="me-1"></iconify-icon>Şifre Üret
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary" id="pwCopy" title="Kopyala">
-                                    <iconify-icon icon="iconamoon:copy-duotone"></iconify-icon>
-                                </button>
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="bk-label">E-posta (giriş için) <span class="text-danger">*</span></label>
+                                <input type="email" name="email" class="form-control" required />
                             </div>
-                            <div class="form-text bk-hint" id="pwHint">Bu şifreyi ilgili kişiye güvenli bir kanaldan (örn. telefonla) iletin.</div>
+
+                            <div class="col-md-7">
+                                <label class="bk-label">Başlangıç Şifresi <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" name="password" id="pwField" class="form-control" required minlength="8"
+                                           placeholder="min. 8 karakter, büyük harf ve rakam içermeli" />
+                                    <button type="button" class="btn btn-outline-primary" id="pwGen">
+                                        <iconify-icon icon="iconamoon:synchronize-duotone" class="me-1"></iconify-icon>Şifre Üret
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="pwCopy" title="Kopyala">
+                                        <iconify-icon icon="iconamoon:copy-duotone"></iconify-icon>
+                                    </button>
+                                </div>
+                                <div class="form-text bk-hint" id="pwHint">Bu şifreyi ilgili kişiye güvenli bir kanaldan iletin.</div>
+                            </div>
                         </div>
                     </div>
 

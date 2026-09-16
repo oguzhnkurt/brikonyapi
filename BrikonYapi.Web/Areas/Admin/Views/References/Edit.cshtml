@@ -37,20 +37,20 @@
                             </div>
                         }
 
-                        <div class="mb-3">
-                            <label class="bk-label">Referans Adı <span class="text-danger">*</span></label>
-                            <input asp-for="Name" class="form-control" />
-                            <span asp-validation-for="Name" class="text-danger small"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="bk-label">Yeni Logo (boş bırakılırsa değişmez)</label>
-                            <input type="file" name="logo" class="form-control" accept="image/png,image/jpeg,image/webp" />
-                        </div>
-
-                        <div class="mb-0">
-                            <label class="bk-label">Sıra Numarası</label>
-                            <input asp-for="OrderIndex" type="number" class="form-control" />
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="bk-label">Referans Adı <span class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control" />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="bk-label">Sıra Numarası</label>
+                                <input asp-for="OrderIndex" type="number" class="form-control" />
+                            </div>
+                            <div class="col-md-12">
+                                <label class="bk-label">Yeni Logo (boş bırakılırsa değişmez)</label>
+                                <input type="file" name="logo" class="form-control" accept="image/png,image/jpeg,image/webp" />
+                            </div>
                         </div>
                     </div>
 

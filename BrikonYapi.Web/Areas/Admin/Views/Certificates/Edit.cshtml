@@ -31,22 +31,23 @@
                     <textarea asp-for="Description" class="form-control" rows="3"></textarea>
                 </div>
 
-                <div class="mb-3">
-                    <label class="bk-label">Mevcut Görsel</label>
-                    @if (!string.IsNullOrEmpty(Model.ImagePath))
-                    {
-                        <div class="mb-2">
-                            <img src="@Model.ImagePath" alt="@Model.Title"
-                                 style="height:120px;width:auto;border-radius:6px;object-fit:cover;border:1px solid #e0e0e0;" />
-                        </div>
-                    }
-                    <input type="file" name="image" class="form-control" accept="image/*" />
-                    <div class="form-text bk-hint">Yeni görsel seçerseniz eskisi silinir.</div>
-                </div>
-
-                <div class="mb-0">
-                    <label class="bk-label">Sıra</label>
-                    <input asp-for="OrderIndex" type="number" class="form-control" style="max-width:120px;" />
+                @if (!string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <div class="mb-2">
+                        <img src="@Model.ImagePath" alt="@Model.Title"
+                             style="height:120px;width:auto;border-radius:6px;object-fit:cover;border:1px solid #e0e0e0;" />
+                    </div>
+                }
+                <div class="row g-3">
+                    <div class="col-8">
+                        <label class="bk-label">Yeni Görsel</label>
+                        <input type="file" name="image" class="form-control" accept="image/*" />
+                        <div class="form-text bk-hint">Yeni görsel seçerseniz eskisi silinir.</div>
+                    </div>
+                    <div class="col-4">
+                        <label class="bk-label">Sıra</label>
+                        <input asp-for="OrderIndex" type="number" class="form-control" />
+                    </div>
                 </div>
             </div>
 
