@@ -20,6 +20,7 @@ namespace BrikonYapi.Web.Services
     {
         private const string OverdueSubject = "Gecikmiş Ödeme — Brikon Yapı";
         private const string ReminderCheckpointsKey = "ReminderCheckpoints";
+        private const string ReminderProjectIdsKey = "ReminderProjectIds";
         private static readonly int[] DefaultReminderCheckpoints = { 7, 1 };
 
         private readonly IServiceScopeFactory _scopeFactory;
@@ -66,6 +67,15 @@ namespace BrikonYapi.Web.Services
                 // (ör. uygulama birkaç gün kapalı kalmışsa) en erken/az acil olandan başlanır.
                 checkpoints = checkpoints.OrderByDescending(d => d).ToArray();
 
+                // Boş/tanımsızsa "Tüm Projelerdeki Malikler" anlamına gelir — hiçbir filtre uygulanmaz.
+                var projectIdsRaw = await settings.GetAsync(ReminderProjectIdsKey);
+                var projectFilter = (projectIdsRaw ?? "")
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(x => int.TryParse(x, out var n) ? n : (int?)null)
+                    .Where(n => n.HasValue)
+                    .Select(n => n!.Value)
+                    .ToHashSet();
+
                 var today = DateTime.Today;
 
                 var pending = await db.PaymentSchedules
@@ -77,6 +87,7 @@ namespace BrikonYapi.Web.Services
                 {
                     var owner = schedule.Unit?.Owner;
                     if (owner == null) continue;
+                    if (projectFilter.Count > 0 && (schedule.Unit == null || !projectFilter.Contains(schedule.Unit.ProjectId))) continue;
 
                     if (schedule.DueDate.Date < today)
                     {

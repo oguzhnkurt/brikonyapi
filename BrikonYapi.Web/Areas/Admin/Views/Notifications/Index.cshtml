@@ -20,6 +20,15 @@
         .ToHashSet();
     bool whatsAppConfigured = ViewBag.WhatsAppConfigured;
     var tr = new System.Globalization.CultureInfo("tr-TR");
+    var projects = (List<Project>)(ViewBag.Projects ?? new List<Project>());
+    string reminderProjectIds = ViewBag.ReminderProjectIds ?? "";
+    var reminderProjectIdsSelected = reminderProjectIds
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(x => int.TryParse(x, out var n) ? n : (int?)null)
+        .Where(n => n.HasValue)
+        .Select(n => n!.Value)
+        .ToHashSet();
+    bool reminderScopeAll = reminderProjectIdsSelected.Count == 0;
 
     string ChannelLabel(NotificationChannel c) => c switch
     {
@@ -149,6 +158,31 @@
         filter: drop-shadow(-1px 0 0 #d3f3c4);
     }
     .bk-tpl-preview-bubble:empty::before { display: none; }
+
+    /* Şablon/onay notu: eskiden yoğun, paragraf halinde bir açıklamaydı — okunması zor ve
+       teknik görünüyordu. Kısa, ikonlu tek satırlık bir nota indirgendi. */
+    .bk-tpl-note {
+        display: flex; align-items: flex-start; gap: .4rem;
+        font-size: .78rem; color: #6b7684; margin-top: .5rem;
+        line-height: 1.45;
+    }
+    .bk-tpl-note iconify-icon { color: #0082B4; font-size: 1rem; margin-top: .1rem; flex-shrink: 0; }
+
+    /* Mesaj şablonu yer tutucuları: uzun kod dolu bir paragraf yerine okunabilir küçük etiketler. */
+    .bk-placeholder-list {
+        display: flex; flex-wrap: wrap; gap: .4rem;
+        margin-top: .6rem;
+    }
+    .bk-placeholder-chip {
+        display: inline-flex; align-items: center; gap: .35rem;
+        background: #f4f6f8; border: 1px solid #e6e9ed; border-radius: 20px;
+        padding: .3rem .65rem .3rem .5rem;
+        font-size: .74rem; color: #5b6472;
+    }
+    .bk-placeholder-chip code {
+        background: #fff; border: 1px solid #dde1e6; border-radius: 6px;
+        padding: .05rem .4rem; font-size: .72rem; color: #0082B4; font-weight: 600;
+    }
 </style>
 }
 
@@ -193,9 +227,16 @@
 
                     <div class="mb-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <label class="bk-label mb-0">Alıcılar</label>
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <select id="projectFilter" class="form-select form-select-sm" style="width:220px">
+                                <option value="">Tüm Projeler</option>
+                                @foreach (var p in projects)
+                                {
+                                    <option value="@p.Id">@p.Name</option>
+                                }
+                            </select>
                             <input type="text" id="ownerSearch" class="form-control form-control-sm" style="width:200px" placeholder="İsimde ara…" />
-                            <button type="button" id="btnSelectAll" class="btn btn-sm btn-outline-secondary">Tümünü Seç</button>
+                            <button type="button" id="btnSelectAll" class="btn btn-sm btn-outline-secondary">Görünenleri Seç</button>
                             <button type="button" id="btnClearAll" class="btn btn-sm btn-outline-secondary">Temizle</button>
                         </div>
                     </div>
@@ -208,7 +249,8 @@
                             var hasPhone = !string.IsNullOrWhiteSpace(o.Phone);
                             var disabled = !hasPhone || !waOn;
                             var meta = o.Units.Any() ? string.Join(", ", o.Units.Select(u => u.Project?.Name + " " + u.UnitNo)) : "Atanmamış";
-                            <div class="owner-pick-card@(disabled ? " disabled" : "")" data-id="@o.Id" data-name="@o.FullName.ToLower()" tabindex="@(disabled ? "-1" : "0")">
+                            var projectIds = string.Join(",", o.Units.Select(u => u.ProjectId).Distinct());
+                            <div class="owner-pick-card@(disabled ? " disabled" : "")" data-id="@o.Id" data-name="@o.FullName.ToLower()" data-projects="@projectIds" tabindex="@(disabled ? "-1" : "0")">
                                 <input type="checkbox" class="d-none owner-check" value="@o.Id" data-name="@o.FullName" @(disabled ? "disabled" : "") />
                                 <iconify-icon icon="mdi:check-circle" class="owner-pick-check"></iconify-icon>
                                 <div class="owner-pick-avatar" style="background:@ColorFor(o.FullName);">@InitialsFor(o.FullName)</div>
@@ -236,9 +278,9 @@
                         </div>
                         <textarea name="message" id="messageInput" class="form-control" rows="3" maxlength="600" required
                                   placeholder="Mesajınızı yazın…"></textarea>
-                        <div class="form-text bk-hint">
-                            Bu mesaj, onaylı bir WhatsApp şablonu içinde ("Sayın [Ad Soyad], [mesajınız]") gönderilir —
-                            serbest metin olarak değil, Meta'nın kurallarına uygun şekilde iletilir.
+                        <div class="bk-tpl-note">
+                            <iconify-icon icon="mdi:shield-check-outline"></iconify-icon>
+                            Mesajınız, Meta onaylı bir WhatsApp şablonuna yerleştirilerek gönderilir. Malik aşağıdaki önizlemeyi görecek.
                         </div>
                         <div class="bk-tpl-preview-wrap">
                             <div class="bk-tpl-preview-label">
@@ -279,6 +321,41 @@
         <form asp-area="Admin" asp-controller="Notifications" asp-action="SaveReminderSettings" method="post" id="reminderForm">
             @Html.AntiForgeryToken()
             <input type="hidden" name="checkpoints" id="checkpointsInput" value="@reminderCheckpoints" />
+            <input type="hidden" name="projectIds" id="reminderProjectIdsInput" value="@reminderProjectIds" />
+
+            <div class="mb-4">
+                <label class="bk-label">Hangi projelerdeki maliklere gönderilsin?</label>
+                <div class="d-flex gap-2 mb-2">
+                    <button type="button" id="reminderScopeAllBtn" class="btn btn-sm @(reminderScopeAll ? "btn-primary" : "btn-outline-secondary")">
+                        <iconify-icon icon="mdi:earth" class="me-1"></iconify-icon>Tüm Projelerdeki Malikler
+                    </button>
+                    <button type="button" id="reminderScopeSelectedBtn" class="btn btn-sm @(!reminderScopeAll ? "btn-primary" : "btn-outline-secondary")">
+                        <iconify-icon icon="mdi:filter-variant" class="me-1"></iconify-icon>Seçili Proje(ler)
+                    </button>
+                </div>
+
+                <div id="reminderProjectPicker" style="display:@(reminderScopeAll ? "none" : "block")">
+                    <input type="text" id="reminderProjectSearch" class="form-control form-control-sm mb-2" style="max-width:280px" placeholder="Proje ara…" />
+                    <div class="owner-pick-grid" id="reminderProjectGrid" style="max-height:220px;">
+                        @foreach (var p in projects)
+                        {
+                            var selected = reminderProjectIdsSelected.Contains(p.Id);
+                            <div class="owner-pick-card@(selected ? " selected" : "")" data-id="@p.Id" data-name="@p.Name.ToLower()" tabindex="0">
+                                <input type="checkbox" class="d-none reminder-project-check" value="@p.Id" @(selected ? "checked" : "") />
+                                <iconify-icon icon="mdi:check-circle" class="owner-pick-check"></iconify-icon>
+                                <div class="owner-pick-info">
+                                    <div class="owner-pick-name">@p.Name</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="text-muted small mt-1"><span id="reminderProjectCount">@reminderProjectIdsSelected.Count</span> proje seçili</div>
+                </div>
+
+                <div class="form-text bk-hint mt-1">
+                    "Tüm Projelerdeki Malikler" seçiliyken sistemdeki her projeden, vadesi yaklaşan tüm bekleyen ödemeler için hatırlatma gönderilir.
+                </div>
+            </div>
 
             <div class="row g-4">
                 <div class="col-lg-5">
@@ -321,10 +398,12 @@
                 <div class="col-lg-7">
                     <label class="bk-label">Mesaj Şablonu</label>
                     <textarea name="messageTemplate" id="messageTemplateInput" class="form-control" rows="3" maxlength="500">@reminderMessageTemplate</textarea>
-                    <div class="form-text bk-hint">
-                        Kullanılabilir yer tutucular:
-                        <code>{ad}</code> malik adı, <code>{aciklama}</code> taksit açıklaması,
-                        <code>{ne_zaman}</code> "yarın" / "1 hafta içinde" gibi ifade, <code>{vade}</code> vade tarihi, <code>{tutar}</code> tutar.
+                    <div class="bk-placeholder-list">
+                        <span class="bk-placeholder-chip"><code>{ad}</code> Malik adı</span>
+                        <span class="bk-placeholder-chip"><code>{aciklama}</code> Taksit açıklaması</span>
+                        <span class="bk-placeholder-chip"><code>{ne_zaman}</code> "yarın", "1 hafta içinde" gibi ifade</span>
+                        <span class="bk-placeholder-chip"><code>{vade}</code> Vade tarihi</span>
+                        <span class="bk-placeholder-chip"><code>{tutar}</code> Tutar</span>
                     </div>
 
                     <div class="bk-tpl-preview-wrap">
@@ -475,6 +554,7 @@
             var selectedCountEl = document.getElementById('selectedCount');
             var btnSubmit = document.getElementById('btnSubmitSend');
             var search = document.getElementById('ownerSearch');
+            var projectFilter = document.getElementById('projectFilter');
             var messageInput = document.getElementById('messageInput');
             var messageCharCount = document.getElementById('messageCharCount');
             var manualTemplatePreview = document.getElementById('manualTemplatePreview');
@@ -550,12 +630,20 @@
                 refresh();
             });
 
-            search.addEventListener('input', function () {
+            // İsim araması ve proje filtresi birlikte çalışır: bir karta her ikisi de uyuyorsa gösterilir.
+            function applyOwnerFilters() {
                 var q = search.value.trim().toLowerCase();
+                var projectId = projectFilter.value;
                 document.querySelectorAll('.owner-pick-card').forEach(function (row) {
-                    row.style.display = row.getAttribute('data-name').indexOf(q) === -1 ? 'none' : '';
+                    var nameMatch = row.getAttribute('data-name').indexOf(q) !== -1;
+                    var projectIds = (row.getAttribute('data-projects') || '').split(',');
+                    var projectMatch = !projectId || projectIds.indexOf(projectId) !== -1;
+                    row.style.display = (nameMatch && projectMatch) ? '' : 'none';
                 });
-            });
+            }
+
+            search.addEventListener('input', applyOwnerFilters);
+            projectFilter.addEventListener('change', applyOwnerFilters);
 
             refresh();
 
@@ -686,8 +774,59 @@
             messageTemplateInput.addEventListener('input', renderTemplatePreview);
             renderTemplatePreview();
 
+            // Otomatik Hatırlatıcı: proje kapsamı seçici ("Tüm Projelerdeki Malikler" / "Seçili Proje(ler)").
+            var reminderScopeAllBtn = document.getElementById('reminderScopeAllBtn');
+            var reminderScopeSelectedBtn = document.getElementById('reminderScopeSelectedBtn');
+            var reminderProjectPicker = document.getElementById('reminderProjectPicker');
+            var reminderProjectGrid = document.getElementById('reminderProjectGrid');
+            var reminderProjectSearch = document.getElementById('reminderProjectSearch');
+            var reminderProjectIdsInput = document.getElementById('reminderProjectIdsInput');
+            var reminderProjectCount = document.getElementById('reminderProjectCount');
+            var reminderScopeAll = reminderProjectPicker.style.display === 'none';
+
+            function syncReminderProjectIdsInput() {
+                if (reminderScopeAll) {
+                    reminderProjectIdsInput.value = '';
+                    return;
+                }
+                var checked = Array.prototype.slice.call(reminderProjectGrid.querySelectorAll('.reminder-project-check:checked'));
+                reminderProjectIdsInput.value = checked.map(function (cb) { return cb.value; }).join(',');
+                reminderProjectCount.textContent = checked.length;
+            }
+
+            function setReminderScope(all) {
+                reminderScopeAll = all;
+                reminderScopeAllBtn.classList.toggle('btn-primary', all);
+                reminderScopeAllBtn.classList.toggle('btn-outline-secondary', !all);
+                reminderScopeSelectedBtn.classList.toggle('btn-primary', !all);
+                reminderScopeSelectedBtn.classList.toggle('btn-outline-secondary', all);
+                reminderProjectPicker.style.display = all ? 'none' : 'block';
+                syncReminderProjectIdsInput();
+            }
+
+            reminderScopeAllBtn.addEventListener('click', function () { setReminderScope(true); });
+            reminderScopeSelectedBtn.addEventListener('click', function () { setReminderScope(false); });
+
+            reminderProjectGrid.addEventListener('click', function (e) {
+                var card = e.target.closest && e.target.closest('.owner-pick-card');
+                if (!card) return;
+                var cb = card.querySelector('.reminder-project-check');
+                if (!cb) return;
+                cb.checked = !cb.checked;
+                card.classList.toggle('selected', cb.checked);
+                syncReminderProjectIdsInput();
+            });
+
+            reminderProjectSearch.addEventListener('input', function () {
+                var q = reminderProjectSearch.value.trim().toLowerCase();
+                reminderProjectGrid.querySelectorAll('.owner-pick-card').forEach(function (row) {
+                    row.style.display = row.getAttribute('data-name').indexOf(q) === -1 ? 'none' : '';
+                });
+            });
+
             document.getElementById('reminderForm').addEventListener('submit', function () {
                 syncCheckpointsInput();
+                syncReminderProjectIdsInput();
             });
 
             syncCheckpointsInput();

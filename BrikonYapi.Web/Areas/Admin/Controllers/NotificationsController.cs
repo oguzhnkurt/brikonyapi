@@ -19,6 +19,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
     {
         private const string ReminderCheckpointsKey = "ReminderCheckpoints";
         private const string ReminderMessageTemplateKey = "ReminderMessageTemplate";
+        private const string ReminderProjectIdsKey = "ReminderProjectIds";
         private static readonly int[] AllowedPageSizes = { 25, 50, 100 };
 
         private readonly AppDbContext _db;
@@ -47,6 +48,11 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             ViewBag.NotificationPrefs = await _db.OwnerNotificationPreferences.ToListAsync();
 
+            ViewBag.Projects = await _db.Projects
+                .Where(p => p.IsActive)
+                .OrderBy(p => p.Name)
+                .ToListAsync();
+
             var historyQuery = _db.NotificationLogs.Include(n => n.Owner).OrderByDescending(n => n.CreatedAt);
             var totalCount = await historyQuery.CountAsync();
             var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
@@ -67,6 +73,9 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             var templateRaw = await _settings.GetAsync(ReminderMessageTemplateKey);
             ViewBag.ReminderMessageTemplate = string.IsNullOrWhiteSpace(templateRaw) ? PaymentNotificationService.DefaultReminderMessageTemplate : templateRaw;
+
+            // Boş = "Tüm Projelerdeki Malikler" (varsayılan davranış, proje filtresi yok).
+            ViewBag.ReminderProjectIds = (await _settings.GetAsync(ReminderProjectIdsKey)) ?? "";
 
             ViewBag.WhatsAppConfigured = _whatsApp.IsConfigured && !string.IsNullOrWhiteSpace(_config["WhatsApp:ManualTemplateName"]);
 
@@ -161,7 +170,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         /// (en geç 24 saat içinde, uygulama yeniden başlatılırsa hemen) okur.
         /// </summary>
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveReminderSettings(string checkpoints, string? messageTemplate)
+        public async Task<IActionResult> SaveReminderSettings(string checkpoints, string? messageTemplate, string? projectIds)
         {
             var days = (checkpoints ?? "")
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -182,13 +191,25 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 ? PaymentNotificationService.DefaultReminderMessageTemplate
                 : messageTemplate.Trim();
 
+            // Boş bırakılırsa (ya da hiç geçerli proje id'si yoksa) "Tüm Projelerdeki Malikler" anlamına gelir —
+            // PaymentReminderBackgroundService bu durumda proje filtresi uygulamaz.
+            var projectIdList = (projectIds ?? "")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => int.TryParse(x, out var n) ? n : (int?)null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .Distinct()
+                .ToList();
+
             await _settings.SaveAllAsync(new Dictionary<string, string>
             {
                 [ReminderCheckpointsKey] = string.Join(",", days),
-                [ReminderMessageTemplateKey] = template
+                [ReminderMessageTemplateKey] = template,
+                [ReminderProjectIdsKey] = string.Join(",", projectIdList)
             });
 
-            TempData["Success"] = $"Otomatik hatırlatıcı ayarları güncellendi: vadeye {string.Join(", ", days)} gün kala hatırlatma gönderilecek.";
+            var scopeText = projectIdList.Count == 0 ? "tüm projelerdeki" : $"seçili {projectIdList.Count} projedeki";
+            TempData["Success"] = $"Otomatik hatırlatıcı ayarları güncellendi: {scopeText} maliklere vadeye {string.Join(", ", days)} gün kala hatırlatma gönderilecek.";
             return RedirectToAction(nameof(Index));
         }
     }
