@@ -45,7 +45,7 @@
 
     var aboutKeys = new[]{"AboutTitle","AboutTitleEn","AboutText","AboutTextEn","AboutText2","AboutText2En","AboutYearFounded","AboutYearLabel","AboutYearLabelEn","AboutCard1Title","AboutCard1TitleEn","AboutCard1Desc","AboutCard1DescEn","AboutCard2Title","AboutCard2TitleEn","AboutCard2Desc","AboutCard2DescEn","AboutCard3Title","AboutCard3TitleEn","AboutCard3Desc","AboutCard3DescEn","AboutCard4Title","AboutCard4TitleEn","AboutCard4Desc","AboutCard4DescEn","AboutMediaPath"};
     var seoKeys = new[]{"SeoSiteName","SeoBaseUrl","SeoDefaultTitle","SeoDescription","SeoKeywords","SeoOgImage","SeoTwitterSite","SeoFacebook","SeoInstagram","SeoGoogleVerification","SeoNoIndex"};
-    var handled = new[]{"PhoneNumber","Email","Address","WhatsApp","Instagram","Facebook","LinkedIn","CompanySlogan","CompanySloganEn","AboutText","MarqueeMode"}.Concat(aboutKeys).Concat(seoKeys).ToArray();
+    var handled = new[]{"PhoneNumber","Email","Address","WhatsApp","Instagram","Facebook","LinkedIn","CompanySlogan","CompanySloganEn","AboutText","MarqueeMode"}.Concat(aboutKeys).Concat(seoKeys).Concat(BrikonYapi.Web.Services.LegalPages.SettingKeys).ToArray();
     string V(string key) => Model.ContainsKey(key) ? (Model[key] ?? "") : "";
     var leftovers = Model.Where(s => !handled.Contains(s.Key)).ToList();
 
@@ -107,6 +107,50 @@
                                             <div class="form-text">@Hint(key)</div>
                                         </div>
                                     }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ═══ Şirket / Yasal Bilgiler (sanal POS ve yasal sayfalar için) ═══ -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#secLegal" aria-expanded="false" aria-controls="secLegal">
+                                    <iconify-icon icon="iconamoon:file-document-duotone" class="me-2 text-primary"></iconify-icon>
+                                    <strong>Şirket / Yasal Bilgiler</strong>
+                                </button>
+                            </h2>
+                            <div id="secLegal" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <p class="text-muted small mb-3">
+                                        Bu bilgiler sitenin alt kısmında ve yasal sayfalarda (Mesafeli Sözleşme, Ön Bilgilendirme,
+                                        İptal-İade, KVKK, Gizlilik) gösterilir. Ödeme kuruluşları sanal POS aktivasyonunda bu bilgilerin
+                                        sitede yer almasını ister. Adres, telefon ve e-posta "İletişim Bilgileri" bölümünden alınır.
+                                    </p>
+                                    <div class="row g-3">
+                                        <div class="col-md-12">
+                                            <label class="form-label fw-medium">Ticari Unvan</label>
+                                            <input type="text" name="settings[LegalCompanyTitle]" value="@V("LegalCompanyTitle")" class="form-control" placeholder="Örn: Brikon Yapı İnşaat Taahhüt San. ve Tic. Ltd. Şti." />
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-medium">Vergi Dairesi</label>
+                                            <input type="text" name="settings[LegalTaxOffice]" value="@V("LegalTaxOffice")" class="form-control" />
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-medium">Vergi Numarası</label>
+                                            <input type="text" name="settings[LegalTaxNumber]" value="@V("LegalTaxNumber")" class="form-control" />
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-medium">MERSİS No</label>
+                                            <input type="text" name="settings[LegalMersisNo]" value="@V("LegalMersisNo")" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="form-text mt-2">
+                                        Yasal sayfalar:
+                                        @foreach (var lp in BrikonYapi.Web.Services.LegalPages.All)
+                                        {
+                                            <a href="/yasal/@lp.Slug" target="_blank" class="me-2">@lp.Title</a>
+                                        }
+                                    </div>
                                 </div>
                             </div>
                         </div>
