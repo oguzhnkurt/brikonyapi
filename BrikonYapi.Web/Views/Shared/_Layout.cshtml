@@ -1,3 +1,4 @@
+@inject BrikonYapi.Web.Services.SiteSettingService SiteSettings
 <!DOCTYPE html>
 <html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
@@ -174,9 +175,51 @@
                 </ul>
             </div>
 
+            <!-- Yasal -->
+            <div class="ft-col">
+                <h6 class="ft-heading">@(isEn ? "Legal" : "Yasal")</h6>
+                <ul class="ft-links">
+                    @foreach (var lp in BrikonYapi.Web.Services.LegalPages.All)
+                    {
+                        <li><a href="/yasal/@lp.Slug">@lp.Title</a></li>
+                    }
+                </ul>
+            </div>
+
 
         </div>
     </div>
+
+    @{
+        // Ödeme kuruluşlarının sitede görmek istediği şirket kimlik bilgileri
+        // (Admin > Site Ayarları > Şirket / Yasal Bilgiler). Boşsa satır gizlenir.
+        var ftSettings = await SiteSettings.GetAllAsync();
+        string FtV(string k) => ftSettings.TryGetValue(k, out var v) && !string.IsNullOrWhiteSpace(v) ? v!.Trim() : "";
+        var ftTitle = FtV(BrikonYapi.Web.Services.LegalPages.KeyCompanyTitle);
+        var ftTaxOffice = FtV(BrikonYapi.Web.Services.LegalPages.KeyTaxOffice);
+        var ftTaxNo = FtV(BrikonYapi.Web.Services.LegalPages.KeyTaxNumber);
+        var ftMersis = FtV(BrikonYapi.Web.Services.LegalPages.KeyMersisNo);
+        var ftAddress = FtV("Address");
+    }
+    @if (!string.IsNullOrEmpty(ftTitle))
+    {
+        <div class="ft-legal">
+            <div class="ft-inner">
+                <div class="ft-legal-info">
+                    <strong>@ftTitle</strong>
+                    @if (!string.IsNullOrEmpty(ftAddress)) { <span>@ftAddress</span> }
+                    @if (!string.IsNullOrEmpty(ftTaxOffice) || !string.IsNullOrEmpty(ftTaxNo)) { <span>@(isEn ? "Tax Office / No" : "Vergi Dairesi / No"): @ftTaxOffice @(string.IsNullOrEmpty(ftTaxNo) ? "" : "/ " + ftTaxNo)</span> }
+                    @if (!string.IsNullOrEmpty(ftMersis)) { <span>MERSİS: @ftMersis</span> }
+                </div>
+                <div class="ft-pay" aria-label="@(isEn ? "Accepted payment methods" : "Kabul edilen ödeme yöntemleri")">
+                    <span class="ft-pay-badge">VISA</span>
+                    <span class="ft-pay-badge">Mastercard</span>
+                    <span class="ft-pay-badge">TROY</span>
+                    <span class="ft-pay-badge ft-pay-secure">3D Secure</span>
+                </div>
+            </div>
+        </div>
+    }
 
     <div class="ft-bar">
         <div class="ft-inner">
