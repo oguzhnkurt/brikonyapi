@@ -54,6 +54,8 @@ namespace BrikonYapi.Web.Controllers
             root.Add(Url("/Home/Iletisim", null, "monthly", "0.7"));
             root.Add(Url("/Home/Sertifikalar", null, "monthly", "0.5"));
             root.Add(Url("/SSS", null, "monthly", "0.6"));
+            foreach (var lp in Services.LegalPages.All)
+                root.Add(Url($"/yasal/{lp.Slug}", null, "yearly", "0.3"));
 
             // Proje detay sayfaları
             var projects = await _db.Projects

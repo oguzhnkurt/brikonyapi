@@ -129,6 +129,26 @@ namespace BrikonYapi.Web.Controllers
             return View(items);
         }
 
+        /// <summary>Yasal metin sayfaları (mesafeli sözleşme, ön bilgilendirme, iptal-iade, KVKK,
+        /// gizlilik). Metinler LegalPages'ta; şirket unvanı/vergi bilgileri Site Ayarları'ndan gelir.</summary>
+        [Route("yasal/{slug}")]
+        public async Task<IActionResult> Yasal(string slug)
+        {
+            var page = LegalPages.Find(slug);
+            if (page == null) return NotFound();
+
+            var settings = await _settings.GetAllAsync();
+            var siteUrl = settings.GetValueOrDefault("SeoBaseUrl");
+            if (string.IsNullOrWhiteSpace(siteUrl)) siteUrl = $"{Request.Scheme}://{Request.Host}";
+
+            ViewBag.BodyHtml = LegalPages.Render(page.BodyHtml, settings, siteUrl.TrimEnd('/'));
+            ViewBag.AllPages = LegalPages.All;
+            return View(page);
+        }
+
+        [Route("Privacy")]
+        public IActionResult Privacy() => RedirectPermanent("/yasal/gizlilik-politikasi");
+
         [Route("Sertifikalar")]
         public async Task<IActionResult> Sertifikalar()
         {
