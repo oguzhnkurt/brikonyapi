@@ -17,6 +17,7 @@
     string reminderMessagePreviewText = (reminderMessageTemplate ?? "")
         .Replace("{ad}", "Ahmet Yılmaz")
         .Replace("{aciklama}", "Taksit 3/12")
+        .Replace("{kalan}", "7 gün")
         .Replace("{ne_zaman}", "1 hafta içinde")
         .Replace("{vade}", "20.09.2026")
         .Replace("{tutar}", "₺250.000");
@@ -599,7 +600,8 @@
                 var checked = getChecked();
                 var firstName = checked.length ? checked[0].getAttribute('data-name') : '[Ad Soyad]';
                 var text = messageInput.value.trim() || '[mesajınız]';
-                manualTemplatePreview.textContent = 'Sayın ' + firstName + ', ' + text;
+                // Meta'da onaylı "manuel_bildirim" şablonu: "Sayın {{1}}, {{2}} Brikon Yapı yönetiminden bilgilendirme mesajıdır."
+                manualTemplatePreview.textContent = 'Sayın ' + firstName + ', ' + text + ' Brikon Yapı yönetiminden bilgilendirme mesajıdır.';
             }
 
             function refresh() {
