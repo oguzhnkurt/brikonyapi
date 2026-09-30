@@ -71,8 +71,9 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             var checkpointsRaw = await _settings.GetAsync(ReminderCheckpointsKey);
             ViewBag.ReminderCheckpoints = string.IsNullOrWhiteSpace(checkpointsRaw) ? "7,1" : checkpointsRaw;
 
-            var templateRaw = await _settings.GetAsync(ReminderMessageTemplateKey);
-            ViewBag.ReminderMessageTemplate = string.IsNullOrWhiteSpace(templateRaw) ? PaymentNotificationService.DefaultReminderMessageTemplate : templateRaw;
+            // Önizleme her zaman Meta'da onaylı WhatsApp şablonunun birebir metnini gösterir
+            // (mesaj artık panelden düzenlenemiyor; malike giden metin Meta şablonudur).
+            ViewBag.ReminderMessageTemplate = PaymentNotificationService.DefaultReminderMessageTemplate;
 
             // Boş = "Tüm Projelerdeki Malikler" (varsayılan davranış, proje filtresi yok).
             ViewBag.ReminderProjectIds = (await _settings.GetAsync(ReminderProjectIdsKey)) ?? "";
