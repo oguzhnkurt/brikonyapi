@@ -51,6 +51,10 @@ namespace BrikonYapi.Web.Services
                 return WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(v) ? fallback : v.Trim());
             }
 
+            // MERSİS no girilmemişse o satırı tamamen gizle (köşeli parantezli yer tutucu göstermek yerine).
+            if (!settings.TryGetValue(KeyMersisNo, out var mersis) || string.IsNullOrWhiteSpace(mersis))
+                html = html.Replace("\n  <li><strong>MERSİS No:</strong> {{MERSIS}}</li>", "");
+
             return html
                 .Replace("{{UNVAN}}",   V(KeyCompanyTitle, "[Ticari Unvan]"))
                 .Replace("{{VD}}",      V(KeyTaxOffice, "[Vergi Dairesi]"))
