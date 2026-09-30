@@ -1,0 +1,72 @@
+@model BrikonYapi.Web.Services.LegalPages.LegalPage
+@{
+    ViewData["Title"] = Model.Title;
+    ViewData["Description"] = Model.Summary;
+    ViewData["BodyClass"] = "legal-page";
+    var pages = (IEnumerable<BrikonYapi.Web.Services.LegalPages.LegalPage>)ViewBag.AllPages;
+}
+
+@section Styles {
+<style>
+body { background: #f4f6f8; }
+
+.lg-hero { background: #0a1628; padding: calc(68px + 3rem) 0 3rem; }
+.lg-hero-inner { max-width: 1040px; margin: 0 auto; padding: 0 1.5rem; }
+.lg-eyebrow {
+    display: inline-flex; align-items: center; gap: .5rem;
+    font-size: .58rem; font-weight: 700; letter-spacing: .25em;
+    text-transform: uppercase; color: #0082B4; margin-bottom: .8rem;
+}
+.lg-eyebrow::before { content: ''; display: block; width: 24px; height: 1px; background: #0082B4; opacity: .5; }
+.lg-title { font-weight: 900; font-size: clamp(1.6rem, 3.6vw, 2.3rem); color: #fff; letter-spacing: -.03em; line-height: 1.15; margin: 0 0 .6rem; }
+.lg-subtitle { font-size: .88rem; color: rgba(255,255,255,.45); line-height: 1.6; margin: 0; }
+
+.lg-wrap {
+    max-width: 1040px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem;
+    display: grid; grid-template-columns: 240px 1fr; gap: 2rem; align-items: start;
+}
+.lg-nav { position: sticky; top: 90px; background: #fff; border: 1px solid #e8ecf0; border-radius: 10px; padding: .6rem; }
+.lg-nav a {
+    display: block; padding: .55rem .75rem; border-radius: 7px;
+    font-size: .84rem; font-weight: 600; color: #4a5a6b; text-decoration: none; line-height: 1.35;
+}
+.lg-nav a:hover { background: #f4f6f8; color: #0a1628; }
+.lg-nav a.active { background: rgba(0,130,180,.08); color: #0082B4; }
+
+.lg-card { background: #fff; border: 1px solid #e8ecf0; border-radius: 10px; padding: 2rem 2.2rem; color: #334155; font-size: .92rem; line-height: 1.75; }
+.lg-card h2 { font-size: 1.02rem; font-weight: 800; color: #0a1628; margin: 1.8rem 0 .6rem; }
+.lg-card h2:first-child { margin-top: 0; }
+.lg-card p { margin: 0 0 .8rem; }
+.lg-card ul { padding-left: 1.2rem; margin: 0 0 .8rem; }
+.lg-card li { margin-bottom: .35rem; }
+.lg-card ul.lg-company { list-style: none; padding: .9rem 1.1rem; background: #f8fafb; border: 1px solid #eef1f4; border-radius: 8px; }
+.lg-updated { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eef1f4; font-size: .78rem; color: #8a97a5; }
+
+@@media (max-width: 860px) {
+    .lg-wrap { grid-template-columns: 1fr; }
+    .lg-nav { position: static; display: flex; flex-wrap: wrap; gap: .25rem; }
+    .lg-card { padding: 1.5rem 1.2rem; }
+}
+</style>
+}
+
+<section class="lg-hero">
+    <div class="lg-hero-inner">
+        <span class="lg-eyebrow">Yasal Bilgilendirme</span>
+        <h1 class="lg-title">@Model.Title</h1>
+        <p class="lg-subtitle">@Model.Summary</p>
+    </div>
+</section>
+
+<div class="lg-wrap">
+    <nav class="lg-nav" aria-label="Yasal metinler">
+        @foreach (var p in pages)
+        {
+            <a href="/yasal/@p.Slug" class="@(p.Slug == Model.Slug ? "active" : "")">@p.Title</a>
+        }
+    </nav>
+
+    <article class="lg-card">
+        @Html.Raw((string)ViewBag.BodyHtml)
+    </article>
+</div>
