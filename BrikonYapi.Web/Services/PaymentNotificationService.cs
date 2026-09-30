@@ -16,9 +16,13 @@ namespace BrikonYapi.Web.Services
         /// Otomatik hatırlatıcının varsayılan mesaj şablonu — admin panelinden (Bildirimler ekranı)
         /// hiç değiştirilmemişse veya SiteSetting kaydı boşsa kullanılır. Yer tutucular:
         /// {ad} malik adı, {aciklama} taksit açıklaması, {ne_zaman} "yarın"/"1 hafta içinde" gibi ifade,
-        /// {vade} vade tarihi (gg.aa.yyyy), {tutar} para birimiyle formatlanmış tutar.
+        /// {vade} vade tarihi (gg.aa.yyyy), {kalan} "7 gün" gibi kalan süre, {tutar} para birimiyle formatlanmış tutar.
+        /// Metin, Meta'da onaylı "odeme_hatirlatma" WhatsApp şablonuyla birebir aynıdır.
         /// </summary>
-        public const string DefaultReminderMessageTemplate = "{aciklama} taksitinizin vadesi {ne_zaman} ({vade}) doluyor. Tutar: {tutar}.";
+        public const string DefaultReminderMessageTemplate = "Sayın {ad}, {aciklama} adlı taksit ödemenizin vadesi {vade} tarihinde ({kalan} kala) dolmaktadır. Ödemeniz gereken tutar {tutar}'dir. Zamanında ödeme yapmanızı rica ederiz.";
+
+        /// <summary>WhatsApp şablonundaki "({{4}} kala)" için kalan gün ifadesi.</summary>
+        private static string RemainingText(int daysBefore) => $"{Math.Max(daysBefore, 0)} gün";
 
         private readonly AppDbContext _db;
         private readonly SmsService _sms;
@@ -152,18 +156,28 @@ namespace BrikonYapi.Web.Services
             var message = template
                 .Replace("{ad}", owner.FullName)
                 .Replace("{aciklama}", desc)
+                .Replace("{kalan}", RemainingText(daysBefore))
                 .Replace("{ne_zaman}", whenText)
                 .Replace("{vade}", schedule.DueDate.ToString("dd.MM.yyyy"))
                 .Replace("{tutar}", Money(schedule));
             var subject = $"Ödeme Hatırlatması ({daysBefore} gün kala) — Brikon Yapı";
 
-            // WhatsApp:ReminderTemplateName appsettings'te tanımlıysa (hesap açılıp şablon Meta'da
-            // onaylandıktan sonra) aynı hatırlatma WhatsApp üzerinden de gönderilir. Şablon parametreleri:
-            // {{1}} malik adı, {{2}} tutar, {{3}} vade tarihi — 360dialog/Meta'da bu sırayla onaylatılmalı.
+            // WhatsApp:ReminderTemplateName tanımlıysa hatırlatma WhatsApp üzerinden de gönderilir.
+            // Meta'da onaylı "odeme_hatirlatma" şablonu:
+            // "Sayın {{1}}, {{2}} adlı taksit ödemenizin vadesi {{3}} tarihinde ({{4}} kala) dolmaktadır.
+            //  Ödemeniz gereken tutar {{5}}'dir. Zamanında ödeme yapmanızı rica ederiz."
+            // {{1}} malik adı, {{2}} açıklama, {{3}} vade tarihi, {{4}} kalan gün, {{5}} tutar.
             var templateName = _config["WhatsApp:ReminderTemplateName"];
             WhatsAppTemplate? whatsapp = string.IsNullOrWhiteSpace(templateName)
                 ? null
-                : new WhatsAppTemplate(templateName, new[] { owner.FullName, Money(schedule), schedule.DueDate.ToString("dd.MM.yyyy") });
+                : new WhatsAppTemplate(templateName, new[]
+                {
+                    owner.FullName,
+                    desc,
+                    schedule.DueDate.ToString("dd.MM.yyyy"),
+                    RemainingText(daysBefore),
+                    Money(schedule)
+                });
 
             await NotifyOwnerAsync(owner, schedule, subject, message, whatsapp);
         }
