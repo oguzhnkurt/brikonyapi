@@ -1263,6 +1263,9 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
   padding: .3rem .6rem; border-radius: 5px;
   background: rgba(255,255,255,.92); color: #0a1628;
 }
+.ft-pay { align-items: center; }
+.ft-pay-logo { display: inline-flex; align-items: center; background: #fff; border-radius: 5px; padding: .15rem .45rem; }
+.ft-pay-logo img { height: 18px; width: auto; display: block; }
 .ft-pay-secure { background: transparent; color: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.18); }
 
 /* Bar */
