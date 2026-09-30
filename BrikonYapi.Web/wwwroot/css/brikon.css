@@ -1205,7 +1205,7 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
 .ft-top { padding: 4rem 0 3rem; border-bottom: 1px solid rgba(255,255,255,.07); }
 .ft-top .ft-inner {
   display: grid;
-  grid-template-columns: 1.8fr 1fr 1fr;
+  grid-template-columns: 1.6fr 1fr 1fr 1.2fr;
   gap: 2rem 3.5rem;
   align-items: start;
 }
@@ -1251,6 +1251,19 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
 .ft-contact svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: .18rem; color: var(--c-primary); opacity: .75; }
 .ft-contact a { color: rgba(255,255,255,.38); transition: color .2s; }
 .ft-contact a:hover { color: rgba(255,255,255,.85); }
+
+/* Şirket kimlik bilgileri + ödeme yöntemleri (sanal POS için) */
+.ft-legal { padding: 1.3rem 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+.ft-legal .ft-inner { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; flex-wrap: wrap; }
+.ft-legal-info { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; font-size: .74rem; color: rgba(255,255,255,.35); line-height: 1.5; }
+.ft-legal-info strong { color: rgba(255,255,255,.6); font-weight: 600; }
+.ft-pay { display: flex; gap: .4rem; flex-wrap: wrap; }
+.ft-pay-badge {
+  font-size: .64rem; font-weight: 800; letter-spacing: .06em;
+  padding: .3rem .6rem; border-radius: 5px;
+  background: rgba(255,255,255,.92); color: #0a1628;
+}
+.ft-pay-secure { background: transparent; color: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.18); }
 
 /* Bar */
 .ft-bar { padding: 1.1rem 0; }
