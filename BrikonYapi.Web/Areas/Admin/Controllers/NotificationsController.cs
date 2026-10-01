@@ -149,6 +149,10 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                     CreatedAt    = DateTime.Now
                 });
 
+                // WhatsApp gelen kutusunda sohbet geçmişi eksiksiz görünsün diye giden şablon mesajını da kaydet.
+                _db.WhatsAppMessages.Add(WhatsAppMessage.OutboundTemplate(owner.Phone, owner.Id,
+                    $"Sayın {owner.FullName}, {message.Trim()} Brikon Yapı yönetiminden bilgilendirme mesajıdır.", success, error));
+
                 if (success) sent++; else failed++;
             }
 
