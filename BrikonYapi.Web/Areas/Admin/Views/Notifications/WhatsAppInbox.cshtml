@@ -1,0 +1,216 @@
+@using BrikonYapi.Web.Data.Entities
+@using BrikonYapi.Web.Areas.Admin.Controllers
+@model List<WhatsAppMessage>
+@{
+    ViewData["Title"] = "WhatsApp Mesajları";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var conversations = (List<WhatsAppInboxController.ConversationItem>)ViewBag.Conversations;
+    var selectedPhone = (string?)ViewBag.SelectedPhone;
+    var selected = ViewBag.Selected as WhatsAppInboxController.ConversationItem;
+    var deadline = ViewBag.ReplyDeadline as DateTime?;
+    bool canReply = deadline.HasValue && deadline.Value > DateTime.Now;
+    bool configured = ViewBag.WhatsAppConfigured;
+
+    string Initials(string name)
+    {
+        var parts = (name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0 || name!.StartsWith("+")) return "#";
+        return (parts[0][0].ToString() + (parts.Length > 1 ? parts[^1][0].ToString() : "")).ToUpper();
+    }
+    string When(DateTime dt) => dt.Date == DateTime.Today ? dt.ToString("HH:mm")
+        : dt.Date == DateTime.Today.AddDays(-1) ? "Dün" : dt.ToString("dd.MM.yyyy");
+    string Remaining(DateTime until)
+    {
+        var left = until - DateTime.Now;
+        if (left.TotalMinutes < 1) return "birkaç saniye";
+        return left.TotalHours >= 1 ? $"{(int)left.TotalHours} sa {left.Minutes} dk" : $"{left.Minutes} dk";
+    }
+}
+
+@section Styles {
+<style>
+    .wa-shell { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 210px); min-height: 520px;
+                background: #fff; border: 1px solid #e8eaec; border-radius: 12px; overflow: hidden; }
+    .wa-list { border-right: 1px solid #eef0f2; overflow-y: auto; }
+    .wa-list-empty { padding: 2rem 1.2rem; color: #8a94a0; font-size: .85rem; text-align: center; }
+    .wa-conv { display: flex; gap: .7rem; padding: .8rem 1rem; border-bottom: 1px solid #f3f4f6; text-decoration: none; color: inherit; }
+    .wa-conv:hover { background: #f8fafb; }
+    .wa-conv.active { background: #eef7fb; }
+    .wa-avatar { width: 40px; height: 40px; border-radius: 50%; background: #0082B4; color: #fff; font-weight: 700;
+                 font-size: .8rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .wa-conv-main { flex: 1; min-width: 0; }
+    .wa-conv-top { display: flex; justify-content: space-between; gap: .5rem; }
+    .wa-conv-name { font-weight: 600; font-size: .88rem; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wa-conv-time { font-size: .72rem; color: #8a94a0; flex-shrink: 0; }
+    .wa-conv-last { font-size: .8rem; color: #6b7684; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wa-conv-bottom { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+    .wa-badge { background: #25D366; color: #fff; border-radius: 10px; font-size: .68rem; font-weight: 700; padding: 0 .45rem; line-height: 1.3rem; }
+    .wa-open-dot { font-size: .66rem; color: #16a34a; }
+
+    .wa-thread { display: flex; flex-direction: column; min-width: 0; }
+    .wa-thread-head { display: flex; align-items: center; gap: .7rem; padding: .75rem 1rem; border-bottom: 1px solid #eef0f2; }
+    .wa-thread-head .sub { font-size: .76rem; color: #8a94a0; }
+    .wa-messages { flex: 1; overflow-y: auto; padding: 1rem 1.2rem; background: #efeae2; display: flex; flex-direction: column; gap: .35rem; }
+    .wa-msg { max-width: 70%; padding: .45rem .65rem .3rem; border-radius: 8px; font-size: .86rem; line-height: 1.4;
+              white-space: pre-wrap; word-break: break-word; box-shadow: 0 1px .5px rgba(0,0,0,.08); }
+    .wa-msg.in { align-self: flex-start; background: #fff; }
+    .wa-msg.out { align-self: flex-end; background: #d9fdd3; }
+    .wa-msg-meta { display: block; text-align: right; font-size: .66rem; color: #8a94a0; margin-top: .15rem; }
+    .wa-msg-err { display: block; font-size: .7rem; color: #dc2626; margin-top: .15rem; }
+    .wa-day { align-self: center; background: #fff; color: #6b7684; font-size: .7rem; padding: .15rem .6rem; border-radius: 6px; margin: .4rem 0; }
+
+    .wa-compose { border-top: 1px solid #eef0f2; padding: .75rem 1rem; }
+    .wa-compose textarea { resize: none; }
+    .wa-window-note { font-size: .74rem; color: #6b7684; margin-top: .35rem; }
+    .wa-closed { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; font-size: .8rem; border-radius: 8px; padding: .6rem .8rem; }
+    .wa-empty-thread { flex: 1; display: flex; align-items: center; justify-content: center; color: #8a94a0; font-size: .9rem; background: #f8fafb; text-align: center; padding: 2rem; }
+
+    @@media (max-width: 900px) {
+        .wa-shell { grid-template-columns: 1fr; height: auto; }
+        .wa-list { max-height: 260px; border-right: 0; border-bottom: 1px solid #eef0f2; }
+        .wa-messages { min-height: 360px; }
+    }
+</style>
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2 bk-page-header">
+    <div>
+        <h5 class="mb-0">
+            <iconify-icon icon="ic:baseline-whatsapp" class="me-1 text-success"></iconify-icon>
+            WhatsApp Mesajları
+        </h5>
+        <span class="text-muted small">Kat maliklerinin WhatsApp'tan yazdığı mesajlar. Son mesajlarından sonraki 24 saat içinde serbest metinle yanıt verebilirsiniz.</span>
+    </div>
+    <a href="/Admin/Notifications" class="btn btn-outline-secondary btn-sm">
+        <iconify-icon icon="mdi:bell-outline" class="me-1"></iconify-icon>
+        Şablonla Mesaj Gönder
+    </a>
+</div>
+
+@if (!configured)
+{
+    <div class="alert alert-light border small text-muted mb-3">WhatsApp API anahtarı tanımlı değil; yanıt gönderilemez.</div>
+}
+
+<div class="wa-shell">
+    <div class="wa-list">
+        @if (conversations.Count == 0)
+        {
+            <div class="wa-list-empty">
+                <iconify-icon icon="ic:baseline-whatsapp" style="font-size:2rem;color:#c4cbd2"></iconify-icon>
+                <div class="mt-2">Henüz gelen mesaj yok.</div>
+                <div class="mt-1">Kat malikleri <strong>+90 543 904 69 88</strong> numarasına yazdığında burada görünecek.</div>
+            </div>
+        }
+        @foreach (var c in conversations)
+        {
+            <a class="wa-conv @(c.Phone == selectedPhone ? "active" : "")" href="/Admin/WhatsAppInbox?phone=@c.Phone">
+                <div class="wa-avatar" style="@(c.OwnerId == null ? "background:#9aa5b1" : "")">@Initials(c.DisplayName)</div>
+                <div class="wa-conv-main">
+                    <div class="wa-conv-top">
+                        <span class="wa-conv-name">@c.DisplayName</span>
+                        <span class="wa-conv-time">@When(c.LastAt)</span>
+                    </div>
+                    <div class="wa-conv-bottom">
+                        <span class="wa-conv-last">@(c.LastDirection == WhatsAppDirection.Outbound ? "Siz: " : "")@c.LastBody</span>
+                        @if (c.UnreadCount > 0)
+                        {
+                            <span class="wa-badge">@c.UnreadCount</span>
+                        }
+                        else if (c.CanReply)
+                        {
+                            <span class="wa-open-dot" title="24 saatlik yanıt penceresi açık">● açık</span>
+                        }
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+
+    <div class="wa-thread">
+        @if (selected == null)
+        {
+            <div class="wa-empty-thread">Bir sohbet seçin.</div>
+        }
+        else
+        {
+            <div class="wa-thread-head">
+                <div class="wa-avatar" style="@(selected.OwnerId == null ? "background:#9aa5b1" : "")">@Initials(selected.DisplayName)</div>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">@selected.DisplayName</div>
+                    <div class="sub">
+                        @WhatsAppInboxController.FormatPhone(selected.Phone)
+                        @if (selected.OwnerId == null)
+                        {
+                            <span class="ms-1">· kayıtlı kat maliki değil</span>
+                        }
+                    </div>
+                </div>
+                @if (selected.OwnerId != null)
+                {
+                    <a href="/Admin/Owners/Edit/@selected.OwnerId" class="btn btn-sm btn-outline-secondary">Malik Kartı</a>
+                }
+            </div>
+
+            <div class="wa-messages" id="waMessages">
+                @{ DateTime? lastDay = null; }
+                @foreach (var m in Model)
+                {
+                    if (lastDay != m.CreatedAt.Date)
+                    {
+                        lastDay = m.CreatedAt.Date;
+                        <div class="wa-day">@(m.CreatedAt.Date == DateTime.Today ? "Bugün" : m.CreatedAt.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("tr-TR")))</div>
+                    }
+                    var meta = m.CreatedAt.ToString("HH:mm");
+                    if (m.Direction == WhatsAppDirection.Outbound)
+                    {
+                        meta += " · " + (m.Status switch { "read" => "okundu", "delivered" => "iletildi", "failed" => "gönderilemedi", _ => "gönderildi" });
+                    }
+                    var errHtml = string.IsNullOrEmpty(m.ErrorMessage) ? "" : "<span class=\"wa-msg-err\">" + System.Net.WebUtility.HtmlEncode(m.ErrorMessage) + "</span>";
+                    <div class="wa-msg @(m.Direction == WhatsAppDirection.Inbound ? "in" : "out")">@m.Body<span class="wa-msg-meta">@meta</span>@Html.Raw(errHtml)</div>
+                }
+            </div>
+
+            <div class="wa-compose">
+                @if (canReply)
+                {
+                    <form asp-area="Admin" asp-controller="WhatsAppInbox" asp-action="Reply" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="phone" value="@selected.Phone" />
+                        <div class="d-flex gap-2 align-items-end">
+                            <textarea name="message" class="form-control" rows="2" maxlength="4096" placeholder="Yanıtınızı yazın…" required id="waReply"></textarea>
+                            <button type="submit" class="btn btn-success" @(configured ? "" : "disabled")>
+                                <iconify-icon icon="mdi:send" class="me-1"></iconify-icon>Gönder
+                            </button>
+                        </div>
+                        <div class="wa-window-note">
+                            <iconify-icon icon="mdi:clock-outline"></iconify-icon>
+                            Yanıt penceresi @Remaining(deadline!.Value) sonra kapanacak (@deadline.Value.ToString("dd.MM HH:mm")).
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="wa-closed">
+                        24 saatlik yanıt süresi doldu. Bu kişiye artık yalnızca
+                        <a href="/Admin/Notifications">Bildirimler</a> ekranındaki onaylı şablonla yazabilirsiniz.
+                        Kişi size tekrar yazarsa pencere yeniden açılır.
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    (function () {
+        var box = document.getElementById('waMessages');
+        if (box) box.scrollTop = box.scrollHeight;
+        var ta = document.getElementById('waReply');
+        if (ta) ta.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ta.form.submit(); }
+        });
+    })();
+</script>
+}
