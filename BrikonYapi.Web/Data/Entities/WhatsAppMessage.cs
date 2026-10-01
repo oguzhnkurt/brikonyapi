@@ -41,5 +41,27 @@ namespace BrikonYapi.Web.Data.Entities
         public bool IsRead { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        /// <summary>Kat maliki telefonunu (05xx..., 5xx..., +90 5xx...) WhatsApp kimliği biçimine
+        /// (905xxxxxxxxx) çevirir; webhook'tan gelen "from" değeriyle aynı biçim.</summary>
+        public static string ToWaId(string? phone)
+        {
+            var d = new string((phone ?? "").Where(char.IsDigit).ToArray());
+            return d.Length >= 10 ? "90" + d[^10..] : d;
+        }
+
+        /// <summary>Şablonla giden bir mesajın gelen kutusundaki sohbet geçmişine eklenecek kaydı.</summary>
+        public static WhatsAppMessage OutboundTemplate(string? phone, int ownerId, string text, bool ok, string? error) => new()
+        {
+            Phone = ToWaId(phone),
+            OwnerId = ownerId,
+            Direction = WhatsAppDirection.Outbound,
+            MessageType = "template",
+            Body = text,
+            Status = ok ? "sent" : "failed",
+            ErrorMessage = error,
+            IsRead = true,
+            CreatedAt = DateTime.Now
+        };
     }
 }
