@@ -28,6 +28,7 @@ namespace BrikonYapi.Web.Data
         public DbSet<PaymentPlanTemplate> PaymentPlanTemplates { get; set; }
         public DbSet<PaymentPlanTemplateItem> PaymentPlanTemplateItems { get; set; }
         public DbSet<NotificationLog> NotificationLogs { get; set; }
+        public DbSet<WhatsAppMessage> WhatsAppMessages { get; set; }
         public DbSet<Announcement> Announcements { get; set; }
         public DbSet<FaqItem> Faqs { get; set; }
 
@@ -117,6 +118,18 @@ namespace BrikonYapi.Web.Data
             {
                 e.HasOne(n => n.Owner).WithMany().HasForeignKey(n => n.OwnerId).OnDelete(DeleteBehavior.Cascade);
                 e.HasOne(n => n.RelatedPaymentSchedule).WithMany().HasForeignKey(n => n.RelatedPaymentScheduleId).OnDelete(DeleteBehavior.SetNull);
+            });
+
+            builder.Entity<WhatsAppMessage>(e =>
+            {
+                e.Property(m => m.Phone).HasMaxLength(20).IsRequired();
+                e.Property(m => m.ContactName).HasMaxLength(150);
+                e.Property(m => m.MessageType).HasMaxLength(30).IsRequired();
+                e.Property(m => m.WaMessageId).HasMaxLength(200);
+                e.Property(m => m.Status).HasMaxLength(20);
+                e.HasOne(m => m.Owner).WithMany().HasForeignKey(m => m.OwnerId).OnDelete(DeleteBehavior.SetNull);
+                e.HasIndex(m => new { m.Phone, m.CreatedAt });
+                e.HasIndex(m => m.WaMessageId);
             });
 
             // ── İlerleme: aşamalar ve saha fotoğrafları ──────────────
