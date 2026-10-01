@@ -134,6 +134,17 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "WhatsAppInbox" ? "active" : "")"
+                       href="/Admin/WhatsAppInbox">
+                        <span class="nav-icon">
+                            <iconify-icon icon="ic:baseline-whatsapp"></iconify-icon>
+                        </span>
+                        <span class="nav-text">WhatsApp Mesajları</span>
+                        <span class="badge bg-success rounded-pill ms-auto d-none" id="waUnreadBadge"></span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Units" ? "active" : "")"
                        href="/Admin/Units">
                         <span class="nav-icon">
@@ -336,5 +347,23 @@
 <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
 
 @await RenderSectionAsync("Scripts", required: false)
+<script>
+    // Sol menüdeki "WhatsApp Mesajları" rozeti: okunmamış gelen mesaj sayısı (dakikada bir yenilenir).
+    (function () {
+        var badge = document.getElementById('waUnreadBadge');
+        if (!badge || !window.fetch) return;
+        function load() {
+            fetch('/Admin/WhatsAppInbox/UnreadCount', { credentials: 'same-origin' })
+                .then(function (r) { return r.ok ? r.json() : 0; })
+                .then(function (n) {
+                    if (n > 0) { badge.textContent = n; badge.classList.remove('d-none'); }
+                    else badge.classList.add('d-none');
+                })
+                .catch(function () { });
+        }
+        load();
+        setInterval(load, 60000);
+    })();
+</script>
 </body>
 </html>
