@@ -46,7 +46,7 @@ namespace BrikonYapi.Web.Services
         /// <summary>Bir WhatsApp bildirimi için gönderilecek onaylı şablon adı ve gövde parametreleri.
         /// null geçilirse (çoğu bildirim tipi — henüz onaylı şablonu olmayanlar) WhatsApp atlanır;
         /// SMS/e-posta serbest metinle gönderilmeye devam eder.</summary>
-        private sealed record WhatsAppTemplate(string Name, IReadOnlyList<string> BodyParams);
+        private sealed record WhatsAppTemplate(string Name, IReadOnlyList<string> BodyParams, string? PreviewText = null);
 
         private static string Money(PaymentSchedule schedule) =>
             schedule.CurrencySymbol + schedule.Amount.ToString("N0", new System.Globalization.CultureInfo("tr-TR"));
@@ -80,6 +80,8 @@ namespace BrikonYapi.Web.Services
                     ErrorMessage = err,
                     SentAt = ok ? DateTime.Now : null
                 });
+                // WhatsApp gelen kutusunda sohbet geçmişi eksiksiz görünsün diye giden şablon mesajını da kaydet.
+                _db.WhatsAppMessages.Add(WhatsAppMessage.OutboundTemplate(owner.Phone, owner.Id, whatsapp.PreviewText ?? message, ok, err));
             }
 
             if (pref.SmsEnabled && !string.IsNullOrWhiteSpace(owner.Phone))
@@ -177,7 +179,12 @@ namespace BrikonYapi.Web.Services
                     schedule.DueDate.ToString("dd.MM.yyyy"),
                     RemainingText(daysBefore),
                     Money(schedule)
-                });
+                }, DefaultReminderMessageTemplate
+                    .Replace("{ad}", owner.FullName)
+                    .Replace("{aciklama}", desc)
+                    .Replace("{kalan}", RemainingText(daysBefore))
+                    .Replace("{vade}", schedule.DueDate.ToString("dd.MM.yyyy"))
+                    .Replace("{tutar}", Money(schedule)));
 
             await NotifyOwnerAsync(owner, schedule, subject, message, whatsapp);
         }
