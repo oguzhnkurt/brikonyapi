@@ -837,6 +837,66 @@ namespace BrikonYapi.Web.Migrations
                     b.ToTable("NotificationLogs");
                 });
 
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.WhatsAppMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContactName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MessageType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int?>("OwnerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Status")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("WaMessageId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.HasIndex("WaMessageId");
+
+                    b.HasIndex("Phone", "CreatedAt");
+
+                    b.ToTable("WhatsAppMessages");
+                });
+
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.Owner", b =>
                 {
                     b.Property<int>("Id")
@@ -1949,6 +2009,16 @@ namespace BrikonYapi.Web.Migrations
                     b.Navigation("Owner");
 
                     b.Navigation("RelatedPaymentSchedule");
+                });
+
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.WhatsAppMessage", b =>
+                {
+                    b.HasOne("BrikonYapi.Web.Data.Entities.Owner", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PaymentSchedule", b =>
