@@ -599,8 +599,8 @@
 
             function renderManualPreview() {
                 var checked = getChecked();
-                // Kimse seçili değilse örnek isim göster; seçiliyse ilk seçilenin gerçek adı (her malike kendi adı gider).
-                var firstName = checked.length ? checked[0].getAttribute('data-name') : 'Ahmet Yılmaz';
+                // Tek kişi seçiliyse onun adı; hiç ya da birden fazla kişi seçiliyse "Ad Soyad" (gönderimde her malike kendi adı gider).
+                var firstName = checked.length === 1 ? checked[0].getAttribute('data-name') : 'Ad Soyad';
                 var text = messageInput.value.trim() || '[mesajınız]';
                 // Meta'da onaylı "manuel_bildirim" şablonu: "Sayın {{1}}, {{2}} Brikon Yapı yönetiminden bilgilendirme mesajıdır."
                 manualTemplatePreview.textContent = 'Sayın ' + firstName + ', ' + text + ' Brikon Yapı yönetiminden bilgilendirme mesajıdır.';
