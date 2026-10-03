@@ -28,37 +28,99 @@
         firstUnit.AreaM2.HasValue ? $"{firstUnit.AreaM2} m²" : null
     }.Where(x => !string.IsNullOrWhiteSpace(x)));
 
-    <!-- Genel ilerleme kartı -->
+    <!-- Genel ilerleme kartı: daire bilgisi + ilerleme halkası + aşama/teslim özeti -->
+    var unitTags = firstUnit == null ? new List<string>() : new[]
+    {
+        firstUnit.BlockNo,
+        string.IsNullOrWhiteSpace(firstUnit.UnitNo) ? null : "No " + firstUnit.UnitNo,
+        firstUnit.FloorNo.HasValue ? $"{firstUnit.FloorNo}. Kat" : null,
+        firstUnit.RoomLayout,
+        firstUnit.AreaM2.HasValue ? $"{firstUnit.AreaM2} m²" : null
+    }.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x!).ToList();
+    var ringPct = Math.Clamp(p.OverallProgress, 0, 100);
+    const double ringC = 2 * Math.PI * 34; // r = 34
+    var ringOffset = (ringC * (1 - ringPct / 100.0)).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+    var ringCStr = ringC.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+    var stagesTotal = p.Stages.Count;
+    var stagesDone = p.Stages.Count(st => st.Status == BrikonYapi.Web.Data.Entities.ProjectStageStatus.Completed);
+    var stagesNow = p.Stages.Where(st => st.Status == BrikonYapi.Web.Data.Entities.ProjectStageStatus.InProgress).Select(st => st.Name).ToList();
+    int? daysLeft = p.EstimatedDelivery.HasValue ? (int)(p.EstimatedDelivery.Value.Date - DateTime.Today).TotalDays : null;
+
     <div class="km-card km-prog-summary mb-4 @(isFirstProject ? "km-prog-summary-first" : "")">
-        <div class="km-prog-unit">
+        <div class="km-ps-head">
             <span class="km-prog-unit-icon"><iconify-icon icon="mdi:home-city-outline"></iconify-icon></span>
-            <span class="km-prog-unit-text">
-                <strong>@p.Project.Name</strong>
-                @if (!string.IsNullOrWhiteSpace(unitLabel))
+            <div class="km-ps-title">
+                <span class="km-ps-eyebrow">Bağımsız Bölümünüz</span>
+                <strong class="km-ps-name">@p.Project.Name</strong>
+                @if (unitTags.Any())
                 {
-                    <span class="km-prog-unit-sub">@unitLabel</span>
+                    <span class="km-ps-tags">
+                        @foreach (var t in unitTags)
+                        {
+                            <span class="km-ps-tag">@t</span>
+                        }
+                    </span>
                 }
-                @if (!string.IsNullOrWhiteSpace(unitDetail))
-                {
-                    <span class="km-prog-unit-sub">@unitDetail</span>
-                }
-            </span>
-        </div>
-        <div class="d-flex justify-content-between align-items-start gap-3 mt-3">
-            <div>
-                <div class="km-prog-label">Genel ilerleme</div>
-                <div class="km-prog-value"><small>%</small>@p.OverallProgress</div>
             </div>
-            @if (p.EstimatedDelivery.HasValue)
-            {
-                <div class="text-end">
-                    <div class="km-prog-label">Tahmini teslim</div>
-                    <div class="km-prog-delivery"><iconify-icon icon="iconamoon:calendar-1-duotone"></iconify-icon>@p.EstimatedDelivery.Value.ToString("dd MMMM yyyy", tr)</div>
-                </div>
-            }
         </div>
-        <div class="km-prog-bar mt-3">
-            <div class="km-prog-bar-fill" style="width:@(p.OverallProgress)%"></div>
+
+        <div class="km-ps-body">
+            <div class="km-ps-ring" role="img" aria-label="Genel ilerleme yüzde @ringPct">
+                <svg viewBox="0 0 80 80">
+                    <defs>
+                        <linearGradient id="kmRingGrad@(projectIndex)" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#00A0E3" />
+                            <stop offset="100%" stop-color="#0d3150" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="40" cy="40" r="34" class="km-ps-ring-track" />
+                    <circle cx="40" cy="40" r="34" class="km-ps-ring-fill" stroke="url(#kmRingGrad@(projectIndex))"
+                            style="stroke-dasharray:@ringCStr; stroke-dashoffset:@ringOffset; --ring-c:@ringCStr;" />
+                </svg>
+                <span class="km-ps-ring-text">
+                    <span class="km-ps-ring-val"><small>%</small>@ringPct</span>
+                    <span class="km-ps-ring-lbl">ilerleme</span>
+                </span>
+            </div>
+
+            <ul class="km-ps-facts">
+                @if (stagesNow.Any())
+                {
+                    <li>
+                        <span class="km-ps-fact-ic"><iconify-icon icon="mdi:crane"></iconify-icon></span>
+                        <span class="km-ps-fact-tx">
+                            <span class="km-ps-fact-lbl">Devam eden iş</span>
+                            <span class="km-ps-fact-val">@string.Join(", ", stagesNow)</span>
+                        </span>
+                    </li>
+                }
+                @if (stagesTotal > 0)
+                {
+                    <li>
+                        <span class="km-ps-fact-ic"><iconify-icon icon="mdi:check-decagram-outline"></iconify-icon></span>
+                        <span class="km-ps-fact-tx">
+                            <span class="km-ps-fact-lbl">Tamamlanan aşama</span>
+                            <span class="km-ps-fact-val">@stagesDone / @stagesTotal</span>
+                        </span>
+                    </li>
+                }
+                @if (p.EstimatedDelivery.HasValue)
+                {
+                    <li>
+                        <span class="km-ps-fact-ic"><iconify-icon icon="iconamoon:calendar-1-duotone"></iconify-icon></span>
+                        <span class="km-ps-fact-tx">
+                            <span class="km-ps-fact-lbl">Tahmini teslim</span>
+                            <span class="km-ps-fact-val">
+                                @p.EstimatedDelivery.Value.ToString("dd MMMM yyyy", tr)
+                                @if (daysLeft > 0)
+                                {
+                                    <span class="km-ps-days">@daysLeft gün</span>
+                                }
+                            </span>
+                        </span>
+                    </li>
+                }
+            </ul>
         </div>
     </div>
 
@@ -271,6 +333,40 @@
     .km-prog-unit-icon iconify-icon { font-size:1.3rem; color:#fff; }
     .km-prog-unit-text { display:flex; flex-direction:column; gap:.05rem; font-size:.98rem; min-width:0; }
     .km-prog-unit-sub { font-size:.82rem; color:#9aa3ac; font-weight:500; }
+
+    /* Özet kartı (kurumsal): başlık + etiketler, solda ilerleme halkası, sağda kısa bilgiler */
+    .km-ps-head { display:flex; align-items:flex-start; gap:.85rem; padding-bottom:1rem; margin-bottom:1rem; border-bottom:1px solid #eef1f4; }
+    .km-ps-title { display:flex; flex-direction:column; min-width:0; gap:.15rem; }
+    .km-ps-eyebrow { font-size:.66rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#8a939c; }
+    .km-ps-name { font-size:1.12rem; font-weight:800; color:var(--c-navy); line-height:1.25; }
+    .km-ps-tags { display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.35rem; }
+    .km-ps-tag { font-size:.72rem; font-weight:600; color:#4b5866; background:#f1f4f8; border:1px solid #e6ebf0; border-radius:6px; padding:.15rem .5rem; white-space:nowrap; }
+
+    .km-ps-body { display:flex; align-items:center; gap:1.25rem; }
+    .km-ps-ring { position:relative; width:112px; height:112px; flex-shrink:0; }
+    .km-ps-ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+    .km-ps-ring-track { fill:none; stroke:#edf1f5; stroke-width:7; }
+    .km-ps-ring-fill { fill:none; stroke-width:7; stroke-linecap:round; animation:km-ring-in 1.2s cubic-bezier(.2,.7,.2,1) both; }
+    @@keyframes km-ring-in { from { stroke-dashoffset: var(--ring-c); } }
+    .km-ps-ring-text { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .km-ps-ring-val { font-size:1.75rem; font-weight:800; color:var(--c-navy); line-height:1; letter-spacing:-.02em; }
+    .km-ps-ring-val small { font-size:.55em; color:var(--c-primary); font-weight:700; margin-right:.05em; }
+    .km-ps-ring-lbl { font-size:.62rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#8a939c; margin-top:.25rem; }
+
+    .km-ps-facts { list-style:none; margin:0; padding:0; flex:1; min-width:0; display:flex; flex-direction:column; gap:.7rem; }
+    .km-ps-facts li { display:flex; align-items:center; gap:.65rem; }
+    .km-ps-fact-ic { width:32px; height:32px; flex-shrink:0; border-radius:9px; background:#eef6fb; color:var(--c-primary);
+                     display:flex; align-items:center; justify-content:center; font-size:1.05rem; }
+    .km-ps-fact-tx { display:flex; flex-direction:column; min-width:0; }
+    .km-ps-fact-lbl { font-size:.68rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#8a939c; }
+    .km-ps-fact-val { font-size:.92rem; font-weight:700; color:var(--c-navy); line-height:1.3; display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; }
+    .km-ps-days { font-size:.7rem; font-weight:700; color:var(--c-primary); background:#eef6fb; border-radius:20px; padding:.08rem .5rem; }
+    @@media (max-width: 400px) {
+        .km-ps-ring { width:96px; height:96px; }
+        .km-ps-ring-val { font-size:1.5rem; }
+        .km-ps-body { gap:1rem; }
+    }
+    @@media (prefers-reduced-motion: reduce) { .km-ps-ring-fill { animation:none; } }
 
     .km-prog-label { font-size:.7rem; color:#8a939c; font-weight:700; text-transform:uppercase; letter-spacing:.09em; }
     .km-prog-value { font-size:2.4rem; font-weight:800; color:var(--c-navy); line-height:1.05; letter-spacing:-.02em; }
