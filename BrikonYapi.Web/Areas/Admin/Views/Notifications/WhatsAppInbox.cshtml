@@ -10,6 +10,8 @@
     var deadline = ViewBag.ReplyDeadline as DateTime?;
     bool canReply = deadline.HasValue && deadline.Value > DateTime.Now;
     bool configured = ViewBag.WhatsAppConfigured;
+    bool templateConfigured = ViewBag.TemplateConfigured ?? false;
+    var templateName = (string?)ViewBag.TemplateRecipientName ?? "";
 
     string Initials(string name)
     {
@@ -189,6 +191,27 @@
                         </div>
                     </form>
                 }
+                else if (templateConfigured)
+                {
+                    <form asp-area="Admin" asp-controller="WhatsAppInbox" asp-action="ReplyTemplate" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="phone" value="@selected.Phone" />
+                        <div class="wa-closed mb-2">
+                            <iconify-icon icon="mdi:information-outline"></iconify-icon>
+                            24 saatlik yanıt süresi doldu; mesajınız onaylı şablonla gidecek
+                            (mesaj başı ücretli, ~0,37 TL). Kişi cevap verirse pencere yeniden açılır.
+                        </div>
+                        <div class="d-flex gap-2 align-items-end">
+                            <textarea name="message" class="form-control" rows="2" maxlength="900" placeholder="Mesajınızı yazın…" required id="waReply"></textarea>
+                            <button type="submit" class="btn btn-success" @(configured ? "" : "disabled")>
+                                <iconify-icon icon="mdi:send" class="me-1"></iconify-icon>Şablonla Gönder
+                            </button>
+                        </div>
+                        <div class="wa-window-note" id="waTplPreview">
+                            Giden metin: <em>Sayın @templateName, <span id="waTplText">…</span> Brikon Yapı yönetiminden bilgilendirme mesajıdır.</em>
+                        </div>
+                    </form>
+                }
                 else
                 {
                     <div class="wa-closed">
@@ -210,6 +233,10 @@
         var ta = document.getElementById('waReply');
         if (ta) ta.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ta.form.submit(); }
+        });
+        var tpl = document.getElementById('waTplText');
+        if (ta && tpl) ta.addEventListener('input', function () {
+            tpl.textContent = ta.value.replace(/\s+/g, ' ').trim() || '…';
         });
     })();
 </script>
