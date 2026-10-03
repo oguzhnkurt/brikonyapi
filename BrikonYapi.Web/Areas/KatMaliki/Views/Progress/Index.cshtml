@@ -2,6 +2,7 @@
 @model ProgressPageViewModel
 @{
     ViewData["Title"] = "Ana Sayfa";
+    ViewData["BodyClass"] = "km-page-home";
     var tr = new System.Globalization.CultureInfo("tr-TR");
 }
 
@@ -46,13 +47,13 @@
         <div class="d-flex justify-content-between align-items-start gap-3 mt-3">
             <div>
                 <div class="km-prog-label">Genel ilerleme</div>
-                <div class="km-prog-value">%@p.OverallProgress</div>
+                <div class="km-prog-value"><small>%</small>@p.OverallProgress</div>
             </div>
             @if (p.EstimatedDelivery.HasValue)
             {
                 <div class="text-end">
                     <div class="km-prog-label">Tahmini teslim</div>
-                    <div class="km-prog-delivery">@p.EstimatedDelivery.Value.ToString("dd MMMM yyyy", tr)</div>
+                    <div class="km-prog-delivery"><iconify-icon icon="iconamoon:calendar-1-duotone"></iconify-icon>@p.EstimatedDelivery.Value.ToString("dd MMMM yyyy", tr)</div>
                 </div>
             }
         </div>
@@ -73,7 +74,13 @@
                 <iconify-icon icon="iconamoon:3d-duotone"></iconify-icon> 360° Sanal Tur
             </span>
             <span class="km-tour-cta">
-                <iconify-icon icon="iconamoon:player-play-duotone"></iconify-icon> Sanal turu başlat
+                <span class="km-tour-cta-text">
+                    <span class="km-tour-cta-title">@p.Project.Name</span>
+                    <span class="km-tour-cta-sub">Daireyi ve projeyi 360° gezin</span>
+                </span>
+                <span class="km-tour-cta-btn">
+                    <iconify-icon icon="iconamoon:player-play-duotone"></iconify-icon> Turu başlat
+                </span>
             </span>
         </button>
     }
@@ -248,50 +255,66 @@
 
 @section Styles {
 <style>
-    .km-card { background:#fff; border-radius:20px; padding:1.25rem 1.35rem; box-shadow:0 4px 18px rgba(20,40,60,.07); }
+    .km-card { background:#fff; border-radius:18px; padding:1.25rem 1.35rem; border:1px solid var(--km-border); box-shadow:var(--km-shadow); }
 
-    /* İlk proje kartı, üstteki başlık (KmGreeting) ile görsel olarak birleşsin diye hafifçe yukarı çekilir */
-    .km-prog-summary-first { margin-top:-1.6rem; position:relative; z-index:2; }
-    .km-prog-summary {
-        background:linear-gradient(180deg, #ffffff 0%, #f7fbfd 100%);
-        border:1px solid #eef3f6;
-    }
+    /* İlk proje kartı, üstteki lacivert başlığın üzerine taşarak onunla birleşir */
+    .km-prog-summary-first { margin-top:-3.6rem; position:relative; z-index:2; }
+    .km-prog-summary { background:#fff; }
 
     .km-prog-unit { display:flex; align-items:center; gap:.75rem; padding-bottom:.9rem; margin-bottom:.9rem; border-bottom:1px solid #f1f3f5; }
     .km-prog-unit-icon {
-        width:40px; height:40px; flex-shrink:0; border-radius:12px;
-        background:linear-gradient(135deg, rgba(0,130,180,.12), rgba(0,160,227,.12));
+        width:44px; height:44px; flex-shrink:0; border-radius:13px;
+        background:linear-gradient(135deg, #0d3150, var(--c-primary));
         display:flex; align-items:center; justify-content:center;
+        box-shadow:0 6px 14px rgba(11,27,46,.2);
     }
-    .km-prog-unit-icon iconify-icon { font-size:1.25rem; color:var(--c-primary); }
+    .km-prog-unit-icon iconify-icon { font-size:1.3rem; color:#fff; }
     .km-prog-unit-text { display:flex; flex-direction:column; gap:.05rem; font-size:.98rem; min-width:0; }
     .km-prog-unit-sub { font-size:.82rem; color:#9aa3ac; font-weight:500; }
 
-    .km-prog-label { font-size:.78rem; color:#8a939c; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
-    .km-prog-value { font-size:2.3rem; font-weight:800; color:var(--c-primary); line-height:1.1; }
-    .km-prog-delivery { font-size:1rem; font-weight:700; color:#2B2A29; }
-    .km-prog-bar { height:12px; background:#eef0f2; border-radius:20px; overflow:hidden; }
+    .km-prog-label { font-size:.7rem; color:#8a939c; font-weight:700; text-transform:uppercase; letter-spacing:.09em; }
+    .km-prog-value { font-size:2.4rem; font-weight:800; color:var(--c-navy); line-height:1.05; letter-spacing:-.02em; }
+    .km-prog-value small { font-size:.55em; font-weight:700; color:var(--c-primary); margin-right:.05em; }
+    .km-prog-delivery { font-size:1rem; font-weight:700; color:var(--c-navy); display:inline-flex; align-items:center; gap:.35rem; }
+    .km-prog-delivery iconify-icon { color:var(--c-primary); font-size:1.05rem; }
+    .km-prog-bar { height:10px; background:#edf1f5; border-radius:20px; overflow:hidden; }
     .km-prog-bar-fill { height:100%; background:linear-gradient(90deg,var(--c-primary),var(--c-secondary)); border-radius:20px; transition:width .6s ease; }
     .km-prog-current { font-size:.92rem; color:#4a5158; display:flex; align-items:center; gap:.4rem; }
     .km-prog-current iconify-icon { color:var(--c-primary); font-size:1.15rem; }
 
-    .km-section-title { font-size:1.05rem; font-weight:700; margin-bottom:.8rem; }
+    .km-section-title {
+        display:flex; align-items:center; gap:.5rem; margin:0 0 .8rem;
+        font-size:.74rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#5b6672;
+    }
+    .km-section-title::before { content:''; width:3px; height:14px; border-radius:3px; background:linear-gradient(180deg,var(--c-secondary),var(--c-primary)); }
 
     /* 360 tur kartı */
     .km-tour-card {
         display:block; position:relative; width:100%; border:none; padding:0; overflow:hidden;
-        border-radius:16px; height:190px; background:#0d1520; box-shadow:0 4px 14px rgba(0,0,0,.12);
+        border-radius:18px; height:200px; background:var(--c-navy); box-shadow:var(--km-shadow); text-align:left;
     }
-    .km-tour-bg { position:absolute; inset:0; background:#0d1520 center/cover no-repeat; opacity:.85; }
-    .km-tour-card::after { content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.6), rgba(0,0,0,.05)); }
+    .km-tour-bg { position:absolute; inset:0; background:var(--c-navy) center/cover no-repeat; transition:transform .6s ease; }
+    .km-tour-card:hover .km-tour-bg { transform:scale(1.04); }
+    .km-tour-card::after { content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(11,27,46,.85) 0%, rgba(11,27,46,.25) 45%, rgba(11,27,46,0) 70%); }
     .km-tour-badge {
-        position:absolute; top:.7rem; right:.7rem; z-index:2; display:inline-flex; align-items:center; gap:.3rem;
-        background:var(--c-primary); color:#fff; font-size:.78rem; font-weight:700; padding:.4rem .75rem; border-radius:20px;
+        position:absolute; top:.8rem; left:.8rem; z-index:2; display:inline-flex; align-items:center; gap:.3rem;
+        background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.35); color:#fff;
+        -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+        font-size:.72rem; font-weight:700; letter-spacing:.04em; padding:.35rem .7rem; border-radius:20px;
     }
     .km-tour-cta {
-        position:absolute; left:.9rem; bottom:.9rem; z-index:2; display:inline-flex; align-items:center; gap:.35rem;
-        color:#fff; font-weight:700; font-size:.95rem;
+        position:absolute; left:1rem; right:1rem; bottom:1rem; z-index:2;
+        display:flex; align-items:center; justify-content:space-between; gap:.6rem; color:#fff;
     }
+    .km-tour-cta-text { display:flex; flex-direction:column; min-width:0; }
+    .km-tour-cta-title { font-weight:800; font-size:1.05rem; line-height:1.2; }
+    .km-tour-cta-sub { font-size:.78rem; color:rgba(255,255,255,.75); }
+    .km-tour-cta-btn {
+        flex-shrink:0; display:inline-flex; align-items:center; gap:.35rem;
+        background:#fff; color:var(--c-navy); font-weight:700; font-size:.85rem;
+        padding:.55rem .95rem; border-radius:999px; box-shadow:0 6px 16px rgba(0,0,0,.25);
+    }
+    .km-tour-cta-btn iconify-icon { color:var(--c-primary); font-size:1.05rem; }
 
     /* Aşamalar */
     .km-stages { padding:.4rem 1.1rem; }
@@ -301,7 +324,8 @@
         width:30px; height:30px; flex-shrink:0; border-radius:50%; background:#eef0f2; color:#9aa3ac;
         display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700;
     }
-    .km-stage.is-done .km-stage-dot, .km-stage.is-now .km-stage-dot { background:var(--c-primary); color:#fff; }
+    .km-stage.is-done .km-stage-dot { background:var(--c-primary); color:#fff; }
+    .km-stage.is-now .km-stage-dot { background:#fff; color:var(--c-primary); box-shadow:inset 0 0 0 2px var(--c-primary), 0 0 0 4px rgba(0,130,180,.15); }
     .km-stage-name { flex:1; font-size:.98rem; color:#9aa3ac; }
     .km-stage.is-done .km-stage-name { color:#2B2A29; }
     .km-stage.is-now .km-stage-name { color:var(--c-primary); font-weight:700; }
@@ -326,8 +350,8 @@
         .km-photo-scroll::-webkit-scrollbar-thumb:hover { background:#9aa3ac; }
     }
     .km-photo-card {
-        position:relative; flex:0 0 240px; scroll-snap-align:start; border:none; padding:0;
-        border-radius:14px; overflow:hidden; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); text-align:left;
+        position:relative; flex:0 0 240px; scroll-snap-align:start; border:1px solid var(--km-border); padding:0;
+        border-radius:16px; overflow:hidden; background:#fff; box-shadow:var(--km-shadow); text-align:left;
     }
     .km-photo-img { display:block; height:160px; background:#0d1520 center/cover no-repeat; }
     .km-photo-360 {
@@ -347,11 +371,11 @@
 
     /* Ödeme durumu kartı: ayrı ayrı çirkin kutucuklar yerine tek, marka renkli, oranlı bir kart */
     .km-pay-card {
-        background:#fff; border-radius:20px; padding:1.15rem 1.25rem 1rem;
-        box-shadow:0 4px 18px rgba(20,40,60,.07); border:1px solid #eef3f6;
+        background:#fff; border-radius:18px; padding:1.15rem 1.25rem 1.1rem;
+        box-shadow:var(--km-shadow); border:1px solid var(--km-border);
     }
     .km-pay-card-top { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.65rem; }
-    .km-pay-card-title { display:flex; align-items:center; gap:.4rem; font-size:.92rem; font-weight:700; color:#2B2A29; }
+    .km-pay-card-title { display:flex; align-items:center; gap:.4rem; font-size:.95rem; font-weight:800; color:var(--c-navy); }
     .km-pay-card-title iconify-icon { font-size:1.15rem; color:var(--c-primary); }
     .km-pay-card-pct { font-size:.78rem; font-weight:700; color:#1e9e5a; white-space:nowrap; }
 
@@ -373,10 +397,12 @@
     .km-pay-stat-divider { width:1px; align-self:stretch; background:#f1f3f5; }
 
     .km-pay-card-link {
-        display:flex; align-items:center; justify-content:center; gap:.3rem;
-        color:var(--c-primary); font-weight:700; font-size:.88rem; text-decoration:none;
-        margin-top:.95rem; padding-top:.85rem; border-top:1px solid #f1f3f5;
+        display:flex; align-items:center; justify-content:center; gap:.35rem;
+        color:var(--c-primary); font-weight:700; font-size:.9rem; text-decoration:none;
+        margin-top:1rem; padding:.75rem 1rem; border-radius:12px; background:#eef6fb;
+        transition:background-color .2s ease, color .2s ease;
     }
+    .km-pay-card-link:hover { background:var(--c-primary); color:#fff; }
     .km-pay-card-link iconify-icon { font-size:1.05rem; }
 
     .km-home-link-sm { color:var(--c-primary); font-weight:700; font-size:.85rem; text-decoration:none; display:inline-flex; align-items:center; gap:.2rem; }
@@ -384,8 +410,8 @@
 
     .km-home-news { display:flex; flex-direction:column; gap:.7rem; }
     .km-home-news-item {
-        display:flex; align-items:center; gap:.85rem; background:#fff; border-radius:14px;
-        padding:.7rem .85rem; text-decoration:none; color:inherit; box-shadow:0 2px 8px rgba(0,0,0,.05);
+        display:flex; align-items:center; gap:.85rem; background:#fff; border-radius:16px; border:1px solid var(--km-border);
+        padding:.7rem .85rem; text-decoration:none; color:inherit; box-shadow:var(--km-shadow);
     }
     .km-home-news-item:active { background:#f7f9fa; }
     .km-home-news-thumb {
@@ -415,7 +441,7 @@
     @@media (max-width: 576px) {
         .km-prog-value { font-size:1.9rem; }
         .km-photo-card { flex-basis:210px; }
-        .km-prog-summary-first { margin-top:-1.2rem; }
+        .km-prog-summary-first { margin-top:-3.4rem; }
         .km-pay-stat-value { font-size:1.05rem; }
         .km-pay-stat-icon { width:34px; height:34px; font-size:1.05rem; }
     }
@@ -424,7 +450,7 @@
        sabit yükseklikli görsel kutuları da orana göre biraz artırılır — yatay uzun ya
        da kare görseller aşırı ince bir şeride sıkışıp tuhaf kırpılmasın diye. */
     @@media (min-width: 768px) {
-        .km-tour-card { height:260px; }
+        .km-tour-card { height:280px; }
         .km-photo-img { height:190px; }
         .km-photo-card { flex-basis:260px; }
         .km-home-news-thumb { width:68px; height:68px; }
