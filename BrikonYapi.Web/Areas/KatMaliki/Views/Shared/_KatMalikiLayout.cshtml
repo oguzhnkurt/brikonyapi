@@ -130,15 +130,15 @@
         .km-legal-secure { display: inline-flex; align-items: center; gap: .3rem; font-size: .72rem; color: #4b5563; font-weight: 600; }
         .km-legal-secure iconify-icon { color: #16a34a; font-size: .95rem; }
         .km-legal-chips { display: inline-flex; gap: .4rem; flex-wrap: wrap; justify-content: center; }
-        .km-chip { display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 50px;
+        .km-paychip { display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 50px;
                    padding: 0 .55rem; border-radius: 6px; background: #fff; border: 1px solid #e5e8eb;
                    font-size: .66rem; font-weight: 800; letter-spacing: .04em; line-height: 1; }
-        .km-chip img { height: 14px; width: auto; display: block; }
-        .km-chip-visa { color: #1a1f71; font-style: italic; font-size: .74rem; }
-        .km-chip-troy { color: #00a3ad; }
-        .km-chip-mc i { width: 14px; height: 14px; border-radius: 50%; display: block; }
-        .km-chip-mc i:first-child { background: #eb001b; }
-        .km-chip-mc i:last-child { background: #f79e1b; margin-left: -5px; mix-blend-mode: multiply; }
+        .km-paychip img { height: 14px; width: auto; display: block; }
+        .km-paychip-visa { color: #1a1f71; font-style: italic; font-size: .74rem; }
+        .km-paychip-troy { color: #00a3ad; }
+        .km-paychip-mc i { width: 14px; height: 14px; border-radius: 50%; display: block; }
+        .km-paychip-mc i:first-child { background: #eb001b; }
+        .km-paychip-mc i:last-child { background: #f79e1b; margin-left: -5px; mix-blend-mode: multiply; }
         .km-legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: .25rem .9rem; margin-bottom: .6rem; }
         .km-legal-links a { color: #6b7684; text-decoration: none; }
         .km-legal-links a:hover { color: var(--c-primary); text-decoration: underline; }
@@ -294,7 +294,8 @@
         }
         @RenderBody()
 
-        @if (User.Identity?.IsAuthenticated == true)
+        @* Güvenli ödeme + yasal alt bilgi yalnızca ödeme ekranlarında (Ödemelerim) gösterilir. *@
+        @if (User.Identity?.IsAuthenticated == true && ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard")
         {
             var kmSettings = await SiteSettings.GetAllAsync();
             string KmV(string k) => kmSettings.TryGetValue(k, out var v) && !string.IsNullOrWhiteSpace(v) ? v!.Trim() : "";
@@ -310,10 +311,10 @@
                             <iconify-icon icon="mdi:lock-outline"></iconify-icon> 3D Secure ile güvenli ödeme
                         </span>
                         <span class="km-legal-chips">
-                            <span class="km-chip"><img src="/images/tkpay.png" alt="tkpay" /></span>
-                            <span class="km-chip km-chip-visa">VISA</span>
-                            <span class="km-chip km-chip-mc"><i></i><i></i></span>
-                            <span class="km-chip km-chip-troy">TROY</span>
+                            <span class="km-paychip"><img src="/images/tkpay.png" alt="tkpay" /></span>
+                            <span class="km-paychip km-paychip-visa">VISA</span>
+                            <span class="km-paychip km-paychip-mc"><i></i><i></i></span>
+                            <span class="km-paychip km-paychip-troy">TROY</span>
                         </span>
                     </div>
                     <div class="km-legal-links">
