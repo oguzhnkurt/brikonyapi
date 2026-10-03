@@ -1253,20 +1253,33 @@ h1,h2,h3,h4,h5 { font-family:'Inter',Arial,sans-serif; font-weight:700; letter-s
 .ft-contact a:hover { color: rgba(255,255,255,.85); }
 
 /* Şirket kimlik bilgileri + ödeme yöntemleri (sanal POS için) */
-.ft-legal { padding: 1.3rem 0; border-bottom: 1px solid rgba(255,255,255,.07); }
-.ft-legal .ft-inner { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; flex-wrap: wrap; }
-.ft-legal-info { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; font-size: .74rem; color: rgba(255,255,255,.35); line-height: 1.5; }
-.ft-legal-info strong { color: rgba(255,255,255,.6); font-weight: 600; }
-.ft-pay { display: flex; gap: .4rem; flex-wrap: wrap; }
-.ft-pay-badge {
-  font-size: .64rem; font-weight: 800; letter-spacing: .06em;
-  padding: .3rem .6rem; border-radius: 5px;
-  background: rgba(255,255,255,.92); color: #0a1628;
+.ft-legal { padding: 1.6rem 0; border-top: 1px solid rgba(255,255,255,.07); }
+.ft-legal .ft-inner { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem 3rem; }
+.ft-legal-info { min-width: 0; font-size: .76rem; color: rgba(255,255,255,.42); line-height: 1.6; }
+.ft-legal-title { font-size: .84rem; font-weight: 600; color: rgba(255,255,255,.78); margin-bottom: .2rem; }
+.ft-legal-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0 .5rem; }
+.ft-dot { opacity: .45; }
+.ft-pay-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: .55rem; flex-shrink: 0; }
+.ft-pay-label { display: inline-flex; align-items: center; gap: .35rem; font-size: .7rem; color: rgba(255,255,255,.5); letter-spacing: .02em; }
+.ft-pay-label svg { width: 13px; height: 13px; color: #34d399; }
+.ft-pay { display: flex; align-items: center; gap: .45rem; }
+.ft-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 30px; min-width: 58px; padding: 0 .65rem; border-radius: 6px;
+  background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25);
+  font-size: .72rem; font-weight: 800; letter-spacing: .04em; line-height: 1;
 }
-.ft-pay { align-items: center; }
-.ft-pay-logo { display: inline-flex; align-items: center; background: #fff; border-radius: 5px; padding: .15rem .45rem; }
-.ft-pay-logo img { height: 18px; width: auto; display: block; }
-.ft-pay-secure { background: transparent; color: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.18); }
+.ft-chip img { height: 16px; width: auto; display: block; }
+.ft-chip-visa { color: #1a1f71; font-style: italic; font-size: .8rem; }
+.ft-chip-troy { color: #00a3ad; }
+.ft-chip-mc { gap: 0; }
+.ft-chip-mc i { width: 16px; height: 16px; border-radius: 50%; display: block; }
+.ft-chip-mc i:first-child { background: #eb001b; }
+.ft-chip-mc i:last-child { background: #f79e1b; margin-left: -6px; mix-blend-mode: multiply; }
+@media (max-width: 768px) {
+  .ft-legal .ft-inner { flex-direction: column; align-items: flex-start; }
+  .ft-pay-wrap { align-items: flex-start; }
+}
 
 /* Bar */
 .ft-bar { padding: 1.1rem 0; }
