@@ -15,7 +15,7 @@
     // Otomatik hatırlatıcının mesajı artık admin tarafından düzenlenemiyor — sabit şablon,
     // örnek değerlerle doldurulup WhatsApp önizlemesi olarak gösteriliyor.
     string reminderMessagePreviewText = (reminderMessageTemplate ?? "")
-        .Replace("{ad}", "Ahmet Yılmaz")
+        .Replace("{ad}", "Ad Soyad")
         .Replace("{aciklama}", "Taksit 3/12")
         .Replace("{kalan}", "7 gün")
         .Replace("{ne_zaman}", "1 hafta içinde")
@@ -207,6 +207,19 @@
         line-height: 1.45;
     }
     .bk-tpl-note iconify-icon { color: #0082B4; font-size: 1rem; margin-top: .1rem; flex-shrink: 0; }
+
+    /* Otomatik hatırlatıcı — sade, adım adım düzen */
+    .rm-summary { display: flex; align-items: flex-start; gap: .55rem; background: #ecfdf3; border: 1px solid #bbf7d0;
+                  color: #14532d; border-radius: 10px; padding: .75rem 1rem; font-size: .9rem; margin-bottom: 1.25rem; line-height: 1.45; }
+    .rm-summary.off { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+    .rm-summary-icon { font-size: 1.25rem; flex-shrink: 0; margin-top: .05rem; }
+    .rm-step-head { font-weight: 600; font-size: .92rem; color: #1f2937; margin-bottom: .35rem; display: flex; align-items: center; gap: .5rem; }
+    .rm-step-no { width: 22px; height: 22px; border-radius: 50%; background: #0082B4; color: #fff; font-size: .75rem;
+                  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .rm-step-hint { font-size: .78rem; color: #6b7684; margin-bottom: .6rem; }
+    .day-chip .chk { display: none; margin-right: .25rem; }
+    .day-chip.btn-primary .chk { display: inline-block; }
+    .rm-scope { max-width: 320px; }
 </style>
 }
 
@@ -343,12 +356,16 @@
     <div class="card-body bk-form-body">
         <div class="bk-group-title mb-2">
             <iconify-icon icon="mdi:clock-alert-outline" class="me-1"></iconify-icon>
-            Otomatik Hatırlatıcı
+            Otomatik Ödeme Hatırlatıcı
         </div>
         <div class="text-muted small mb-3">
-            Ödeme vadesinden önce, seçilen günlerde malike otomatik olarak (her gece kontrol edilir) bir hatırlatma gönderilir.
-            SMS ve e-posta kanalları şu an için devre dışı — hatırlatma yalnızca WhatsApp üzerinden, aşağıdaki mesaj şablonuyla
-            gönderilir; bunun için onaylı bir şablon adı sunucu ayarlarından (<code>WhatsApp:ReminderTemplateName</code>) tanımlanmış olmalı.
+            Vadesi yaklaşan ödemeler için kat maliklerine WhatsApp'tan kendiliğinden hatırlatma gider. Sistem her gün bir kez kontrol eder;
+            aşağıdan sadece <strong>ne zaman</strong> ve <strong>kimlere</strong> gideceğini seçip kaydedin.
+        </div>
+
+        <div class="rm-summary" id="reminderSummary">
+            <iconify-icon icon="mdi:check-decagram" class="rm-summary-icon"></iconify-icon>
+            <span id="reminderSummaryText">…</span>
         </div>
 
         <form asp-area="Admin" asp-controller="Notifications" asp-action="SaveReminderSettings" method="post" id="reminderForm">
@@ -356,110 +373,110 @@
             <input type="hidden" name="checkpoints" id="checkpointsInput" value="@reminderCheckpoints" />
             <input type="hidden" name="projectIds" id="reminderProjectIdsInput" value="@reminderProjectIds" />
 
-            <div class="mb-4">
-                <label class="bk-label">Hangi projelerdeki maliklere gönderilsin?</label>
-                <div class="d-flex gap-2 mb-2">
-                    <button type="button" id="reminderScopeAllBtn" class="btn btn-sm @(reminderScopeAll ? "btn-primary" : "btn-outline-secondary")">
-                        <iconify-icon icon="mdi:earth" class="me-1"></iconify-icon>Tüm Projelerdeki Malikler
-                    </button>
-                    <button type="button" id="reminderScopeSelectedBtn" class="btn btn-sm @(!reminderScopeAll ? "btn-primary" : "btn-outline-secondary")">
-                        <iconify-icon icon="mdi:filter-variant" class="me-1"></iconify-icon>Seçili Proje(ler)
-                    </button>
-                </div>
-
-                <div id="reminderProjectPicker" style="display:@(reminderScopeAll ? "none" : "block")">
-                    <input type="text" id="reminderProjectSearch" class="form-control form-control-sm mb-2" style="max-width:280px" placeholder="Proje ara…" />
-                    <div class="owner-pick-grid" id="reminderProjectGrid" style="max-height:220px;">
-                        @foreach (var p in projects)
-                        {
-                            var selected = reminderProjectIdsSelected.Contains(p.Id);
-                            <div class="owner-pick-card@(selected ? " selected" : "")" data-id="@p.Id" data-name="@p.Name.ToLower()" tabindex="0">
-                                <input type="checkbox" class="d-none reminder-project-check" value="@p.Id" @(selected ? "checked" : "") />
-                                <iconify-icon icon="mdi:check-circle" class="owner-pick-check"></iconify-icon>
-                                <div class="owner-pick-info">
-                                    <div class="owner-pick-name">@p.Name</div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                    <div class="text-muted small mt-1"><span id="reminderProjectCount">@reminderProjectIdsSelected.Count</span> proje seçili</div>
-                </div>
-
-                <div class="form-text bk-hint mt-1">
-                    "Tüm Projelerdeki Malikler" seçiliyken sistemdeki her projeden, vadesi yaklaşan tüm bekleyen ödemeler için hatırlatma gönderilir.
-                </div>
-            </div>
-
             <div class="row g-4">
                 <div class="col-lg-5">
-                    <label class="bk-label">Vadeye kaç gün/hafta kala hatırlatılsın?</label>
-                    <div class="d-flex flex-wrap gap-2" id="dayPresets">
-                        @foreach (var (days, label) in new (int, string)[] { (1, "1 gün"), (3, "3 gün"), (7, "1 hafta"), (14, "2 hafta"), (30, "1 ay") })
-                        {
-                            <button type="button" class="btn btn-sm day-chip @(reminderDaysSelected.Contains(days) ? "btn-primary" : "btn-outline-secondary")" data-days="@days">
-                                @label
+                    <div class="rm-step">
+                        <div class="rm-step-head"><span class="rm-step-no">1</span> Vadeye ne kadar kala gönderilsin?</div>
+                        <div class="rm-step-hint">Birden fazla seçebilirsiniz. Örneğin "1 hafta" + "1 gün" seçerseniz malik iki kez hatırlatılır.</div>
+                        <div class="d-flex flex-wrap gap-2" id="dayPresets">
+                            @foreach (var (days, label) in new (int, string)[] { (1, "1 gün"), (3, "3 gün"), (7, "1 hafta"), (14, "2 hafta"), (30, "1 ay") })
+                            {
+                                <button type="button" class="btn btn-sm day-chip @(reminderDaysSelected.Contains(days) ? "btn-primary" : "btn-outline-secondary")" data-days="@days">
+                                    <iconify-icon icon="mdi:check" class="chk"></iconify-icon>@label kala
+                                </button>
+                            }
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mt-2" id="customDayChips">
+                            @{
+                                var presetDays = new[] { 1, 3, 7, 14, 30 };
+                                var customDays = reminderDaysSelected.Where(d => !presetDays.Contains(d)).OrderByDescending(d => d);
+                            }
+                            @foreach (var d in customDays)
+                            {
+                                <span class="btn btn-sm btn-primary day-chip-custom" data-days="@d">
+                                    @d gün kala
+                                    <iconify-icon icon="mdi:close" class="ms-1 remove-custom-day"></iconify-icon>
+                                </span>
+                            }
+                        </div>
+
+                        <a href="#" class="small d-inline-block mt-2" id="btnShowCustomDay">+ Listede olmayan bir gün ekle</a>
+                        <div class="input-group input-group-sm mt-2" style="max-width:240px;display:none" id="customDayBox">
+                            <input type="number" min="1" max="365" class="form-control" id="customDayInput" placeholder="Örn: 5" />
+                            <span class="input-group-text">gün kala</span>
+                            <button type="button" class="btn btn-outline-primary" id="btnAddCustomDay">Ekle</button>
+                        </div>
+                    </div>
+
+                    <div class="rm-step mt-4">
+                        <div class="rm-step-head"><span class="rm-step-no">2</span> Kimlere gönderilsin?</div>
+                        <div class="d-flex flex-column gap-2">
+                            <button type="button" id="reminderScopeAllBtn" class="btn btn-sm text-start rm-scope @(reminderScopeAll ? "btn-primary" : "btn-outline-secondary")">
+                                <iconify-icon icon="mdi:earth" class="me-1"></iconify-icon>Tüm projelerdeki kat malikleri
                             </button>
-                        }
-                    </div>
+                            <button type="button" id="reminderScopeSelectedBtn" class="btn btn-sm text-start rm-scope @(!reminderScopeAll ? "btn-primary" : "btn-outline-secondary")">
+                                <iconify-icon icon="mdi:filter-variant" class="me-1"></iconify-icon>Sadece seçtiğim projeler
+                            </button>
+                        </div>
 
-                    <div class="d-flex flex-wrap gap-2 mt-2" id="customDayChips">
-                        @{
-                            var presetDays = new[] { 1, 3, 7, 14, 30 };
-                            var customDays = reminderDaysSelected.Where(d => !presetDays.Contains(d)).OrderByDescending(d => d);
-                        }
-                        @foreach (var d in customDays)
-                        {
-                            <span class="btn btn-sm btn-primary day-chip-custom" data-days="@d">
-                                @d gün
-                                <iconify-icon icon="mdi:close" class="ms-1 remove-custom-day"></iconify-icon>
-                            </span>
-                        }
-                    </div>
-
-                    <div class="input-group input-group-sm mt-2" style="max-width:220px">
-                        <input type="number" min="1" max="365" class="form-control" id="customDayInput" placeholder="Özel gün sayısı" />
-                        <button type="button" class="btn btn-outline-primary" id="btnAddCustomDay">
-                            <iconify-icon icon="iconamoon:sign-plus-circle-duotone"></iconify-icon>
-                        </button>
-                    </div>
-
-                    <div class="form-text bk-hint mt-2">
-                        Bir veya birden fazla seçebilirsiniz. Vadesi bu günlere denk gelen ödemeler için aynı gün tekrar gönderilmez.
+                        <div id="reminderProjectPicker" class="mt-2" style="display:@(reminderScopeAll ? "none" : "block")">
+                            <input type="text" id="reminderProjectSearch" class="form-control form-control-sm mb-2" placeholder="Proje ara…" />
+                            <div class="owner-pick-grid" id="reminderProjectGrid" style="max-height:220px;">
+                                @foreach (var p in projects)
+                                {
+                                    var selected = reminderProjectIdsSelected.Contains(p.Id);
+                                    <div class="owner-pick-card@(selected ? " selected" : "")" data-id="@p.Id" data-name="@p.Name.ToLower()" data-label="@p.Name" tabindex="0">
+                                        <input type="checkbox" class="d-none reminder-project-check" value="@p.Id" @(selected ? "checked" : "") />
+                                        <iconify-icon icon="mdi:check-circle" class="owner-pick-check"></iconify-icon>
+                                        <div class="owner-pick-info">
+                                            <div class="owner-pick-name">@p.Name</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            <div class="text-muted small mt-1"><span id="reminderProjectCount">@reminderProjectIdsSelected.Count</span> proje seçili</div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="col-lg-7">
-                    <label class="bk-label">Gönderilecek Mesaj</label>
-                    <div class="form-text bk-hint mb-2">
-                        Mesaj metni sabittir ve onaylı bir WhatsApp şablonuna yerleştirilerek gönderilir. Malik aşağıdaki önizlemeyi görecek.
-                    </div>
-                    <div class="bk-tpl-preview-phone">
-                        <div class="bk-tpl-preview-head">
-                            <div class="bk-tpl-preview-avatar"><iconify-icon icon="ic:baseline-whatsapp"></iconify-icon></div>
-                            <div>
-                                <div class="bk-tpl-preview-name">Brikon Yapı</div>
-                                <div class="bk-tpl-preview-status">İşletme hesabı</div>
+                    <div class="rm-step">
+                        <div class="rm-step-head"><span class="rm-step-no">3</span> Malikin göreceği mesaj</div>
+                        <div class="rm-step-hint">Metin Meta onaylı sabit şablondur; isim, taksit, tarih ve tutar her malik için otomatik doldurulur.</div>
+                        <div class="bk-tpl-preview-phone">
+                            <div class="bk-tpl-preview-head">
+                                <div class="bk-tpl-preview-avatar"><iconify-icon icon="ic:baseline-whatsapp"></iconify-icon></div>
+                                <div>
+                                    <div class="bk-tpl-preview-name">Brikon Yapı</div>
+                                    <div class="bk-tpl-preview-status">İşletme hesabı</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="bk-tpl-preview-body">
-                            <div class="bk-tpl-preview-bubble">@reminderMessagePreviewText</div>
+                            <div class="bk-tpl-preview-body">
+                                <div class="bk-tpl-preview-bubble">@reminderMessagePreviewText</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn bk-btn-save btn-sm mt-3">
-                <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
-                Kaydet
-            </button>
+            <div class="d-flex align-items-center gap-3 mt-4">
+                <button type="submit" class="btn bk-btn-save">
+                    <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                    Ayarları Kaydet
+                </button>
+                <span class="small text-warning fw-semibold" id="reminderDirty" style="display:none">
+                    <iconify-icon icon="mdi:alert-circle-outline"></iconify-icon> Kaydedilmemiş değişiklik var
+                </span>
+            </div>
         </form>
 
         <hr class="my-3" />
 
         <div class="text-muted small">
             <iconify-icon icon="iconamoon:information-circle-duotone" class="text-warning me-1"></iconify-icon>
-            Her kat malikinin bildirim tercihleri (SMS/E-posta/WhatsApp açık-kapalı) ve telefon numarası
-            <a href="/Admin/Owners">Kat Malikleri</a> ekranındaki "Bildirimler" butonundan düzenlenir.
+            Bir malike hiç hatırlatma gitmesin istiyorsanız <a href="/Admin/Owners">Kat Malikleri</a> ekranında o malikin "Bildirimler" ayarından WhatsApp'ı kapatın.
+            Telefon numarası kayıtlı olmayan maliklere gönderim yapılamaz.
         </div>
     </div>
 </div>
@@ -747,7 +764,16 @@
 
             function syncCheckpointsInput() {
                 checkpointsInput.value = getSelectedDays().join(',');
+                if (window.updateReminderSummary) window.updateReminderSummary();
             }
+
+            var btnShowCustomDay = document.getElementById('btnShowCustomDay');
+            btnShowCustomDay.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.getElementById('customDayBox').style.display = 'flex';
+                btnShowCustomDay.style.display = 'none';
+                customDayInput.focus();
+            });
 
             document.querySelectorAll('.day-chip').forEach(function (btn) {
                 btn.addEventListener('click', function () {
@@ -765,7 +791,7 @@
                 var chip = document.createElement('span');
                 chip.className = 'btn btn-sm btn-primary day-chip-custom';
                 chip.setAttribute('data-days', days);
-                chip.innerHTML = days + ' gün <iconify-icon icon="mdi:close" class="ms-1 remove-custom-day"></iconify-icon>';
+                chip.innerHTML = days + ' gün kala <iconify-icon icon="mdi:close" class="ms-1 remove-custom-day"></iconify-icon>';
                 customDayChips.appendChild(chip);
                 syncCheckpointsInput();
             }
@@ -803,12 +829,53 @@
             function syncReminderProjectIdsInput() {
                 if (reminderScopeAll) {
                     reminderProjectIdsInput.value = '';
-                    return;
+                } else {
+                    var checked = Array.prototype.slice.call(reminderProjectGrid.querySelectorAll('.reminder-project-check:checked'));
+                    reminderProjectIdsInput.value = checked.map(function (cb) { return cb.value; }).join(',');
+                    reminderProjectCount.textContent = checked.length;
                 }
-                var checked = Array.prototype.slice.call(reminderProjectGrid.querySelectorAll('.reminder-project-check:checked'));
-                reminderProjectIdsInput.value = checked.map(function (cb) { return cb.value; }).join(',');
-                reminderProjectCount.textContent = checked.length;
+                if (window.updateReminderSummary) window.updateReminderSummary();
             }
+
+            // Üstteki yeşil özet kutusu: seçimleri düz cümleyle anlatır + kaydedilmemiş değişiklik uyarısı.
+            var initialReminderState = null;
+            function dayLabel(d) {
+                if (d === 7) return '1 hafta';
+                if (d === 14) return '2 hafta';
+                if (d === 30) return '1 ay';
+                return d + ' gün';
+            }
+            window.updateReminderSummary = function () {
+                var days = getSelectedDays();
+                var box = document.getElementById('reminderSummary');
+                var text = document.getElementById('reminderSummaryText');
+                var who;
+                if (reminderScopeAll) {
+                    who = 'tüm projelerdeki kat maliklerine';
+                } else {
+                    var names = Array.prototype.slice.call(reminderProjectGrid.querySelectorAll('.reminder-project-check:checked'))
+                        .map(function (cb) { return cb.closest('.owner-pick-card').getAttribute('data-label'); });
+                    who = names.length === 0 ? null
+                        : (names.length <= 3 ? names.join(', ') + (names.length === 1 ? ' projesindeki' : ' projelerindeki') + ' kat maliklerine'
+                                             : names.length + ' projedeki kat maliklerine');
+                }
+                if (days.length === 0) {
+                    box.classList.add('off');
+                    text.textContent = 'Hiç zaman seçilmedi — otomatik hatırlatma gönderilmeyecek. Aşağıdan en az bir seçenek işaretleyin.';
+                } else if (who === null) {
+                    box.classList.add('off');
+                    text.textContent = 'Hiç proje seçilmedi — en az bir proje seçin ya da "Tüm projelerdeki kat malikleri"ni işaretleyin.';
+                } else {
+                    box.classList.remove('off');
+                    var parts = days.map(dayLabel);
+                    var when = parts.length === 1 ? parts[0] : parts.slice(0, -1).join(', ') + ' ve ' + parts[parts.length - 1];
+                    text.innerHTML = 'Ödeme vadesine <strong>' + when + '</strong> kala, <strong>' + who.replace(/</g, '&lt;') +
+                        '</strong> WhatsApp\'tan otomatik hatırlatma gönderilir.';
+                }
+                var state = checkpointsInput.value + '|' + (reminderScopeAll ? 'all' : reminderProjectIdsInput.value);
+                if (initialReminderState === null) initialReminderState = state;
+                document.getElementById('reminderDirty').style.display = state === initialReminderState ? 'none' : 'inline';
+            };
 
             function setReminderScope(all) {
                 reminderScopeAll = all;
