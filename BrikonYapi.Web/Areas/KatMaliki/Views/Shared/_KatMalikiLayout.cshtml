@@ -75,8 +75,41 @@
             background-size: 30px 30px;
             -webkit-mask-image: linear-gradient(to bottom left, #000 0%, transparent 70%);
                     mask-image: linear-gradient(to bottom left, #000 0%, transparent 70%);
+            animation: km-grid-drift 40s linear infinite;
         }
         .km-navbar > .container { position: relative; z-index: 1; }
+
+        /* İnşaat temalı, çok yavaş hareketli çizim: şantiye silueti + kule vinç.
+           Vinç arabası bomun üzerinde gidip gelir, kanca iner-kalkar, tepedeki ikaz lambası
+           yanıp söner, yapım halindeki bina katları sırayla "çizilir". Düşük opaklıkta
+           durur, yazıların okunmasını etkilemez; hareket azaltma tercihi olanlarda durur. */
+        .km-hero-art {
+            position: absolute; right: -8px; bottom: 0; height: 100%; width: 380px; max-width: 75%;
+            pointer-events: none; z-index: 0; opacity: .2;
+            -webkit-mask-image: linear-gradient(to left, #000 55%, transparent 100%);
+                    mask-image: linear-gradient(to left, #000 55%, transparent 100%);
+        }
+        .km-hero-art svg { width: 100%; height: 100%; display: block; }
+        .km-hero-art .ln { fill: none; stroke: #fff; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+        .km-hero-art .ln-thin { stroke-width: .8; opacity: .7; }
+        .km-hero-art .win { fill: #fff; opacity: .35; }
+        .km-hero-art .trolley { animation: km-trolley 22s ease-in-out infinite alternate; }
+        .km-hero-art .hook { animation: km-hook 9s ease-in-out infinite alternate; }
+        .km-hero-art .beacon { fill: #ff5a4f; animation: km-beacon 2.6s ease-in-out infinite; }
+        .km-hero-art .floor { stroke-dasharray: 120; stroke-dashoffset: 120; animation: km-draw 16s ease-in-out infinite; }
+        .km-hero-art .floor.f2 { animation-delay: 1.6s; }
+        .km-hero-art .floor.f3 { animation-delay: 3.2s; }
+        .km-hero-art .floor.f4 { animation-delay: 4.8s; }
+
+        @@keyframes km-grid-drift { from { background-position: 0 0, 0 0; } to { background-position: 30px 30px, 30px 30px; } }
+        @@keyframes km-trolley { from { transform: translateX(0); } to { transform: translateX(-62px); } }
+        @@keyframes km-hook { from { transform: translateY(0); } to { transform: translateY(26px); } }
+        @@keyframes km-beacon { 0%, 60%, 100% { opacity: .15; } 30% { opacity: 1; } }
+        @@keyframes km-draw { 0% { stroke-dashoffset: 120; } 35%, 80% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 120; } }
+        @@media (prefers-reduced-motion: reduce) {
+            .km-navbar::before, .km-hero-art * { animation: none !important; }
+            .km-hero-art .floor { stroke-dashoffset: 0; }
+        }
         /* Ana sayfada ilk kart başlığın üzerine taşar; bunun için başlığın altında yer açılır */
         .km-page-home .km-navbar { padding-bottom: 2.8rem; }
 
@@ -317,6 +350,70 @@
 </head>
 <body class="@(ViewData["BodyClass"] ?? "")">
     <nav class="km-navbar navbar navbar-dark">
+        <div class="km-hero-art" aria-hidden="true">
+            <svg viewBox="0 0 380 170" preserveAspectRatio="xMaxYMax meet">
+                <!-- Arka plandaki bitmiş binalar -->
+                <g class="ln ln-thin">
+                    <rect x="12" y="112" width="34" height="58" />
+                    <rect x="50" y="92" width="28" height="78" />
+                    <rect x="82" y="122" width="40" height="48" />
+                    <rect x="300" y="104" width="30" height="66" />
+                    <rect x="334" y="124" width="40" height="46" />
+                </g>
+                <g>
+                    <rect class="win" x="18" y="120" width="5" height="5" /><rect class="win" x="30" y="120" width="5" height="5" />
+                    <rect class="win" x="18" y="134" width="5" height="5" /><rect class="win" x="56" y="100" width="5" height="5" />
+                    <rect class="win" x="66" y="114" width="5" height="5" /><rect class="win" x="56" y="128" width="5" height="5" />
+                    <rect class="win" x="306" y="112" width="5" height="5" /><rect class="win" x="318" y="126" width="5" height="5" />
+                    <rect class="win" x="342" y="132" width="5" height="5" /><rect class="win" x="356" y="132" width="5" height="5" />
+                </g>
+
+                <!-- Yapım halindeki bina: kolonlar + sırayla çizilen kat döşemeleri -->
+                <g class="ln">
+                    <line x1="150" y1="170" x2="150" y2="78" />
+                    <line x1="188" y1="170" x2="188" y2="78" />
+                    <line x1="226" y1="170" x2="226" y2="78" />
+                    <line x1="264" y1="170" x2="264" y2="96" />
+                </g>
+                <g class="ln">
+                    <line class="floor"    x1="146" y1="150" x2="268" y2="150" />
+                    <line class="floor f2" x1="146" y1="128" x2="268" y2="128" />
+                    <line class="floor f3" x1="146" y1="106" x2="268" y2="106" />
+                    <line class="floor f4" x1="146" y1="84"  x2="230" y2="84" />
+                </g>
+                <g class="ln ln-thin">
+                    <line x1="150" y1="150" x2="188" y2="128" /><line x1="188" y1="150" x2="226" y2="128" />
+                    <line x1="226" y1="150" x2="264" y2="128" /><line x1="150" y1="128" x2="188" y2="106" />
+                </g>
+
+                <!-- Kule vinç: kafes direk + bom + karşı ağırlık -->
+                <g class="ln">
+                    <line x1="112" y1="170" x2="112" y2="22" />
+                    <line x1="122" y1="170" x2="122" y2="22" />
+                    <polyline class="ln-thin" points="112,170 122,155 112,140 122,125 112,110 122,95 112,80 122,65 112,50 122,35 112,22" />
+                    <line x1="82" y1="22" x2="292" y2="22" />
+                    <line x1="82" y1="30" x2="292" y2="30" />
+                    <polyline class="ln-thin" points="122,30 132,22 142,30 152,22 162,30 172,22 182,30 192,22 202,30 212,22 222,30 232,22 242,30 252,22 262,30 272,22 282,30 292,22" />
+                    <line x1="117" y1="22" x2="117" y2="6" />
+                    <line x1="117" y1="6" x2="82" y2="22" />
+                    <line x1="117" y1="6" x2="292" y2="22" />
+                    <rect x="84" y="30" width="20" height="12" />
+                </g>
+                <circle class="beacon" cx="117" cy="5" r="2.4" />
+
+                <!-- Vinç arabası + halat + kanca (yavaşça gidip gelir, iner-kalkar) -->
+                <g class="trolley">
+                    <rect class="ln" x="262" y="30" width="12" height="5" />
+                    <g class="hook">
+                        <line class="ln ln-thin" x1="268" y1="35" x2="268" y2="70" />
+                        <path class="ln" d="M268 70 v6 a4 4 0 1 1 -4 4" />
+                        <rect class="ln ln-thin" x="256" y="84" width="24" height="10" />
+                    </g>
+                </g>
+
+                <line class="ln ln-thin" x1="0" y1="169.5" x2="380" y2="169.5" />
+            </svg>
+        </div>
         @if (User.Identity?.IsAuthenticated == true)
         {
             <div class="container">
