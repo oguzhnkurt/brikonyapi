@@ -19,12 +19,16 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
         private readonly AppDbContext _db;
         private readonly WhatsAppService _whatsApp;
+        private readonly IConfiguration _config;
 
-        public WhatsAppInboxController(AppDbContext db, WhatsAppService whatsApp)
+        public WhatsAppInboxController(AppDbContext db, WhatsAppService whatsApp, IConfiguration config)
         {
             _db = db;
             _whatsApp = whatsApp;
+            _config = config;
         }
+
+        private string? ManualTemplateName => _config["WhatsApp:ManualTemplateName"];
 
         public class ConversationItem
         {
@@ -73,6 +77,7 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             ViewBag.Conversations = conversations;
             ViewBag.WhatsAppConfigured = _whatsApp.IsConfigured;
+            ViewBag.TemplateConfigured = !string.IsNullOrWhiteSpace(ManualTemplateName);
 
             if (string.IsNullOrEmpty(phone) && conversations.Count > 0)
                 phone = conversations[0].Phone;
@@ -98,7 +103,10 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
                 var lastIn = thread.LastOrDefault(m => m.Direction == WhatsAppDirection.Inbound);
                 ViewBag.ReplyDeadline = lastIn?.CreatedAt.Add(ReplyWindow);
-                ViewBag.Selected = conversations.FirstOrDefault(c => c.Phone == phone);
+                var sel = conversations.FirstOrDefault(c => c.Phone == phone);
+                ViewBag.Selected = sel;
+                ViewBag.TemplateRecipientName = sel == null || sel.DisplayName.StartsWith("+")
+                    ? "Değerli Kat Malikimiz" : sel.DisplayName;
             }
 
             return View("~/Areas/Admin/Views/Notifications/WhatsAppInbox.cshtml", thread);
@@ -152,6 +160,84 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
 
             if (ok) TempData["Success"] = "Yanıt gönderildi.";
             else TempData["Error"] = error ?? "Yanıt gönderilemedi.";
+
+            return RedirectToAction(nameof(Index), new { phone });
+        }
+
+        /// <summary>
+        /// 24 saatlik pencere kapandıktan sonra aynı sohbetten onaylı manuel_bildirim şablonuyla
+        /// ("Sayın {{1}}, {{2}} Brikon Yapı yönetiminden bilgilendirme mesajıdır.") mesaj gönderir.
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReplyTemplate(string phone, string message)
+        {
+            phone = new string((phone ?? "").Where(char.IsDigit).ToArray());
+            // Meta şablon parametresinde satır sonu/sekme ve 4'ten fazla ardışık boşluk kabul edilmez.
+            message = System.Text.RegularExpressions.Regex.Replace(message ?? "", @"\s+", " ").Trim();
+
+            if (string.IsNullOrEmpty(phone) || string.IsNullOrEmpty(message))
+            {
+                TempData["Error"] = "Mesaj boş olamaz.";
+                return RedirectToAction(nameof(Index), new { phone });
+            }
+            if (message.Length > 900)
+            {
+                TempData["Error"] = "Şablonlu mesaj en fazla 900 karakter olabilir.";
+                return RedirectToAction(nameof(Index), new { phone });
+            }
+
+            var templateName = ManualTemplateName;
+            if (string.IsNullOrWhiteSpace(templateName))
+            {
+                TempData["Error"] = "WhatsApp manuel gönderim şablonu yapılandırılmamış (WhatsApp:ManualTemplateName).";
+                return RedirectToAction(nameof(Index), new { phone });
+            }
+
+            var last = await _db.WhatsAppMessages
+                .Include(m => m.Owner)
+                .Where(m => m.Phone == phone)
+                .OrderByDescending(m => m.CreatedAt)
+                .ToListAsync();
+            var owner = last.Select(m => m.Owner).FirstOrDefault(o => o != null);
+            var contactName = last.Select(m => m.ContactName).FirstOrDefault(n => !string.IsNullOrWhiteSpace(n));
+            var recipientName = owner?.FullName ?? contactName ?? "Değerli Kat Malikimiz";
+
+            var languageCode = _config["WhatsApp:TemplateLanguage"] ?? "tr";
+            var (ok, error) = await _whatsApp.SendTemplateAsync(phone, templateName, languageCode, new[] { recipientName, message });
+
+            _db.WhatsAppMessages.Add(new WhatsAppMessage
+            {
+                Phone = phone,
+                OwnerId = owner?.Id,
+                ContactName = contactName,
+                Direction = WhatsAppDirection.Outbound,
+                MessageType = "template",
+                Body = $"Sayın {recipientName}, {message} Brikon Yapı yönetiminden bilgilendirme mesajıdır.",
+                Status = ok ? "sent" : "failed",
+                ErrorMessage = error,
+                IsRead = true,
+                CreatedAt = DateTime.Now
+            });
+
+            if (owner != null)
+            {
+                _db.NotificationLogs.Add(new NotificationLog
+                {
+                    OwnerId      = owner.Id,
+                    Channel      = NotificationChannel.WhatsApp,
+                    Subject      = "Manuel bildirim (WhatsApp Mesajları)",
+                    Message      = message,
+                    Status       = ok ? NotificationStatus.Sent : NotificationStatus.Failed,
+                    ErrorMessage = error,
+                    SentAt       = ok ? DateTime.Now : null,
+                    CreatedAt    = DateTime.Now
+                });
+            }
+
+            await _db.SaveChangesAsync();
+
+            if (ok) TempData["Success"] = "Mesaj şablonla gönderildi.";
+            else TempData["Error"] = error ?? "Mesaj gönderilemedi.";
 
             return RedirectToAction(nameof(Index), new { phone });
         }
