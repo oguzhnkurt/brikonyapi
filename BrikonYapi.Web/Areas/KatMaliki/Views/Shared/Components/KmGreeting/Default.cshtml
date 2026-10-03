@@ -1,9 +1,26 @@
 @model BrikonYapi.Web.ViewComponents.KmGreetingModel
+@{
+    // Rozette ad + soyad baş harfleri (ör. "Oğuzhan Kurt" -> "OK"); tek kelimeyse ilk harf.
+    var trCulture = new System.Globalization.CultureInfo("tr-TR");
+    var parts = (Model.FullName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var initials = parts.Length >= 2
+        ? (parts[0][0].ToString() + parts[^1][0].ToString()).ToUpper(trCulture)
+        : Model.Initial;
+    var hour = DateTime.Now.Hour;
+    var hello = hour < 12 ? "Günaydın," : hour < 18 ? "İyi günler," : "İyi akşamlar,";
+}
 
 <div class="km-greeting">
+    <div class="km-greeting-top">
+        <a href="/KatMaliki/Progress" class="km-greeting-brand" aria-label="Ana sayfa">
+            <img src="/images/logo.png" alt="Brikon Yapı" />
+            <span class="km-greeting-brand-sep"></span>
+            <span class="km-greeting-brand-label">Kat Maliki Portalı</span>
+        </a>
+        <button type="button" id="kmMenuBtn" class="km-greeting-avatar" aria-label="Menü" aria-expanded="false">@initials</button>
+    </div>
     <div class="km-greeting-text">
-        <span class="km-greeting-hi">Hoş geldiniz,</span>
+        <span class="km-greeting-hi">@hello</span>
         <span class="km-greeting-name">@Model.FullName</span>
     </div>
-    <button type="button" id="kmMenuBtn" class="km-greeting-avatar" aria-label="Menü" aria-expanded="false">@Model.Initial</button>
 </div>
