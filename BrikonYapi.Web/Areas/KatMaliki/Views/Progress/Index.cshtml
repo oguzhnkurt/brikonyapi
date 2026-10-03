@@ -165,10 +165,13 @@
             <div class="km-pay-card mb-3">
                 <div class="km-pay-card-top">
                     <span class="km-pay-card-title">
-                        <iconify-icon icon="iconamoon:wallet-duotone"></iconify-icon>
-                        Ödeme Durumu @(Model.PaymentTotals.Count > 1 ? $"({pt.Currency})" : "")
+                        <span class="km-pay-card-ic"><iconify-icon icon="iconamoon:wallet-duotone"></iconify-icon></span>
+                        <span class="km-pay-card-ttx">
+                            <span class="km-pay-card-eyebrow">Ödeme Durumu @(Model.PaymentTotals.Count > 1 ? $"({pt.Currency})" : "")</span>
+                            <span class="km-pay-card-total">@pt.Symbol@ptTotal.ToString("N0", tr) <small>toplam</small></span>
+                        </span>
                     </span>
-                    <span class="km-pay-card-pct">%@(Math.Round(ptPct)) tamamlandı</span>
+                    <span class="km-pay-card-pct">%@(Math.Round(ptPct))</span>
                 </div>
                 <div class="km-pay-progress">
                     <div class="km-pay-progress-fill" style="width:@(ptPct.ToString("0.##", tr))%"></div>
@@ -197,35 +200,73 @@
         }
     }
 
-    <!-- İnşaat aşamaları -->
+    <!-- İnşaat aşamaları: dikey zaman çizelgesi -->
     @if (p.Stages.Any())
     {
+        var stTotal = p.Stages.Count;
+        var stDone = p.Stages.Count(st => st.Status == BrikonYapi.Web.Data.Entities.ProjectStageStatus.Completed);
         <h6 class="km-section-title">İnşaat Aşamaları</h6>
-        <div class="km-card km-stages mb-4">
-            @foreach (var s in p.Stages)
-            {
-                var isDone = s.Status == BrikonYapi.Web.Data.Entities.ProjectStageStatus.Completed;
-                var isNow = s.Status == BrikonYapi.Web.Data.Entities.ProjectStageStatus.InProgress;
-                <div class="km-stage @(isNow ? "is-now" : "") @(isDone ? "is-done" : "")">
-                    <span class="km-stage-dot">
-                        @if (isDone || isNow)
-                        {
-                            <iconify-icon icon="iconamoon:check-bold"></iconify-icon>
-                        }
-                        else
-                        {
-                            @s.OrderIndex
-                        }
-                    </span>
-                    <span class="km-stage-name">
-                        @s.Name
-                        @if (isNow)
-                        {
-                            <span class="km-stage-now">(devam ediyor)</span>
-                        }
-                    </span>
-                </div>
-            }
+        <div class="km-card km-tl mb-4">
+            <div class="km-tl-head">
+                <span class="km-tl-head-txt"><strong>@stDone</strong> / @stTotal aşama tamamlandı</span>
+                <span class="km-tl-seg">
+                    @foreach (var sg in p.Stages)
+                    {
+                        <i class="@(sg.Status == BrikonYapi.Web.Data.Entities.ProjectStageStatus.Completed ? "is-done" : sg.Status == BrikonYapi.Web.Data.Entities.ProjectStageStatus.InProgress ? "is-now" : "")"></i>
+                    }
+                </span>
+            </div>
+            <ol class="km-tl-list">
+                @foreach (var s in p.Stages)
+                {
+                    var isDone = s.Status == BrikonYapi.Web.Data.Entities.ProjectStageStatus.Completed;
+                    var isNow = s.Status == BrikonYapi.Web.Data.Entities.ProjectStageStatus.InProgress;
+                    <li class="km-tl-item @(isNow ? "is-now" : "") @(isDone ? "is-done" : "")">
+                        <span class="km-tl-dot">
+                            @if (isDone)
+                            {
+                                <iconify-icon icon="iconamoon:check-bold"></iconify-icon>
+                            }
+                            else if (isNow)
+                            {
+                                <span class="km-tl-pulse"></span>
+                            }
+                            else
+                            {
+                                @s.OrderIndex
+                            }
+                        </span>
+                        <span class="km-tl-body">
+                            <span class="km-tl-row">
+                                <span class="km-tl-name">@s.Name</span>
+                                @if (isNow)
+                                {
+                                    <span class="km-tl-badge">Devam ediyor</span>
+                                }
+                            </span>
+                            @if (isDone && s.CompletedAt.HasValue)
+                            {
+                                <span class="km-tl-sub">Tamamlandı · @s.CompletedAt.Value.ToString("dd MMMM yyyy", tr)</span>
+                            }
+                            else if (isNow)
+                            {
+                                if (s.ProgressPercentage > 0)
+                                {
+                                    <span class="km-tl-mini"><i style="width:@(s.ProgressPercentage)%"></i></span>
+                                }
+                                if (s.PlannedEndDate.HasValue)
+                                {
+                                    <span class="km-tl-sub">Hedef bitiş · @s.PlannedEndDate.Value.ToString("dd MMMM yyyy", tr)</span>
+                                }
+                            }
+                            else if (!isDone && s.PlannedStartDate.HasValue)
+                            {
+                                <span class="km-tl-sub">Planlanan başlangıç · @s.PlannedStartDate.Value.ToString("dd MMMM yyyy", tr)</span>
+                            }
+                        </span>
+                    </li>
+                }
+            </ol>
         </div>
     }
 
@@ -412,21 +453,45 @@
     }
     .km-tour-cta-btn iconify-icon { color:var(--c-primary); font-size:1.05rem; }
 
-    /* Aşamalar */
-    .km-stages { padding:.4rem 1.1rem; }
-    .km-stage { display:flex; align-items:center; gap:.75rem; padding:.85rem 0; border-bottom:1px solid #f1f3f5; }
-    .km-stage:last-child { border-bottom:none; }
-    .km-stage-dot {
-        width:30px; height:30px; flex-shrink:0; border-radius:50%; background:#eef0f2; color:#9aa3ac;
-        display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700;
+    /* Aşamalar: dikey zaman çizelgesi */
+    .km-tl { padding:1.1rem 1.25rem 1rem; }
+    .km-tl-head { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding-bottom:.9rem; margin-bottom:.5rem; border-bottom:1px solid #eef1f4; }
+    .km-tl-head-txt { font-size:.85rem; color:#5b6672; white-space:nowrap; }
+    .km-tl-head-txt strong { color:var(--c-navy); font-size:1rem; }
+    .km-tl-seg { display:flex; gap:3px; flex:1; max-width:180px; }
+    .km-tl-seg i { flex:1; height:6px; border-radius:3px; background:#e6ebf0; }
+    .km-tl-seg i.is-done { background:var(--c-primary); }
+    .km-tl-seg i.is-now { background:linear-gradient(90deg,var(--c-primary) 50%, #bfe3f3 50%); }
+
+    .km-tl-list { list-style:none; margin:0; padding:0; }
+    .km-tl-item { position:relative; display:flex; gap:.85rem; padding:.55rem 0; }
+    /* Noktaları birleştiren dikey çizgi */
+    .km-tl-item::before {
+        content:''; position:absolute; left:14px; top:calc(.55rem + 30px); bottom:calc(-.55rem); width:2px; background:#e6ebf0;
     }
-    .km-stage.is-done .km-stage-dot { background:var(--c-primary); color:#fff; }
-    .km-stage.is-now .km-stage-dot { background:#fff; color:var(--c-primary); box-shadow:inset 0 0 0 2px var(--c-primary), 0 0 0 4px rgba(0,130,180,.15); }
-    .km-stage-name { flex:1; font-size:.98rem; color:#9aa3ac; }
-    .km-stage.is-done .km-stage-name { color:#2B2A29; }
-    .km-stage.is-now .km-stage-name { color:var(--c-primary); font-weight:700; }
-    .km-stage-now { font-size:.82rem; font-weight:600; margin-left:.3rem; }
-    .km-stage-pct { font-size:.8rem; color:#9aa3ac; white-space:nowrap; }
+    .km-tl-item:last-child::before { display:none; }
+    .km-tl-item.is-done::before { background:var(--c-primary); }
+
+    .km-tl-dot {
+        position:relative; z-index:1; width:30px; height:30px; flex-shrink:0; border-radius:50%;
+        display:flex; align-items:center; justify-content:center;
+        background:#fff; border:2px solid #dfe5eb; color:#9aa3ac; font-size:.78rem; font-weight:700;
+    }
+    .km-tl-item.is-done .km-tl-dot { background:var(--c-primary); border-color:var(--c-primary); color:#fff; font-size:.95rem; }
+    .km-tl-item.is-now .km-tl-dot { border-color:var(--c-primary); box-shadow:0 0 0 4px rgba(0,130,180,.12); }
+    .km-tl-pulse { width:10px; height:10px; border-radius:50%; background:var(--c-primary); animation:km-tl-pulse 1.8s ease-in-out infinite; }
+    @@keyframes km-tl-pulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(.6); opacity:.55; } }
+
+    .km-tl-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:.2rem; padding-top:.2rem; }
+    .km-tl-row { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem; }
+    .km-tl-name { font-size:.98rem; font-weight:600; color:#9aa3ac; }
+    .km-tl-item.is-done .km-tl-name { color:var(--c-navy); }
+    .km-tl-item.is-now .km-tl-name { color:var(--c-navy); font-weight:800; }
+    .km-tl-badge { font-size:.66rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--c-primary); background:#e6f4fb; border-radius:20px; padding:.15rem .55rem; }
+    .km-tl-sub { font-size:.76rem; color:#8a939c; }
+    .km-tl-mini { display:block; height:5px; max-width:200px; background:#e6ebf0; border-radius:4px; overflow:hidden; margin-top:.15rem; }
+    .km-tl-mini i { display:block; height:100%; background:linear-gradient(90deg,var(--c-secondary),var(--c-primary)); border-radius:4px; }
+    @@media (prefers-reduced-motion: reduce) { .km-tl-pulse { animation:none; } }
 
     /* Saha fotoğrafları */
     .km-photo-count { font-size:.82rem; color:#9aa3ac; }
@@ -470,12 +535,19 @@
         background:#fff; border-radius:18px; padding:1.15rem 1.25rem 1.1rem;
         box-shadow:var(--km-shadow); border:1px solid var(--km-border);
     }
-    .km-pay-card-top { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.65rem; }
-    .km-pay-card-title { display:flex; align-items:center; gap:.4rem; font-size:.95rem; font-weight:800; color:var(--c-navy); }
+    .km-pay-card-top { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.9rem; }
+    .km-pay-card-title { display:flex; align-items:center; gap:.7rem; font-size:.95rem; font-weight:800; color:var(--c-navy); }
     .km-pay-card-title iconify-icon { font-size:1.15rem; color:var(--c-primary); }
-    .km-pay-card-pct { font-size:.78rem; font-weight:700; color:#1e9e5a; white-space:nowrap; }
+    .km-pay-card-pct { font-size:.85rem; font-weight:800; color:#1e9e5a; background:#e6f7ed; border-radius:20px; padding:.25rem .65rem; white-space:nowrap; }
 
-    .km-pay-progress { height:8px; background:#eef0f2; border-radius:20px; overflow:hidden; margin-bottom:1rem; }
+    .km-pay-card-ic { width:38px; height:38px; flex-shrink:0; border-radius:11px; background:linear-gradient(135deg,#0d3150,var(--c-primary)); color:#fff;
+                      display:flex; align-items:center; justify-content:center; font-size:1.15rem; box-shadow:0 6px 14px rgba(11,27,46,.18); }
+    .km-pay-card-ic iconify-icon { color:#fff !important; }
+    .km-pay-card-ttx { display:flex; flex-direction:column; gap:.05rem; }
+    .km-pay-card-eyebrow { font-size:.66rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#8a939c; }
+    .km-pay-card-total { font-size:1.1rem; font-weight:800; color:var(--c-navy); line-height:1.2; }
+    .km-pay-card-total small { font-size:.7rem; font-weight:600; color:#8a939c; margin-left:.15rem; }
+    .km-pay-progress { height:8px; margin-top:.1rem; background:#eef0f2; border-radius:20px; overflow:hidden; margin-bottom:1rem; }
     .km-pay-progress-fill { height:100%; background:linear-gradient(90deg,#1e9e5a,#3fc47c); border-radius:20px; transition:width .6s ease; }
 
     .km-pay-stats { display:flex; align-items:center; gap:.8rem; }
