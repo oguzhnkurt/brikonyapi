@@ -206,17 +206,28 @@
         <div class="ft-legal">
             <div class="ft-inner">
                 <div class="ft-legal-info">
-                    <strong>@ftTitle</strong>
-                    @if (!string.IsNullOrEmpty(ftAddress)) { <span>@ftAddress</span> }
-                    @if (!string.IsNullOrEmpty(ftTaxOffice) || !string.IsNullOrEmpty(ftTaxNo)) { <span>@(isEn ? "Tax Office / No" : "Vergi Dairesi / No"): @ftTaxOffice @(string.IsNullOrEmpty(ftTaxNo) ? "" : "/ " + ftTaxNo)</span> }
-                    @if (!string.IsNullOrEmpty(ftMersis)) { <span>MERSİS: @ftMersis</span> }
+                    <div class="ft-legal-title">@ftTitle</div>
+                    @if (!string.IsNullOrEmpty(ftAddress)) { <div class="ft-legal-line">@ftAddress</div> }
+                    <div class="ft-legal-line">
+                        @if (!string.IsNullOrEmpty(ftTaxOffice) || !string.IsNullOrEmpty(ftTaxNo))
+                        {
+                            <span>@(isEn ? "Tax Office" : "Vergi Dairesi"): @ftTaxOffice</span>
+                            @if (!string.IsNullOrEmpty(ftTaxNo)) { <span class="ft-dot">•</span><span>@(isEn ? "Tax No" : "VKN"): @ftTaxNo</span> }
+                        }
+                        @if (!string.IsNullOrEmpty(ftMersis)) { <span class="ft-dot">•</span><span>MERSİS: @ftMersis</span> }
+                    </div>
                 </div>
-                <div class="ft-pay" aria-label="@(isEn ? "Accepted payment methods" : "Kabul edilen ödeme yöntemleri")">
-                    <span class="ft-pay-logo"><img src="/images/tkpay.png" alt="tkpay" /></span>
-                    <span class="ft-pay-badge">VISA</span>
-                    <span class="ft-pay-badge">Mastercard</span>
-                    <span class="ft-pay-badge">TROY</span>
-                    <span class="ft-pay-badge ft-pay-secure">3D Secure</span>
+                <div class="ft-pay-wrap">
+                    <div class="ft-pay-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                        @(isEn ? "Secure payment with 3D Secure" : "3D Secure ile güvenli ödeme")
+                    </div>
+                    <div class="ft-pay" aria-label="@(isEn ? "Accepted payment methods" : "Kabul edilen ödeme yöntemleri")">
+                        <span class="ft-chip"><img src="/images/tkpay.png" alt="tkpay" /></span>
+                        <span class="ft-chip ft-chip-visa">VISA</span>
+                        <span class="ft-chip ft-chip-mc"><i></i><i></i></span>
+                        <span class="ft-chip ft-chip-troy">TROY</span>
+                    </div>
                 </div>
             </div>
         </div>
