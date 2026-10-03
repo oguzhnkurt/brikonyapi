@@ -1,3 +1,4 @@
+@inject BrikonYapi.Web.Services.SiteSettingService SiteSettings
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -121,6 +122,28 @@
             .container { padding-left: 1rem; padding-right: 1rem; }
             .card-body { padding: 1.1rem; }
         }
+
+        /* ── Panel alt bilgisi: güvenli ödeme logoları + yasal linkler + şirket bilgisi ── */
+        .km-legal { margin: 2.2rem 0 .5rem; padding-top: 1.1rem; border-top: 1px solid #e5e8eb;
+                    text-align: center; font-size: .74rem; color: #8a94a0; }
+        .km-legal-pay { display: flex; flex-direction: column; align-items: center; gap: .45rem; margin-bottom: .8rem; }
+        .km-legal-secure { display: inline-flex; align-items: center; gap: .3rem; font-size: .72rem; color: #4b5563; font-weight: 600; }
+        .km-legal-secure iconify-icon { color: #16a34a; font-size: .95rem; }
+        .km-legal-chips { display: inline-flex; gap: .4rem; flex-wrap: wrap; justify-content: center; }
+        .km-chip { display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 50px;
+                   padding: 0 .55rem; border-radius: 6px; background: #fff; border: 1px solid #e5e8eb;
+                   font-size: .66rem; font-weight: 800; letter-spacing: .04em; line-height: 1; }
+        .km-chip img { height: 14px; width: auto; display: block; }
+        .km-chip-visa { color: #1a1f71; font-style: italic; font-size: .74rem; }
+        .km-chip-troy { color: #00a3ad; }
+        .km-chip-mc i { width: 14px; height: 14px; border-radius: 50%; display: block; }
+        .km-chip-mc i:first-child { background: #eb001b; }
+        .km-chip-mc i:last-child { background: #f79e1b; margin-left: -5px; mix-blend-mode: multiply; }
+        .km-legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: .25rem .9rem; margin-bottom: .6rem; }
+        .km-legal-links a { color: #6b7684; text-decoration: none; }
+        .km-legal-links a:hover { color: var(--c-primary); text-decoration: underline; }
+        .km-legal-company { display: flex; flex-direction: column; gap: .1rem; line-height: 1.5; }
+        .km-legal-company strong { color: #4b5563; font-weight: 600; }
 
         /* ── Mobil uygulama hissi: yüzen (floating) alt gezinme çubuğu ──────── */
         .km-content { padding-bottom: 1.1rem; }
@@ -270,6 +293,46 @@
             </div>
         }
         @RenderBody()
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            var kmSettings = await SiteSettings.GetAllAsync();
+            string KmV(string k) => kmSettings.TryGetValue(k, out var v) && !string.IsNullOrWhiteSpace(v) ? v!.Trim() : "";
+            var kmTitle = KmV(BrikonYapi.Web.Services.LegalPages.KeyCompanyTitle);
+            if (!string.IsNullOrEmpty(kmTitle))
+            {
+                var kmTaxOffice = KmV(BrikonYapi.Web.Services.LegalPages.KeyTaxOffice);
+                var kmTaxNo = KmV(BrikonYapi.Web.Services.LegalPages.KeyTaxNumber);
+                var kmAddress = KmV("Address");
+                <footer class="km-legal">
+                    <div class="km-legal-pay">
+                        <span class="km-legal-secure">
+                            <iconify-icon icon="mdi:lock-outline"></iconify-icon> 3D Secure ile güvenli ödeme
+                        </span>
+                        <span class="km-legal-chips">
+                            <span class="km-chip"><img src="/images/tkpay.png" alt="tkpay" /></span>
+                            <span class="km-chip km-chip-visa">VISA</span>
+                            <span class="km-chip km-chip-mc"><i></i><i></i></span>
+                            <span class="km-chip km-chip-troy">TROY</span>
+                        </span>
+                    </div>
+                    <div class="km-legal-links">
+                        @foreach (var lp in BrikonYapi.Web.Services.LegalPages.All)
+                        {
+                            <a href="/yasal/@lp.Slug" target="_blank" rel="noopener">@lp.Title</a>
+                        }
+                    </div>
+                    <div class="km-legal-company">
+                        <strong>@kmTitle</strong>
+                        @if (!string.IsNullOrEmpty(kmAddress)) { <span>@kmAddress</span> }
+                        @if (!string.IsNullOrEmpty(kmTaxOffice) || !string.IsNullOrEmpty(kmTaxNo))
+                        {
+                            <span>@("Vergi Dairesi: " + kmTaxOffice + (string.IsNullOrEmpty(kmTaxNo) ? "" : " • VKN: " + kmTaxNo))</span>
+                        }
+                    </div>
+                </footer>
+            }
+        }
     </div>
 
     @if (User.Identity?.IsAuthenticated == true)
