@@ -304,7 +304,8 @@
                                   placeholder="Mesajınızı yazın…"></textarea>
                         <div class="bk-tpl-note">
                             <iconify-icon icon="mdi:shield-check-outline"></iconify-icon>
-                            Mesajınız, Meta onaylı bir WhatsApp şablonuna yerleştirilerek gönderilir. Malik aşağıdaki önizlemeyi görecek.
+                            Mesajınız, Meta onaylı bir WhatsApp şablonuna yerleştirilerek gönderilir.
+                            <strong>"Sayın Ad Soyad," hitabı her malike kendi adıyla otomatik eklenir; mesaja isim yazmanıza gerek yok.</strong>
                         </div>
                         <div class="bk-tpl-preview-wrap">
                             <div class="bk-tpl-preview-label">
@@ -598,7 +599,8 @@
 
             function renderManualPreview() {
                 var checked = getChecked();
-                var firstName = checked.length ? checked[0].getAttribute('data-name') : '[Ad Soyad]';
+                // Kimse seçili değilse örnek isim göster; seçiliyse ilk seçilenin gerçek adı (her malike kendi adı gider).
+                var firstName = checked.length ? checked[0].getAttribute('data-name') : 'Ahmet Yılmaz';
                 var text = messageInput.value.trim() || '[mesajınız]';
                 // Meta'da onaylı "manuel_bildirim" şablonu: "Sayın {{1}}, {{2}} Brikon Yapı yönetiminden bilgilendirme mesajıdır."
                 manualTemplatePreview.textContent = 'Sayın ' + firstName + ', ' + text + ' Brikon Yapı yönetiminden bilgilendirme mesajıdır.';
