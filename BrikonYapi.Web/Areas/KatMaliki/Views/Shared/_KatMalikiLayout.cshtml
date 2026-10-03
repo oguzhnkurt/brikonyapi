@@ -265,10 +265,14 @@
             /* Masaüstünde boş kenarlar "boşluk" değil, bilinçli bir zemin gibi dursun: üstte
                lacivert bir şerit + açık gri zemin; başlık tam genişlik değil, uygulama sütunuyla
                aynı genişlikte yuvarlak bir "kapak" kartı olarak ortada durur. */
+            /* Şerit yalnızca sayfanın en üstünde bir kez çizilir (no-repeat) — aksi halde
+               tarayıcı degradeyi sayfa boyunca tekrarlayıp araya lacivert bantlar koyuyordu. */
             body {
-                background:
-                    linear-gradient(180deg, var(--c-navy) 0, var(--c-navy) 150px, transparent 150px),
-                    var(--km-bg);
+                background-color: var(--km-bg);
+                background-image: linear-gradient(var(--c-navy), var(--c-navy));
+                background-repeat: no-repeat;
+                background-position: top left;
+                background-size: 100% 150px;
             }
             .container { max-width: 680px; }
             .km-navbar {
