@@ -22,7 +22,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
     <style>
-        :root { --c-primary:#0082B4; --c-secondary:#00A0E3; --c-dark:#2B2A29; }
+        :root {
+            --c-primary:#0082B4; --c-secondary:#00A0E3; --c-dark:#2B2A29; --c-navy:#0b1b2e;
+            --km-bg:#f1f4f8; --km-border:#e6ebf0;
+            --km-shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+        }
 
         /* Mobile-first, buyuk metin ve buyuk dokunma alanlari - yasli/az teknik kullanicilar icin */
         html { -webkit-text-size-adjust: 100%; overscroll-behavior-y: contain; height: 100%; }
@@ -36,7 +40,7 @@
         */
         body {
             font-family:'DM Sans','Segoe UI',Arial,sans-serif;
-            background:#f5f6f7; color:#2B2A29;
+            background:var(--km-bg); color:#1f2933;
             font-size: 17px;
             line-height: 1.55;
             -webkit-tap-highlight-color: transparent;
@@ -51,35 +55,61 @@
 
         a, button { -webkit-tap-highlight-color: transparent; }
 
-        /* Ana ekrana eklendiğinde (standalone/PWA) durum çubuğu alanı için üst boşluk */
+        /* Kurumsal başlık: lacivertten marka mavisine geçiş + ince mimari ızgara dokusu
+           (ana sitenin koyu lacivert footer/header diliyle uyumlu). */
         .km-navbar {
-            background:linear-gradient(135deg,var(--c-primary),var(--c-secondary));
-            padding: .9rem 0 1.5rem; padding-top: calc(.9rem + env(safe-area-inset-top, 0px));
+            position: relative; overflow: hidden;
+            background:
+                radial-gradient(120% 150% at 100% 0%, rgba(0,160,227,.55) 0%, rgba(0,160,227,0) 55%),
+                linear-gradient(135deg, var(--c-navy) 0%, #0d3150 55%, #0a6a98 100%);
+            padding: .85rem 0 1.6rem; padding-top: calc(.85rem + env(safe-area-inset-top, 0px));
             border-radius: 0 0 28px 28px;
-            box-shadow: 0 10px 26px rgba(0,130,180,.22);
+            box-shadow: 0 14px 34px rgba(11,27,46,.22);
             margin-bottom: 1.4rem;
         }
-        /* Kişisel karşılama (KmGreeting bileşeni) — header'ın tamamı bu kart */
-        .km-greeting { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-top:.2rem; width:100%; }
+        .km-navbar::before {
+            content:''; position:absolute; inset:0; pointer-events:none;
+            background-image:
+                linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+            background-size: 30px 30px;
+            -webkit-mask-image: linear-gradient(to bottom left, #000 0%, transparent 70%);
+                    mask-image: linear-gradient(to bottom left, #000 0%, transparent 70%);
+        }
+        .km-navbar > .container { position: relative; z-index: 1; }
+        /* Ana sayfada ilk kart başlığın üzerine taşar; bunun için başlığın altında yer açılır */
+        .km-page-home .km-navbar { padding-bottom: 2.8rem; }
+
+        /* Kişisel karşılama (KmGreeting bileşeni): üstte logo + menü, altında selam */
+        .km-greeting { display:flex; flex-direction:column; gap:1.15rem; width:100%; }
+        .km-greeting-top { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+        .km-greeting-brand { display:flex; align-items:center; gap:.7rem; text-decoration:none; min-width:0; }
+        .km-greeting-brand img { height:30px; width:auto; display:block; }
+        .km-greeting-brand-sep { width:1px; height:22px; background:rgba(255,255,255,.28); }
+        .km-greeting-brand-label {
+            color:rgba(255,255,255,.78); font-size:.68rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+            white-space:nowrap;
+        }
         .km-greeting-text { display:flex; flex-direction:column; gap:.1rem; min-width:0; }
-        .km-greeting-hi { color:rgba(255,255,255,.82); font-size:.85rem; font-weight:500; }
+        .km-greeting-hi { color:rgba(255,255,255,.7); font-size:.88rem; font-weight:500; }
         .km-greeting-name {
-            color:#fff; font-size:1.45rem; font-weight:800; line-height:1.2;
+            color:#fff; font-size:1.55rem; font-weight:800; line-height:1.2; letter-spacing:-.01em;
             overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
         }
         /* Avatar aynı zamanda menü düğmesi: Haberler/SSS/Çıkış Yap'a buradan ulaşılır */
         .km-greeting-avatar {
-            width:46px; height:46px; flex-shrink:0; border-radius:50%; margin-left:auto;
-            background:rgba(255,255,255,.2); border:2px solid rgba(255,255,255,.4);
+            width:44px; height:44px; flex-shrink:0; border-radius:14px;
+            background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.28);
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
             display:flex; align-items:center; justify-content:center;
-            color:#fff; font-weight:800; font-size:1.15rem; padding:0; cursor:pointer;
+            color:#fff; font-weight:800; font-size:.95rem; letter-spacing:.03em; padding:0; cursor:pointer;
         }
-        .km-greeting-avatar:active { background:rgba(255,255,255,.32); }
+        .km-greeting-avatar:active { background:rgba(255,255,255,.24); }
 
         .progress { background:#e8eaec; height: 16px !important; border-radius: 8px; }
         .progress-bar { background:var(--c-primary); }
 
-        .card { border:none; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+        .card { border:1px solid var(--km-border); border-radius:18px; box-shadow:var(--km-shadow); }
         .card-body { padding: 1.25rem; }
 
         /* Butonlar: buyuk, parmakla kolay dokunulur (min 48px), net yazi */
@@ -175,12 +205,12 @@
         }
         .km-bottomnav a.active { color: var(--c-primary); font-weight: 700; }
         .km-bottomnav a.active iconify-icon {
-            background: linear-gradient(135deg, var(--c-primary), var(--c-secondary));
+            background: linear-gradient(135deg, #0d3150, var(--c-primary));
             color: #fff;
-            box-shadow: 0 6px 14px rgba(0,130,180,.35);
+            box-shadow: 0 6px 14px rgba(11,27,46,.28);
         }
         .km-bottomnav a:active iconify-icon { background: #f0f2f4; }
-        .km-bottomnav a.active:active iconify-icon { background: linear-gradient(135deg, var(--c-primary), var(--c-secondary)); }
+        .km-bottomnav a.active:active iconify-icon { background: linear-gradient(135deg, #0d3150, var(--c-primary)); }
 
         /* Alt açılır menü (bottom sheet) */
         .km-sheet-backdrop {
@@ -222,6 +252,7 @@
         /* Dar telefonlarda 5 sekme sığsın diye yazı ve rozet boyutu biraz küçülür */
         @@media (max-width: 360px) {
             .km-bottomnav a { font-size: .6rem; }
+            .km-greeting-brand-label, .km-greeting-brand-sep { display: none; }
             .km-bottomnav a iconify-icon { font-size: 1.15rem; width: 34px; height: 34px; border-radius: 11px; }
         }
 
@@ -231,11 +262,24 @@
            haber kapakları) mobildekiyle aynı, dengeli oranını korur; yatay/kare görseller
            tuhaf biçimde kırpılmaz. */
         @@media (min-width: 768px) {
-            body { background:#e9edf1; }
-            .container { max-width: 640px; }
-            .km-navbar { border-radius:0 0 22px 22px; }
+            /* Masaüstünde boş kenarlar "boşluk" değil, bilinçli bir zemin gibi dursun: üstte
+               lacivert bir şerit + açık gri zemin; başlık tam genişlik değil, uygulama sütunuyla
+               aynı genişlikte yuvarlak bir "kapak" kartı olarak ortada durur. */
+            body {
+                background:
+                    linear-gradient(180deg, var(--c-navy) 0, var(--c-navy) 150px, transparent 150px),
+                    var(--km-bg);
+            }
+            .container { max-width: 680px; }
+            .km-navbar {
+                width: calc(100% - 32px); max-width: 656px; margin: 18px auto 1.4rem;
+                border-radius: 26px; padding-bottom: 1.8rem;
+                box-shadow: 0 18px 40px rgba(11,27,46,.28);
+            }
+            .km-navbar > .container { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .km-page-home .km-navbar { padding-bottom: 3rem; }
             .km-content { padding-top:.25rem; }
-            .card, .km-card { box-shadow:0 4px 16px rgba(20,30,40,.07); }
+            .card, .km-card { box-shadow: var(--km-shadow); }
             /* Alt sekme çubuğu, telefonda parmakla dokunmaya göre boyutlandırılmıştı (40px ikon,
                ~11px yazı) — masaüstünde normal görüntüleme mesafesinde bu "minicik" görünüyordu.
                Çubuğu ve içindekileri masaüstü için büyütüyoruz, uygulama sütunuyla (640px) aynı
@@ -246,7 +290,7 @@
                ortasında minik bir hap gibi kalıyordu. width:100% eklemek bunu düzeltir.
             */
             .km-bottomnav {
-                width:100%; max-width:640px; margin:0 auto calc(16px + env(safe-area-inset-bottom, 0px));
+                width:100%; max-width:656px; margin:0 auto calc(16px + env(safe-area-inset-bottom, 0px));
                 border-radius:26px;
             }
             .km-bottomnav-inner { padding:10px; }
@@ -259,7 +303,7 @@
                olmayan (küçük bir boşluk bırakan) yuvarlak köşeli bir panel olarak göster. */
             .km-sheet {
                 left:50%; right:auto; bottom:16px;
-                width:100%; max-width:640px; transform:translate(-50%, 120%);
+                width:100%; max-width:656px; transform:translate(-50%, 120%);
                 border-radius:20px; box-shadow:0 12px 40px rgba(20,30,40,.22);
             }
             .km-sheet.show { transform:translate(-50%, 0); }
@@ -267,7 +311,7 @@
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
+<body class="@(ViewData["BodyClass"] ?? "")">
     <nav class="km-navbar navbar navbar-dark">
         @if (User.Identity?.IsAuthenticated == true)
         {
