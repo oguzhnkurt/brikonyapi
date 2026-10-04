@@ -2,6 +2,7 @@
 @inject BrikonYapi.Web.Services.ExchangeRateService Fx
 @{
     ViewData["Title"] = "Ödemelerim";
+    ViewData["BodyClass"] = "km-page-home";
     var tr = new System.Globalization.CultureInfo("tr-TR");
 
     var allSchedules = Model.Units
@@ -58,38 +59,84 @@
     if (!years.Contains(todayYear)) years.Add(todayYear);
     years = years.OrderBy(y => y).ToList();
     var defaultYear = todayYear;
+
+    // Özet kartı için: sıradaki ödeme, geciken toplam, filtre sayıları
+    var openItems = allSchedules
+        .Where(x => x.Schedule.Status == PaymentScheduleStatus.Pending || x.Schedule.Status == PaymentScheduleStatus.Overdue)
+        .OrderBy(x => x.Schedule.DueDate).ToList();
+    var nextItem = openItems.FirstOrDefault();
+    var lateItems = allSchedules.Where(x => FilterOf(x.Schedule) == "geciken").ToList();
+    int CountOf(string cat) => allSchedules.Count(x => FilterOf(x.Schedule) == cat);
+    var paidCount = CountOf("odenen");
+    var totalCount = allSchedules.Count(x => x.Schedule.Status != PaymentScheduleStatus.Cancelled);
 }
 
-<div class="km-pay-hero mb-3">
-    <div class="km-pay-hero-title">Ödeme Planım</div>
+<div class="km-pm-hero mb-3">
+    <div class="km-pm-hero-head">
+        <span class="km-pm-hero-ic"><iconify-icon icon="mdi:wallet-outline"></iconify-icon></span>
+        <div>
+            <div class="km-pm-eyebrow">Ödeme Planım</div>
+            <div class="km-pm-sub">@paidCount / @totalCount taksit ödendi</div>
+        </div>
+    </div>
+
     @for (var ctIdx = 0; ctIdx < currencyTotals.Count; ctIdx++)
     {
         var g = currencyTotals[ctIdx];
-        <div class="km-pay-stats @(ctIdx > 0 ? "mt-2" : "")">
-            <div class="km-pay-stat">
-                <div class="km-pay-stat-label">Ödenen @(currencyTotals.Count > 1 ? $"({g.Currency})" : "")</div>
-                <div class="km-pay-stat-value">@g.Symbol@g.Paid.ToString("N0", tr)</div>
-                @if (g.Currency == PaymentCurrency.TRY)
-                {
-                    var paidUsd = await Fx.FormatUsdEquivalentAsync(g.Paid);
-                    if (paidUsd != null)
-                    {
-                        <div class="km-pay-stat-fx">@paidUsd</div>
-                    }
-                }
+        var gTotal = g.Paid + g.Remaining;
+        var gPct = gTotal > 0 ? (double)(g.Paid / gTotal * 100) : 0;
+        string? remainingUsd = null, paidUsd = null;
+        if (g.Currency == PaymentCurrency.TRY)
+        {
+            remainingUsd = await Fx.FormatUsdEquivalentAsync(g.Remaining);
+            paidUsd = await Fx.FormatUsdEquivalentAsync(g.Paid);
+        }
+        <div class="km-pm-cur @(ctIdx > 0 ? "is-extra" : "")">
+            <div class="km-pm-main">
+                <div>
+                    <div class="km-pm-lbl">Kalan borç @(currencyTotals.Count > 1 ? $"({g.Currency})" : "")</div>
+                    <div class="km-pm-big">@g.Symbol@g.Remaining.ToString("N0", tr)</div>
+                    @if (remainingUsd != null) { <div class="km-pm-fx">@remainingUsd</div> }
+                </div>
+                <span class="km-pm-pct">%@(Math.Round(gPct)) ödendi</span>
             </div>
-            <div class="km-pay-stat">
-                <div class="km-pay-stat-label">Kalan @(currencyTotals.Count > 1 ? $"({g.Currency})" : "")</div>
-                <div class="km-pay-stat-value">@g.Symbol@g.Remaining.ToString("N0", tr)</div>
-                @if (g.Currency == PaymentCurrency.TRY)
-                {
-                    var remainingUsd = await Fx.FormatUsdEquivalentAsync(g.Remaining);
-                    if (remainingUsd != null)
-                    {
-                        <div class="km-pay-stat-fx">@remainingUsd</div>
-                    }
-                }
+            <div class="km-pm-bar"><i style="width:@(gPct.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%"></i></div>
+            <div class="km-pm-stats">
+                <div class="km-pm-stat">
+                    <span class="km-pm-dot is-paid"></span>
+                    <span><span class="km-pm-stat-lbl">Ödenen</span><span class="km-pm-stat-val is-paid">@g.Symbol@g.Paid.ToString("N0", tr)</span>@if (paidUsd != null) {<span class="km-pm-stat-fx">@paidUsd</span>}</span>
+                </div>
+                <div class="km-pm-stat">
+                    <span class="km-pm-dot"></span>
+                    <span><span class="km-pm-stat-lbl">Toplam</span><span class="km-pm-stat-val">@g.Symbol@gTotal.ToString("N0", tr)</span></span>
+                </div>
             </div>
+        </div>
+    }
+
+    @if (nextItem != null)
+    {
+        var ns = nextItem.Schedule;
+        var nDays = (ns.DueDate.Date - DateTime.Today).Days;
+        var nLate = nDays < 0;
+        <a class="km-pm-next @(nLate ? "is-late" : "")" href="/KatMaliki/Dashboard/Detail/@ns.Id">
+            <span class="km-pm-next-date">
+                <span class="d">@ns.DueDate.Day</span>
+                <span class="m">@monthNamesTr[ns.DueDate.Month - 1]</span>
+            </span>
+            <span class="km-pm-next-tx">
+                <span class="km-pm-next-lbl">@(nLate ? "Gecikmiş ödeme" : "Sıradaki ödeme")</span>
+                <span class="km-pm-next-amt">@ns.CurrencySymbol@ns.Amount.ToString("N0", tr)</span>
+                <span class="km-pm-next-when">@(nLate ? $"{-nDays} gün gecikti" : nDays == 0 ? "Bugün son gün" : $"{nDays} gün kaldı")</span>
+            </span>
+            <span class="km-pm-next-go">Öde <iconify-icon icon="iconamoon:arrow-right-2"></iconify-icon></span>
+        </a>
+    }
+    @if (lateItems.Count > 1)
+    {
+        <div class="km-pm-alert">
+            <iconify-icon icon="mdi:alert-circle-outline"></iconify-icon>
+            @lateItems.Count gecikmiş taksitiniz bulunuyor. Lütfen en kısa sürede ödeme yapınız.
         </div>
     }
 </div>
@@ -111,21 +158,24 @@
 }
 else
 {
-    <div class="km-view-toggle mb-3">
-        <button type="button" class="km-view-btn active" data-view="liste">
-            <iconify-icon icon="mdi:format-list-bulleted"></iconify-icon> Liste
-        </button>
-        <button type="button" class="km-view-btn" data-view="takvim">
-            <iconify-icon icon="mdi:calendar-month-outline"></iconify-icon> Takvim
-        </button>
+    <div class="km-pm-toolbar mb-3">
+        <h6 class="km-pm-section">Taksitler</h6>
+        <div class="km-view-toggle">
+            <button type="button" class="km-view-btn active" data-view="liste" title="Liste">
+                <iconify-icon icon="mdi:format-list-bulleted"></iconify-icon> Liste
+            </button>
+            <button type="button" class="km-view-btn" data-view="takvim" title="Takvim">
+                <iconify-icon icon="mdi:calendar-month-outline"></iconify-icon> Takvim
+            </button>
+        </div>
     </div>
 
     <div id="pmViewListe">
-        <div class="km-pay-filters mb-2">
-            <button type="button" class="km-chip active" data-filter="tumu">Tümü</button>
-            <button type="button" class="km-chip" data-filter="geciken">Geciken</button>
-            <button type="button" class="km-chip" data-filter="yaklasan">Yaklaşan</button>
-            <button type="button" class="km-chip" data-filter="odenen">Ödenen</button>
+        <div class="km-pay-filters mb-3">
+            <button type="button" class="km-chip active" data-filter="tumu">Tümü <b>@allSchedules.Count</b></button>
+            <button type="button" class="km-chip is-late" data-filter="geciken">Geciken <b>@CountOf("geciken")</b></button>
+            <button type="button" class="km-chip" data-filter="yaklasan">Yaklaşan <b>@CountOf("yaklasan")</b></button>
+            <button type="button" class="km-chip" data-filter="odenen">Ödenen <b>@paidCount</b></button>
         </div>
         <button type="button" id="pmMonthClear" class="km-month-clear mb-3" hidden>
             <iconify-icon icon="mdi:calendar-month-outline"></iconify-icon>
@@ -142,20 +192,10 @@ else
                 var pendingTx = s.Transactions.Any(t => t.Status == PaymentTransactionStatus.PendingApproval);
                 var stageReady = s.ProjectStage != null && s.ProjectStage.Status == ProjectStageStatus.Completed && s.Status == PaymentScheduleStatus.Pending;
 
-                <a class="km-pay-row" data-cat="@f" data-year="@s.DueDate.Year" data-month="@s.DueDate.Month" href="/KatMaliki/Dashboard/Detail/@s.Id">
-                    <span class="km-pay-icon is-@f">
-                        @if (f == "odenen")
-                        {
-                            <iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon>
-                        }
-                        else if (f == "geciken")
-                        {
-                            <iconify-icon icon="iconamoon:attention-circle-duotone"></iconify-icon>
-                        }
-                        else
-                        {
-                            <iconify-icon icon="iconamoon:clock-duotone"></iconify-icon>
-                        }
+                <a class="km-pay-row is-@f" data-cat="@f" data-year="@s.DueDate.Year" data-month="@s.DueDate.Month" href="/KatMaliki/Dashboard/Detail/@s.Id">
+                    <span class="km-pay-date is-@f">
+                        <span class="d">@s.DueDate.Day</span>
+                        <span class="m">@monthNamesTr[s.DueDate.Month - 1]</span>
                     </span>
                     <span class="km-pay-main">
                         <span class="km-pay-top">
@@ -174,7 +214,7 @@ else
                             }
                         </span>
                         <span class="km-pay-desc">@(string.IsNullOrWhiteSpace(s.Description) ? "Ödeme" : s.Description)</span>
-                        <span class="km-pay-due">Vade: @s.DueDate.ToString("dd MMM yyyy", tr)</span>
+                        <span class="km-pay-due">Vade: @s.DueDate.ToString("dd MMMM yyyy", tr)</span>
                     </span>
                     <span class="km-pay-right">
                         <span class="km-pay-amount">@s.CurrencySymbol@s.Amount.ToString("N0", tr)</span>
@@ -228,66 +268,128 @@ else
 
 @section Styles {
 <style>
-    .km-pay-hero {
-        background:linear-gradient(135deg,var(--c-primary),var(--c-secondary));
-        border-radius:18px; padding:1.3rem 1.35rem 1.4rem; color:#fff;
-        box-shadow:0 6px 18px rgba(0,130,180,.22);
+    /* Özet kartı: başlığın üzerine taşan beyaz kurumsal kart */
+    .km-pm-hero {
+        position:relative; z-index:2; margin-top:-3.6rem;
+        background:#fff; border:1px solid var(--km-border); border-radius:18px; box-shadow:var(--km-shadow);
+        padding:1.15rem 1.25rem 1.2rem;
     }
-    .km-pay-hero-title { font-size:1.35rem; font-weight:800; margin-bottom:.9rem; }
-    .km-pay-stats { display:flex; gap:.7rem; }
-    .km-pay-stat { flex:1; background:rgba(255,255,255,.16); border-radius:12px; padding:.7rem .85rem; }
-    .km-pay-stat-label { font-size:.78rem; color:rgba(255,255,255,.85); font-weight:600; }
-    .km-pay-stat-value { font-size:1.25rem; font-weight:800; margin-top:.1rem; }
-    .km-pay-stat-fx { font-size:.74rem; color:rgba(255,255,255,.75); margin-top:.1rem; }
+    .km-pm-hero-head { display:flex; align-items:center; gap:.75rem; padding-bottom:.9rem; margin-bottom:.9rem; border-bottom:1px solid #eef1f4; }
+    .km-pm-hero-ic { width:42px; height:42px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+                     background:linear-gradient(135deg,#0d3150,var(--c-primary)); color:#fff; font-size:1.25rem; box-shadow:0 6px 14px rgba(11,27,46,.18); }
+    .km-pm-eyebrow { font-size:.68rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#8a939c; }
+    .km-pm-sub { font-size:.95rem; font-weight:700; color:var(--c-navy); }
 
-    .km-view-toggle { display:flex; gap:.3rem; background:#eef0f2; border-radius:14px; padding:.3rem; width:fit-content; }
-    .km-view-btn { border:none; background:transparent; color:#4a5158; font-weight:700; font-size:.88rem;
-                   padding:.5rem 1rem; border-radius:11px; display:flex; align-items:center; gap:.35rem; min-height:38px; }
-    .km-view-btn.active { background:#fff; color:var(--c-primary); box-shadow:0 2px 6px rgba(0,0,0,.08); }
+    .km-pm-cur.is-extra { margin-top:1rem; padding-top:1rem; border-top:1px dashed #e6ebf0; }
+    .km-pm-main { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; }
+    .km-pm-lbl { font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#8a939c; }
+    .km-pm-big { font-size:2rem; font-weight:800; color:var(--c-navy); line-height:1.1; letter-spacing:-.02em; }
+    .km-pm-fx { font-size:.78rem; color:#8a939c; margin-top:.1rem; }
+    .km-pm-pct { font-size:.8rem; font-weight:800; color:#1e9e5a; background:#e6f7ed; border-radius:20px; padding:.25rem .7rem; white-space:nowrap; margin-bottom:.3rem; }
+    .km-pm-bar { height:8px; background:#edf1f5; border-radius:20px; overflow:hidden; margin:.85rem 0 .9rem; }
+    .km-pm-bar i { display:block; height:100%; background:linear-gradient(90deg,#1e9e5a,#3fc47c); border-radius:20px; min-width:0; }
+    .km-pm-stats { display:flex; gap:1.5rem; }
+    .km-pm-stat { display:flex; align-items:flex-start; gap:.5rem; }
+    .km-pm-stat > span:last-child { display:flex; flex-direction:column; }
+    .km-pm-dot { width:9px; height:9px; border-radius:50%; background:#cfd7df; margin-top:.35rem; flex-shrink:0; }
+    .km-pm-dot.is-paid { background:#1e9e5a; }
+    .km-pm-stat-lbl { font-size:.72rem; color:#8a939c; font-weight:600; }
+    .km-pm-stat-val { font-size:1rem; font-weight:800; color:var(--c-navy); }
+    .km-pm-stat-val.is-paid { color:#1e9e5a; }
+    .km-pm-stat-fx { font-size:.7rem; color:#9aa3ac; }
 
-    .km-pay-filters { display:flex; gap:.5rem; overflow-x:auto; padding-bottom:.2rem; }
+    /* Sıradaki / gecikmiş ödeme vurgusu */
+    .km-pm-next {
+        display:flex; align-items:center; gap:.85rem; margin-top:1.1rem; padding:.8rem .9rem; border-radius:14px;
+        background:#f2f8fc; border:1px solid #d9ecf6; text-decoration:none; color:inherit; transition:background-color .2s, border-color .2s;
+    }
+    .km-pm-next:hover { background:#e8f3fa; }
+    .km-pm-next.is-late { background:#fdf2f2; border-color:#f6d3d0; }
+    .km-pm-next-date { width:50px; height:52px; flex-shrink:0; border-radius:12px; background:#fff; border:1px solid #e3edf3;
+                       display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; }
+    .km-pm-next-date .d { font-size:1.25rem; font-weight:800; color:var(--c-navy); }
+    .km-pm-next-date .m { font-size:.66rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--c-primary); margin-top:.15rem; }
+    .km-pm-next.is-late .km-pm-next-date .m { color:#c0392b; }
+    .km-pm-next-tx { flex:1; min-width:0; display:flex; flex-direction:column; }
+    .km-pm-next-lbl { font-size:.68rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--c-primary); }
+    .km-pm-next.is-late .km-pm-next-lbl { color:#c0392b; }
+    .km-pm-next-amt { font-size:1.1rem; font-weight:800; color:var(--c-navy); line-height:1.25; }
+    .km-pm-next-when { font-size:.78rem; color:#6b7684; }
+    .km-pm-next.is-late .km-pm-next-when { color:#c0392b; font-weight:600; }
+    .km-pm-next-go { display:inline-flex; align-items:center; gap:.2rem; flex-shrink:0; background:var(--c-primary); color:#fff;
+                     font-size:.85rem; font-weight:700; padding:.5rem .85rem; border-radius:999px; }
+    .km-pm-next.is-late .km-pm-next-go { background:#c0392b; }
+    .km-pm-alert { display:flex; align-items:center; gap:.5rem; margin-top:.7rem; font-size:.82rem; color:#9a3412; background:#fff7ed;
+                   border:1px solid #fed7aa; border-radius:10px; padding:.55rem .75rem; }
+
+    /* Araç çubuğu: başlık + liste/takvim geçişi */
+    .km-pm-toolbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-top:1.4rem; }
+    .km-pm-section {
+        display:flex; align-items:center; gap:.5rem; margin:0;
+        font-size:.74rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#5b6672;
+    }
+    .km-pm-section::before { content:''; width:3px; height:14px; border-radius:3px; background:linear-gradient(180deg,var(--c-secondary),var(--c-primary)); }
+    .km-view-toggle { display:flex; gap:.2rem; background:#e9eef3; border-radius:12px; padding:.25rem; }
+    .km-view-btn { border:none; background:transparent; color:#5b6672; font-weight:700; font-size:.82rem;
+                   padding:.4rem .8rem; border-radius:9px; display:flex; align-items:center; gap:.3rem; min-height:34px; }
+    .km-view-btn.active { background:#fff; color:var(--c-navy); box-shadow:0 1px 3px rgba(16,24,40,.12); }
+
+    .km-pay-filters { display:flex; gap:.45rem; overflow-x:auto; padding-bottom:.2rem; }
     .km-pay-filters::-webkit-scrollbar { display:none; }
     .km-chip {
-        border:1px solid #dfe3e7; background:#fff; color:#4a5158; border-radius:20px;
-        padding:.5rem 1rem; font-size:.9rem; font-weight:600; white-space:nowrap; min-height:42px;
+        display:inline-flex; align-items:center; gap:.4rem;
+        border:1px solid var(--km-border); background:#fff; color:#4a5560; border-radius:999px;
+        padding:.45rem .9rem; font-size:.86rem; font-weight:600; white-space:nowrap; min-height:38px;
     }
-    .km-chip.active { background:var(--c-primary); border-color:var(--c-primary); color:#fff; }
+    .km-chip b { font-size:.72rem; font-weight:800; background:#eef2f6; color:#5b6672; border-radius:20px; padding:.05rem .45rem; }
+    .km-chip.active { background:var(--c-navy); border-color:var(--c-navy); color:#fff; }
+    .km-chip.active b { background:rgba(255,255,255,.18); color:#fff; }
+    .km-chip.is-late b { background:#fdeaea; color:#c0392b; }
 
     .km-month-clear {
         display:flex; align-items:center; gap:.4rem; border:1px dashed var(--c-primary); background:#e6f4fb;
         color:var(--c-primary); border-radius:20px; padding:.4rem .8rem; font-size:.82rem; font-weight:600;
     }
 
-    .km-pay-list { display:flex; flex-direction:column; gap:.7rem; }
+    /* Taksit satırları: solda tarih kutusu, sağda tutar */
+    .km-pay-list { display:flex; flex-direction:column; gap:.6rem; }
     .km-pay-row {
-        display:flex; align-items:center; gap:.85rem; background:#fff; border-radius:14px;
-        padding:.95rem 1rem; text-decoration:none; color:inherit; box-shadow:0 2px 8px rgba(0,0,0,.05);
+        position:relative; overflow:hidden;
+        display:flex; align-items:center; gap:.9rem; background:#fff; border-radius:14px; border:1px solid var(--km-border);
+        padding:.85rem 1rem .85rem 1.1rem; text-decoration:none; color:inherit; box-shadow:0 1px 2px rgba(16,24,40,.04);
+        transition:box-shadow .2s, transform .15s;
     }
-    .km-pay-row:active { background:#f7f9fa; }
-    .km-pay-icon {
-        width:40px; height:40px; flex-shrink:0; border-radius:12px; display:flex;
-        align-items:center; justify-content:center; font-size:1.35rem;
-    }
-    .km-pay-icon.is-odenen  { background:#e6f7ed; color:#1e9e5a; }
-    .km-pay-icon.is-geciken { background:#fdeaea; color:#c0392b; }
-    .km-pay-icon.is-yaklasan{ background:#e6f4fb; color:var(--c-primary); }
-    .km-pay-icon.is-iptal   { background:#eef0f2; color:#9aa3ac; }
+    .km-pay-row::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:#cfd7df; }
+    .km-pay-row.is-geciken::before { background:#e5534b; }
+    .km-pay-row.is-yaklasan::before { background:var(--c-primary); }
+    .km-pay-row.is-odenen::before { background:#1e9e5a; }
+    .km-pay-row:hover { box-shadow:var(--km-shadow); transform:translateY(-1px); }
+    .km-pay-date { width:48px; height:50px; flex-shrink:0; border-radius:11px; background:#f3f6f9; border:1px solid #e6ebf0;
+                   display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; }
+    .km-pay-date .d { font-size:1.15rem; font-weight:800; color:var(--c-navy); }
+    .km-pay-date .m { font-size:.62rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#8a939c; margin-top:.15rem; }
+    .km-pay-date.is-geciken { background:#fdf2f2; border-color:#f6d3d0; }
+    .km-pay-date.is-geciken .m { color:#c0392b; }
+    .km-pay-date.is-odenen { background:#effaf3; border-color:#cdebd9; }
+    .km-pay-date.is-odenen .m { color:#1e9e5a; }
 
     .km-pay-main { flex:1; min-width:0; display:block; }
     .km-pay-top { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
-    .km-pay-no { font-size:.78rem; color:#8a939c; font-weight:600; }
-    .km-pay-chip { font-size:.7rem; font-weight:700; padding:.18rem .5rem; border-radius:20px; }
+    .km-pay-no { font-size:.72rem; color:#8a939c; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+    .km-pay-chip { font-size:.66rem; font-weight:800; padding:.15rem .5rem; border-radius:20px; letter-spacing:.02em; }
     .km-pay-chip.is-paid   { background:#e6f7ed; color:#1e9e5a; }
     .km-pay-chip.is-late   { background:#fdeaea; color:#c0392b; }
-    .km-pay-chip.is-soon   { background:#fef6e0; color:#b8860b; }
+    .km-pay-chip.is-soon   { background:#fef6e0; color:#a16207; }
     .km-pay-chip.is-cancel { background:#eef0f2; color:#8a939c; }
     .km-pay-chip.is-review { background:#e6f4fb; color:var(--c-primary); }
     .km-pay-chip.is-stage  { background:#e6f7ed; color:#1e9e5a; display:inline-flex; align-items:center; gap:.2rem; }
-    .km-pay-desc { display:block; font-size:1rem; font-weight:700; margin-top:.15rem; line-height:1.3; }
-    .km-pay-due  { display:block; font-size:.82rem; color:#9aa3ac; margin-top:.1rem; }
+    .km-pay-desc { display:block; font-size:.98rem; font-weight:700; color:var(--c-navy); margin-top:.15rem; line-height:1.3; }
+    .km-pay-due  { display:block; font-size:.78rem; color:#9aa3ac; margin-top:.1rem; }
 
     .km-pay-right { display:flex; align-items:center; gap:.35rem; flex-shrink:0; }
-    .km-pay-amount { font-size:1.02rem; font-weight:800; color:var(--c-primary); white-space:nowrap; }
+    .km-pay-amount { font-size:1.02rem; font-weight:800; color:var(--c-navy); white-space:nowrap; }
+    .km-pay-row.is-odenen .km-pay-amount { color:#1e9e5a; }
+    .km-pay-row.is-geciken .km-pay-amount { color:#c0392b; }
     .km-pay-chev { color:#c3cad1; font-size:1.2rem; }
 
     .km-pay-empty { text-align:center; color:#9aa3ac; padding:2rem 1rem; font-size:.95rem; }
@@ -303,19 +405,19 @@ else
 
     .km-cal-grid { display:none; grid-template-columns:repeat(3,1fr); gap:.6rem; margin-top:.7rem; }
     .km-cal-grid.active { display:grid; }
-    .km-cal-cell { background:#fff; border-radius:12px; padding:.8rem .7rem; box-shadow:0 2px 8px rgba(0,0,0,.05); }
+    .km-cal-cell { background:#fff; border-radius:14px; padding:.8rem .75rem; border:1px solid var(--km-border); box-shadow:0 1px 2px rgba(16,24,40,.04); }
     .km-cal-cell.is-today { border:1.5px solid var(--c-primary); }
     .km-cal-cell.has-pay { cursor:pointer; }
     .km-cal-cell.has-pay:active { background:#f7f9fa; }
     .km-cal-month { font-size:.85rem; font-weight:700; color:#4a5158; }
-    .km-cal-amount { font-size:.88rem; font-weight:800; color:var(--c-primary); margin-top:.3rem; line-height:1.2; }
+    .km-cal-amount { font-size:.88rem; font-weight:800; color:var(--c-navy); margin-top:.3rem; line-height:1.2; }
     .km-cal-count { font-size:.72rem; color:#8a939c; margin-top:.15rem; display:flex; align-items:center; gap:.3rem; }
     .km-cal-dot { width:6px; height:6px; border-radius:50%; background:var(--c-primary); display:inline-block; flex-shrink:0; }
     .km-cal-empty { font-size:.78rem; color:#c3cad1; margin-top:.3rem; }
 
     @@media (max-width: 576px) {
-        .km-pay-hero-title { font-size:1.2rem; }
-        .km-pay-stat-value { font-size:1.1rem; }
+        .km-pm-big { font-size:1.65rem; }
+        .km-pm-hero { margin-top:-3.4rem; }
         .km-pay-desc { font-size:.95rem; }
         .km-cal-amount { font-size:.8rem; }
     }
