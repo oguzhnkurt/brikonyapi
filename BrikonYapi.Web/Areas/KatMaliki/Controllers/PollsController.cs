@@ -48,8 +48,10 @@ namespace BrikonYapi.Web.Areas.KatMaliki.Controllers
 
             var polls = await VisibleTo(_db.Polls.AsQueryable(), projectIds)
                 .Where(p => p.Status != PollStatus.Draft)
-                .Include(p => p.Options)
+                .Include(p => p.Options).ThenInclude(o => o.Images)
+                .Include(p => p.Options).ThenInclude(o => o.Materials)
                 .Include(p => p.Votes)
+                .AsSplitQuery()
                 .OrderByDescending(p => p.Status == PollStatus.Active)
                 .ThenByDescending(p => p.CreatedAt)
                 .Take(50)
