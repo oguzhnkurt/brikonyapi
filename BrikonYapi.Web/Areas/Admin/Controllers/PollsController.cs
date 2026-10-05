@@ -67,6 +67,9 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 return View(poll);
             }
 
+            poll.ConceptRooms = poll.IsConcept ? NormalizeRooms(poll.ConceptRooms) : null;
+            if (!poll.IsConcept) poll.SameCameraAngle = false;
+
             poll.CreatedAt = DateTime.Now;
             for (var i = 0; i < texts.Count; i++)
                 poll.Options.Add(new PollOption { Text = texts[i], OrderIndex = i + 1 });
@@ -74,7 +77,9 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             _db.Polls.Add(poll);
             await _db.SaveChangesAsync();
 
-            TempData["Success"] = "Oylama oluşturuldu. Seçenek görsellerini düzenleme ekranından ekleyebilirsiniz.";
+            TempData["Success"] = poll.IsConcept
+                ? "Konsept oylaması oluşturuldu. Şimdi her konsept için oda görsellerini ve malzeme kartını ekleyin."
+                : "Oylama oluşturuldu. Seçenek görsellerini düzenleme ekranından ekleyebilirsiniz.";
             return RedirectToAction(nameof(Manage), new { id = poll.Id });
         }
 
@@ -82,7 +87,8 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         {
             var poll = await _db.Polls
                 .Include(p => p.Project)
-                .Include(p => p.Options)
+                .Include(p => p.Options).ThenInclude(o => o.Images)
+                .Include(p => p.Options).ThenInclude(o => o.Materials)
                 .Include(p => p.Votes)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -335,6 +341,10 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
             }
 
             DeleteUploadedFile(option.ImagePath);
+            foreach (var im in await _db.PollOptionImages.Where(i => i.PollOptionId == optionId).ToListAsync())
+                DeleteUploadedFile(im.ImagePath);
+            foreach (var m in await _db.PollOptionMaterials.Where(x => x.PollOptionId == optionId).ToListAsync())
+                DeleteUploadedFile(m.SwatchPath);
             _db.PollOptions.Remove(option);
             await _db.SaveChangesAsync();
 
@@ -345,16 +355,223 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var poll = await _db.Polls.Include(p => p.Options).FirstOrDefaultAsync(p => p.Id == id);
+            var poll = await _db.Polls
+                .Include(p => p.Options).ThenInclude(o => o.Images)
+                .Include(p => p.Options).ThenInclude(o => o.Materials)
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (poll == null) return NotFound();
 
-            foreach (var o in poll.Options) DeleteUploadedFile(o.ImagePath);
+            foreach (var o in poll.Options)
+            {
+                DeleteUploadedFile(o.ImagePath);
+                foreach (var im in o.Images) DeleteUploadedFile(im.ImagePath);
+                foreach (var m in o.Materials) DeleteUploadedFile(m.SwatchPath);
+            }
 
             _db.Polls.Remove(poll);
             await _db.SaveChangesAsync();
 
             TempData["Success"] = "Oylama silindi.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // ── Konsept oylaması ─────────────────────────────────────────────────────
+
+        public const string DefaultConceptRooms = "Salon,Mutfak,Banyo,Dış Cephe";
+
+        /// <summary>"Salon, banyo ,Salon" → "Salon,banyo" (boşlukları kırpar, tekrarları atar).
+        /// Boş gelirse varsayılan oda listesi kullanılır.</summary>
+        public static string NormalizeRooms(string? rooms)
+        {
+            var list = (rooms ?? "")
+                .Split(new[] { ',', ';', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(r => r.Length > 0)
+                .Select(r => r.Length > 60 ? r[..60] : r)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            return list.Count == 0 ? DefaultConceptRooms : string.Join(",", list);
+        }
+
+        /// <summary>Konsept ayarları: oda listesi ve "aynı kamera açısı" (karşılaştırma sürgüsü).</summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveConceptSettings(int id, string? conceptRooms, bool sameCameraAngle)
+        {
+            var poll = await _db.Polls.FindAsync(id);
+            if (poll == null) return NotFound();
+
+            poll.IsConcept = true;
+            poll.ConceptRooms = NormalizeRooms(conceptRooms);
+            poll.SameCameraAngle = sameCameraAngle;
+            poll.UpdatedAt = DateTime.Now;
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = "Konsept ayarları kaydedildi.";
+            return RedirectToAction(nameof(Manage), new { id });
+        }
+
+        /// <summary>Konseptin adını ve kısa açıklamasını günceller.</summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveOptionInfo(int optionId, string text, string? description)
+        {
+            var option = await _db.PollOptions.FirstOrDefaultAsync(o => o.Id == optionId);
+            if (option == null) return NotFound();
+
+            if (!string.IsNullOrWhiteSpace(text)) option.Text = text.Trim().Length > 200 ? text.Trim()[..200] : text.Trim();
+            var d = (description ?? "").Trim();
+            option.Description = d.Length == 0 ? null : (d.Length > 500 ? d[..500] : d);
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = "Konsept bilgileri kaydedildi.";
+            return RedirectToAction(nameof(Manage), new { id = option.PollId });
+        }
+
+        /// <summary>
+        /// Bir konseptin bir odaya ait render görselini yükler/değiştirir. Render dosyaları genelde
+        /// çok büyük (4K, birkaç MB) olduğu için en fazla 1800px genişliğe küçültülüp WebP olarak
+        /// kaydedilir — telefonda hızlı açılır, kalite kaybı gözle fark edilmez.
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        [RequestSizeLimit(30 * 1024 * 1024)]
+        public async Task<IActionResult> SetConceptImage(int optionId, string room, IFormFile image)
+        {
+            var option = await _db.PollOptions.Include(o => o.Poll).FirstOrDefaultAsync(o => o.Id == optionId);
+            if (option == null) return NotFound();
+            room = (room ?? "").Trim();
+
+            if (image == null || image.Length == 0 || room.Length == 0)
+            {
+                TempData["Error"] = "Lütfen bir görsel seçin.";
+                return RedirectToAction(nameof(Manage), new { id = option.PollId });
+            }
+            if (image.Length > 25 * 1024 * 1024)
+            {
+                TempData["Error"] = "Görsel 25 MB'ı aşamaz.";
+                return RedirectToAction(nameof(Manage), new { id = option.PollId });
+            }
+            var ext = Path.GetExtension(image.FileName).ToLowerInvariant();
+            if (!AllowedImageExt.Contains(ext))
+            {
+                TempData["Error"] = "Sadece JPG, PNG veya WEBP yükleyebilirsiniz.";
+                return RedirectToAction(nameof(Manage), new { id = option.PollId });
+            }
+
+            var saved = await SaveResizedWebpAsync(image, 1800);
+            if (saved == null)
+            {
+                TempData["Error"] = "Geçersiz görsel dosyası.";
+                return RedirectToAction(nameof(Manage), new { id = option.PollId });
+            }
+
+            var existing = await _db.PollOptionImages.FirstOrDefaultAsync(i => i.PollOptionId == optionId && i.Room == room);
+            if (existing != null)
+            {
+                DeleteUploadedFile(existing.ImagePath);
+                existing.ImagePath = saved;
+            }
+            else
+            {
+                _db.PollOptionImages.Add(new PollOptionImage { PollOptionId = optionId, Room = room, ImagePath = saved });
+            }
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = $"{option.Text} · {room} görseli yüklendi.";
+            return RedirectToAction(nameof(Manage), new { id = option.PollId });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConceptImage(int imageId)
+        {
+            var img = await _db.PollOptionImages.Include(i => i.PollOption).FirstOrDefaultAsync(i => i.Id == imageId);
+            if (img == null) return NotFound();
+            var pollId = img.PollOption!.PollId;
+
+            DeleteUploadedFile(img.ImagePath);
+            _db.PollOptionImages.Remove(img);
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = "Görsel kaldırıldı.";
+            return RedirectToAction(nameof(Manage), new { id = pollId });
+        }
+
+        /// <summary>Konseptin malzeme kartına satır ekler (Parke — Meşe Naturel, Kod, renk, doku görseli).</summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        [RequestSizeLimit(12 * 1024 * 1024)]
+        public async Task<IActionResult> AddMaterial(int optionId, string category, string name, string? code, string? colorHex, IFormFile? swatch)
+        {
+            var option = await _db.PollOptions.FirstOrDefaultAsync(o => o.Id == optionId);
+            if (option == null) return NotFound();
+
+            category = (category ?? "").Trim();
+            name = (name ?? "").Trim();
+            if (category.Length == 0 || name.Length == 0)
+            {
+                TempData["Error"] = "Malzeme grubu ve adı zorunludur.";
+                return RedirectToAction(nameof(Manage), new { id = option.PollId });
+            }
+
+            string? swatchPath = null;
+            if (swatch != null && swatch.Length > 0)
+            {
+                var ext = Path.GetExtension(swatch.FileName).ToLowerInvariant();
+                if (AllowedImageExt.Contains(ext) && swatch.Length <= MaxImageBytes)
+                    swatchPath = await SaveResizedWebpAsync(swatch, 240);
+            }
+
+            var hex = (colorHex ?? "").Trim();
+            if (!System.Text.RegularExpressions.Regex.IsMatch(hex, "^#[0-9a-fA-F]{6}$")) hex = "";
+
+            var maxOrder = await _db.PollOptionMaterials.Where(m => m.PollOptionId == optionId).MaxAsync(m => (int?)m.OrderIndex) ?? 0;
+            _db.PollOptionMaterials.Add(new PollOptionMaterial
+            {
+                PollOptionId = optionId,
+                Category = category.Length > 60 ? category[..60] : category,
+                Name = name.Length > 150 ? name[..150] : name,
+                Code = string.IsNullOrWhiteSpace(code) ? null : (code.Trim().Length > 150 ? code.Trim()[..150] : code.Trim()),
+                ColorHex = hex.Length == 0 ? null : hex.ToUpperInvariant(),
+                SwatchPath = swatchPath,
+                OrderIndex = maxOrder + 1
+            });
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = "Malzeme eklendi.";
+            return RedirectToAction(nameof(Manage), new { id = option.PollId });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteMaterial(int materialId)
+        {
+            var m = await _db.PollOptionMaterials.Include(x => x.PollOption).FirstOrDefaultAsync(x => x.Id == materialId);
+            if (m == null) return NotFound();
+            var pollId = m.PollOption!.PollId;
+
+            DeleteUploadedFile(m.SwatchPath);
+            _db.PollOptionMaterials.Remove(m);
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = "Malzeme kaldırıldı.";
+            return RedirectToAction(nameof(Manage), new { id = pollId });
+        }
+
+        /// <summary>Görseli en fazla <paramref name="maxWidth"/> px genişliğe küçültüp
+        /// /uploads/polls altına WebP olarak kaydeder; başarısızsa null döner.</summary>
+        private async Task<string?> SaveResizedWebpAsync(IFormFile file, int maxWidth)
+        {
+            var dir = Path.Combine(_env.WebRootPath, "uploads", "polls");
+            Directory.CreateDirectory(dir);
+            var fileName = $"{Guid.NewGuid()}.webp";
+            try
+            {
+                using var input = file.OpenReadStream();
+                using var img = await Image.LoadAsync(input);
+                if (img.Width > maxWidth) img.Mutate(x => x.Resize(maxWidth, 0));
+                await img.SaveAsWebpAsync(Path.Combine(dir, fileName),
+                    new SixLabors.ImageSharp.Formats.Webp.WebpEncoder { Quality = 82 });
+                return $"/uploads/polls/{fileName}";
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private async Task FillProjectsAsync()
