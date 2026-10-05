@@ -13,6 +13,9 @@
     var expired    = Model.Status == PollStatus.Active && Model.EndsAt != null && Model.EndsAt < now;
     var startsText = Model.StartsAt?.ToString("dd MMMM yyyy HH:mm", tr) ?? "";
     var endsText   = Model.EndsAt?.ToString("dd MMMM yyyy HH:mm", tr) ?? "";
+    var rooms = (Model.ConceptRooms ?? BrikonYapi.Web.Areas.Admin.Controllers.PollsController.DefaultConceptRooms)
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+    string[] materialGroups = { "Parke", "Laminat", "Fayans", "Seramik", "Duvar Boyası", "Dış Cephe", "Mutfak Dolabı", "Tezgah", "Kapı", "Vitrifiye" };
 }
 
 <div class="d-flex align-items-center gap-2 mb-3">
@@ -91,6 +94,24 @@ else if (expired)
                     <div class="border-top pt-2 small text-muted">@Model.Description</div>
                 }
 
+                @if (Model.IsConcept)
+                {
+                    <form asp-area="Admin" asp-controller="Polls" asp-action="SaveConceptSettings" method="post" class="border-top pt-3 mt-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="fw-semibold small mb-2 d-flex align-items-center gap-1">
+                            <iconify-icon icon="mdi:palette-swatch-outline" class="text-primary"></iconify-icon> Konsept Ayarları
+                        </div>
+                        <label class="form-label small mb-1">Odalar / Alanlar</label>
+                        <input name="conceptRooms" class="form-control form-control-sm mb-2" value="@string.Join(", ", rooms)" />
+                        <div class="form-check small mb-2">
+                            <input class="form-check-input" type="checkbox" name="sameCameraAngle" value="true" id="sameAngle" @(Model.SameCameraAngle ? "checked" : "") />
+                            <label class="form-check-label" for="sameAngle">Render'lar aynı kamera açısından (karşılaştırma sürgüsü açık)</label>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">Konsept ayarlarını kaydet</button>
+                    </form>
+                }
+
                 <div class="border-top pt-3 mt-3">
                     <div class="fw-semibold small mb-2">Tarihler</div>
 
@@ -144,6 +165,158 @@ else if (expired)
     </div>
 
     <div class="col-lg-8">
+        @if (Model.IsConcept)
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var o in Model.Options.OrderBy(o => o.OrderIndex))
+                {
+                    var count = Model.Votes.Count(v => v.PollOptionId == o.Id);
+                    var pct = total > 0 ? (int)Math.Round(count * 100.0 / total) : 0;
+                    var filled = rooms.Count(r => o.Images.Any(i => i.Room == r));
+                    <div class="card cpt-card">
+                        <div class="card-header d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="cpt-letter">@(o.Text.Length > 0 ? o.Text.Trim().Split(' ').Last()[..1].ToUpperInvariant() : "?")</span>
+                                <h6 class="card-title mb-0">@o.Text</h6>
+                                <span class="badge @(filled == rooms.Count ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning")">@filled / @rooms.Count oda görseli</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="small text-muted">@count oy · %@pct</span>
+                                <form asp-area="Admin" asp-controller="Polls" asp-action="DeleteOption" method="post"
+                                      onsubmit="return confirm('Bu konsept silinsin mi? Görselleri ve malzeme kartı da silinir.')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="optionId" value="@o.Id" />
+                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0">Sil</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form asp-area="Admin" asp-controller="Polls" asp-action="SaveOptionInfo" method="post" class="row g-2 align-items-end mb-3">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="optionId" value="@o.Id" />
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1">Konsept adı</label>
+                                    <input name="text" class="form-control form-control-sm" value="@o.Text" maxlength="200" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small mb-1">Kısa açıklama</label>
+                                    <input name="description" class="form-control form-control-sm" value="@o.Description" maxlength="500" placeholder="Örn: Doğal tonlar, meşe parke, kırık beyaz duvarlar" />
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary w-100">Kaydet</button>
+                                </div>
+                            </form>
+
+                            <div class="small fw-semibold text-muted text-uppercase mb-2" style="letter-spacing:.06em">Oda görselleri</div>
+                            <div class="cpt-rooms mb-3">
+                                @foreach (var r in rooms)
+                                {
+                                    var img = o.Images.FirstOrDefault(i => i.Room == r);
+                                    var inputId = $"cimg{o.Id}_{rooms.IndexOf(r)}";
+                                    <div class="cpt-room">
+                                        <div class="cpt-room-img @(img == null ? "is-empty" : "")" style="@(img != null ? $"background-image:url('{img.ImagePath}')" : "")">
+                                            @if (img == null)
+                                            {
+                                                <iconify-icon icon="mdi:image-plus-outline"></iconify-icon>
+                                            }
+                                        </div>
+                                        <div class="cpt-room-foot">
+                                            <span class="cpt-room-name">@r</span>
+                                            <span class="d-flex gap-1">
+                                                <form asp-area="Admin" asp-controller="Polls" asp-action="SetConceptImage" method="post" enctype="multipart/form-data">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="optionId" value="@o.Id" />
+                                                    <input type="hidden" name="room" value="@r" />
+                                                    <input type="file" name="image" id="@inputId" class="d-none" accept=".jpg,.jpeg,.png,.webp" onchange="this.form.submit(); document.getElementById('@(inputId)_b').innerText='Yükleniyor…';" />
+                                                    <button type="button" id="@(inputId)_b" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="document.getElementById('@inputId').click()">
+                                                        @(img == null ? "Yükle" : "Değiştir")
+                                                    </button>
+                                                </form>
+                                                @if (img != null)
+                                                {
+                                                    <form asp-area="Admin" asp-controller="Polls" asp-action="DeleteConceptImage" method="post" onsubmit="return confirm('Görsel kaldırılsın mı?')">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="imageId" value="@img.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-link text-danger py-0 px-1" title="Kaldır"><iconify-icon icon="mdi:close"></iconify-icon></button>
+                                                    </form>
+                                                }
+                                            </span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="small fw-semibold text-muted text-uppercase mb-2" style="letter-spacing:.06em">Malzeme kartı</div>
+                            @if (o.Materials.Any())
+                            {
+                                <div class="cpt-mats mb-2">
+                                    @foreach (var m in o.Materials.OrderBy(m => m.OrderIndex))
+                                    {
+                                        <div class="cpt-mat">
+                                            <span class="cpt-mat-sw" style="@(m.SwatchPath != null ? $"background-image:url('{m.SwatchPath}')" : m.ColorHex != null ? $"background:{m.ColorHex}" : "")"></span>
+                                            <span class="flex-grow-1 min-w-0">
+                                                <span class="cpt-mat-cat">@m.Category</span>
+                                                <span class="cpt-mat-name">@m.Name @if (!string.IsNullOrEmpty(m.Code)) {<small class="text-muted">· @m.Code</small>}</span>
+                                            </span>
+                                            <form asp-area="Admin" asp-controller="Polls" asp-action="DeleteMaterial" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="materialId" value="@m.Id" />
+                                                <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Kaldır"><iconify-icon icon="mdi:close"></iconify-icon></button>
+                                            </form>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            <form asp-area="Admin" asp-controller="Polls" asp-action="AddMaterial" method="post" enctype="multipart/form-data" class="row g-2 align-items-end cpt-addmat">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="optionId" value="@o.Id" />
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label small mb-1">Grup</label>
+                                    <input name="category" class="form-control form-control-sm" list="matGroups" placeholder="Parke" required />
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label small mb-1">Malzeme</label>
+                                    <input name="name" class="form-control form-control-sm" placeholder="Meşe Naturel" required />
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label small mb-1">Kod (ops.)</label>
+                                    <input name="code" class="form-control form-control-sm" placeholder="AC4-123" />
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label small mb-1">Renk (ops.)</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="color" class="form-control form-control-color cpt-color" value="#E8E1D3" title="Renk seç" />
+                                        <input name="colorHex" class="form-control cpt-hex" placeholder="#RRGGBB" maxlength="7" />
+                                    </div>
+                                </div>
+                                <div class="col-8 col-md-2">
+                                    <label class="form-label small mb-1">Doku görseli (ops.)</label>
+                                    <input type="file" name="swatch" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" />
+                                </div>
+                                <div class="col-4 col-md-1">
+                                    <button type="submit" class="btn btn-sm btn-primary w-100">Ekle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                }
+                <div class="card">
+                    <div class="card-body">
+                        <label class="form-label small mb-1">Yeni konsept ekle (opsiyonel)</label>
+                        <input id="newOptionInput" class="form-control" placeholder="Örn: Konsept D" />
+                        <div class="form-text small mb-0">Doldurursan sayfanın altındaki "Kaydet" ile birlikte eklenir.</div>
+                    </div>
+                </div>
+            </div>
+            <datalist id="matGroups">
+                @foreach (var gname in materialGroups)
+                {
+                    <option value="@gname"></option>
+                }
+            </datalist>
+        }
+        else
+        {
         <div class="card h-100">
             <div class="card-header"><h6 class="card-title mb-0">Seçenekler ve Sonuçlar</h6></div>
             <div class="card-body">
@@ -202,6 +375,7 @@ else if (expired)
                 <div class="form-text small mb-0">Doldurursan sayfanın altındaki "Kaydet" ile birlikte eklenir.</div>
             </div>
         </div>
+        }
     </div>
 </div>
 
@@ -220,7 +394,37 @@ else if (expired)
     </button>
 </div>
 
+@section Styles {
+<style>
+    .cpt-card .card-header { background:#fafbfc; }
+    .cpt-letter { width:30px; height:30px; border-radius:9px; background:linear-gradient(135deg,#0d3150,#0082B4); color:#fff;
+                  display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:.9rem; }
+    .cpt-rooms { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:.75rem; }
+    .cpt-room { border:1px solid #e6ebf0; border-radius:10px; overflow:hidden; background:#fff; }
+    .cpt-room-img { aspect-ratio:16/10; background:#f1f4f7 center/cover no-repeat; display:flex; align-items:center; justify-content:center; }
+    .cpt-room-img.is-empty { border-bottom:1px dashed #d6dde4; color:#b3bcc6; font-size:1.8rem; }
+    .cpt-room-foot { display:flex; align-items:center; justify-content:space-between; gap:.3rem; padding:.4rem .5rem; }
+    .cpt-room-name { font-size:.8rem; font-weight:700; color:#1f2937; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .cpt-mats { display:flex; flex-direction:column; gap:.35rem; }
+    .cpt-mat { display:flex; align-items:center; gap:.6rem; padding:.45rem .6rem; border:1px solid #eef1f4; border-radius:9px; }
+    .cpt-mat-sw { width:30px; height:30px; border-radius:7px; flex-shrink:0; background:#eef1f4 center/cover no-repeat; border:1px solid rgba(0,0,0,.06); }
+    .cpt-mat-cat { display:block; font-size:.66rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#8a94a0; }
+    .cpt-mat-name { display:block; font-size:.86rem; font-weight:600; color:#1f2937; }
+    .cpt-addmat { background:#f8fafb; border:1px dashed #dfe5eb; border-radius:10px; padding:.6rem .4rem .7rem; margin:0; }
+    .cpt-color { max-width:38px; padding:.15rem; }
+</style>
+}
+
 @section Scripts {
+<script>
+    // Renk seçici ↔ HEX metin kutusu eşlemesi (malzeme kartı)
+    document.querySelectorAll('.cpt-addmat').forEach(function (f) {
+        var c = f.querySelector('.cpt-color'), h = f.querySelector('.cpt-hex');
+        if (!c || !h) return;
+        c.addEventListener('input', function () { h.value = c.value.toUpperCase(); });
+        h.addEventListener('input', function () { if (/^#[0-9a-fA-F]{6}$/.test(h.value)) c.value = h.value; });
+    });
+</script>
 <script>
     // Tarih/saat alanları brikon-admin-datepicker.js'teki ortak Türkçe flatpickr ile
     // başlatılıyor. Bitiş, başlangıçtan önceki bir tarihe ayarlanamasın — sunucudaki

@@ -58,6 +58,37 @@
                     </div>
 
                     <div class="bk-field-group mb-3">
+                        <div class="bk-group-title">Oylama Türü</div>
+                        <input type="hidden" asp-for="IsConcept" id="IsConceptInput" />
+                        <div class="row g-2 mb-2" id="pollTypePicker">
+                            <div class="col-md-6">
+                                <button type="button" class="pt-card active" data-concept="false">
+                                    <iconify-icon icon="mdi:format-list-checks"></iconify-icon>
+                                    <span><strong>Standart oylama</strong><small>Her seçenek tek bir fotoğraf/başlık (ör. kapı modeli, renk).</small></span>
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" class="pt-card" data-concept="true">
+                                    <iconify-icon icon="mdi:palette-swatch-outline"></iconify-icon>
+                                    <span><strong>Konsept (render) oylaması</strong><small>Her seçenek bir tasarım paketi: odalara göre render görselleri + malzeme kartı.</small></span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="conceptFields" style="display:none">
+                            <div class="mb-2">
+                                <label class="bk-label">Odalar / Alanlar</label>
+                                <input asp-for="ConceptRooms" class="form-control" placeholder="Salon, Mutfak, Banyo, Dış Cephe" />
+                                <div class="form-text bk-hint">Virgülle ayırın. Her konsept için bu odaların render görsellerini yükleyeceksiniz. Boş bırakırsanız: Salon, Mutfak, Banyo, Dış Cephe.</div>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" asp-for="SameCameraAngle" />
+                                <label class="form-check-label" asp-for="SameCameraAngle">Render'lar aynı kamera açısından çekildi</label>
+                                <div class="form-text bk-hint">İşaretlerseniz kat malikleri iki konsepti kaydırmalı bir sürgüyle üst üste karşılaştırabilir. Farklı açılarsa işaretlemeyin.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bk-field-group mb-3">
                         <div class="bk-group-title">Zamanlama</div>
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -76,7 +107,7 @@
                         <div class="bk-group-title">Seçenekler &amp; Durum</div>
 
                         <div class="mb-3">
-                            <label class="bk-label">Seçenekler <span class="text-danger">*</span></label>
+                            <label class="bk-label" id="optionsLabel">Seçenekler <span class="text-danger">*</span></label>
                             <div id="optionList" class="d-flex flex-column gap-2">
                                 <input name="optionTexts" class="form-control" placeholder="1. seçenek" required />
                                 <input name="optionTexts" class="form-control" placeholder="2. seçenek" required />
@@ -109,14 +140,45 @@
     </div>
 </div>
 
+@section Styles {
+<style>
+    .pt-card { width:100%; display:flex; align-items:flex-start; gap:.75rem; text-align:left; padding:.9rem 1rem;
+               border:1.5px solid #e3e8ee; border-radius:12px; background:#fff; transition:border-color .15s, background-color .15s; }
+    .pt-card iconify-icon { font-size:1.6rem; color:#8a94a0; flex-shrink:0; margin-top:.1rem; }
+    .pt-card span { display:flex; flex-direction:column; gap:.15rem; }
+    .pt-card strong { font-size:.92rem; color:#1f2937; }
+    .pt-card small { font-size:.78rem; color:#6b7684; line-height:1.4; }
+    .pt-card.active { border-color:var(--bk-primary, #0082B4); background:#f0f8fc; }
+    .pt-card.active iconify-icon { color:var(--bk-primary, #0082B4); }
+</style>
+}
+
 @section Scripts {
 <script>
+    // Oylama türü seçici: konsept modunda oda alanları açılır ve seçenek ipuçları "Konsept A/B/C" olur.
+    (function () {
+        var hidden = document.getElementById('IsConceptInput');
+        var fields = document.getElementById('conceptFields');
+        var cards = document.querySelectorAll('#pollTypePicker .pt-card');
+        function apply(isConcept) {
+            hidden.value = isConcept ? 'true' : 'false';
+            fields.style.display = isConcept ? 'block' : 'none';
+            cards.forEach(function (c) { c.classList.toggle('active', (c.dataset.concept === 'true') === isConcept); });
+            document.querySelectorAll('#optionList input').forEach(function (inp, i) {
+                inp.placeholder = isConcept ? ('Konsept ' + String.fromCharCode(65 + i)) : ((i + 1) + '. seçenek');
+            });
+        }
+        cards.forEach(function (c) { c.addEventListener('click', function () { apply(c.dataset.concept === 'true'); }); });
+        apply(hidden.value === 'true' || hidden.value === 'True');
+    })();
+
     document.getElementById('addOption').addEventListener('click', function () {
         var list = document.getElementById('optionList');
         var input = document.createElement('input');
         input.name = 'optionTexts';
         input.className = 'form-control';
-        input.placeholder = (list.children.length + 1) + '. seçenek';
+        var isConcept = document.getElementById('IsConceptInput').value === 'true';
+        input.placeholder = isConcept ? ('Konsept ' + String.fromCharCode(65 + list.children.length)) : ((list.children.length + 1) + '. seçenek');
         list.appendChild(input);
         input.focus();
     });
