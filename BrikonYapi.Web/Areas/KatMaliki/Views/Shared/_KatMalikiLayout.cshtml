@@ -282,8 +282,20 @@
         .km-sheet-item.is-danger iconify-icon { color: #c0392b; }
         .km-sheet-logout { border-top: 1px solid #f1f3f5; margin-top: .4rem; padding-top: .4rem; }
 
+        /* Kısa ekranlı telefonlar (iPhone SE vb.): başlık ve alt çubuk biraz daha kompakt,
+           içeriğe daha fazla alan kalsın */
+        @@media (max-width: 767px) and (max-height: 700px) {
+            .km-navbar { padding-bottom: 1.15rem; margin-bottom: 1rem; }
+            .km-page-home .km-navbar { padding-bottom: 2.4rem; }
+            .km-greeting { gap: .8rem; }
+            .km-greeting-name { font-size: 1.3rem; }
+            .km-bottomnav a { min-height: 54px; gap: .2rem; }
+            .km-bottomnav a iconify-icon { width: 36px; height: 36px; font-size: 1.2rem; }
+        }
+
         /* Dar telefonlarda 5 sekme sığsın diye yazı ve rozet boyutu biraz küçülür */
         @@media (max-width: 360px) {
+            .km-greeting-name { font-size: 1.3rem; }
             .km-bottomnav a { font-size: .6rem; }
             .km-greeting-brand-label, .km-greeting-brand-sep { display: none; }
             .km-bottomnav a iconify-icon { font-size: 1.15rem; width: 34px; height: 34px; border-radius: 11px; }
