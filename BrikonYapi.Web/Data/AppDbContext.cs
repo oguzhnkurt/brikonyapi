@@ -38,6 +38,8 @@ namespace BrikonYapi.Web.Data
         public DbSet<Poll> Polls { get; set; }
         public DbSet<PollOption> PollOptions { get; set; }
         public DbSet<PollVote> PollVotes { get; set; }
+        public DbSet<PollOptionImage> PollOptionImages { get; set; }
+        public DbSet<PollOptionMaterial> PollOptionMaterials { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<ChatPoll> ChatPolls { get; set; }
         public DbSet<ChatPollOption> ChatPollOptions { get; set; }
@@ -150,6 +152,12 @@ namespace BrikonYapi.Web.Data
             {
                 e.HasOne(p => p.Project).WithMany().HasForeignKey(p => p.ProjectId).OnDelete(DeleteBehavior.Cascade);
                 e.HasMany(p => p.Options).WithOne(o => o.Poll).HasForeignKey(o => o.PollId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<PollOption>(e =>
+            {
+                e.HasMany(o => o.Images).WithOne(i => i.PollOption).HasForeignKey(i => i.PollOptionId).OnDelete(DeleteBehavior.Cascade);
+                e.HasMany(o => o.Materials).WithOne(m => m.PollOption).HasForeignKey(m => m.PollOptionId).OnDelete(DeleteBehavior.Cascade);
             });
 
             builder.Entity<PollVote>(e =>
