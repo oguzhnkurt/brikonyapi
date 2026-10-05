@@ -450,6 +450,7 @@
                 var kmTaxOffice = KmV(BrikonYapi.Web.Services.LegalPages.KeyTaxOffice);
                 var kmTaxNo = KmV(BrikonYapi.Web.Services.LegalPages.KeyTaxNumber);
                 var kmAddress = KmV("Address");
+                var kmMersis = KmV(BrikonYapi.Web.Services.LegalPages.KeyMersisNo);
                 <footer class="km-legal">
                     <div class="km-legal-pay">
                         <span class="km-legal-secure">
@@ -475,6 +476,7 @@
                         {
                             <span>@("Vergi Dairesi: " + kmTaxOffice + (string.IsNullOrEmpty(kmTaxNo) ? "" : " • VKN: " + kmTaxNo))</span>
                         }
+                        @if (!string.IsNullOrEmpty(kmMersis)) { <span>MERSİS: @kmMersis</span> }
                     </div>
                 </footer>
             }
