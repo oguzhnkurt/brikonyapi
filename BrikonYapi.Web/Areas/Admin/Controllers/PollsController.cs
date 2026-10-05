@@ -462,16 +462,14 @@ namespace BrikonYapi.Web.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Manage), new { id = option.PollId });
             }
 
-            var existing = await _db.PollOptionImages.FirstOrDefaultAsync(i => i.PollOptionId == optionId && i.Room == room);
-            if (existing != null)
+            // Bu odaya ait tüm eski kayıtları temizle (çift kayıt kalmasın), yenisini ekle
+            var existing = await _db.PollOptionImages.Where(i => i.PollOptionId == optionId && i.Room == room).ToListAsync();
+            foreach (var old in existing)
             {
-                DeleteUploadedFile(existing.ImagePath);
-                existing.ImagePath = saved;
+                DeleteUploadedFile(old.ImagePath);
+                _db.PollOptionImages.Remove(old);
             }
-            else
-            {
-                _db.PollOptionImages.Add(new PollOptionImage { PollOptionId = optionId, Room = room, ImagePath = saved });
-            }
+            _db.PollOptionImages.Add(new PollOptionImage { PollOptionId = optionId, Room = room, ImagePath = saved });
             await _db.SaveChangesAsync();
 
             TempData["Success"] = $"{option.Text} · {room} görseli yüklendi.";
