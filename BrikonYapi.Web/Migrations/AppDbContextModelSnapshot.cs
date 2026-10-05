@@ -565,6 +565,10 @@ namespace BrikonYapi.Web.Migrations
                         .HasMaxLength(60)
                         .HasColumnType("character varying(60)");
 
+                    b.Property<string>("ConceptRooms")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -575,8 +579,14 @@ namespace BrikonYapi.Web.Migrations
                     b.Property<DateTime?>("EndsAt")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<bool>("IsConcept")
+                        .HasColumnType("boolean");
+
                     b.Property<int?>("ProjectId")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("SameCameraAngle")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("StartsAt")
                         .HasColumnType("timestamp without time zone");
@@ -607,6 +617,10 @@ namespace BrikonYapi.Web.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("ImagePath")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -627,6 +641,77 @@ namespace BrikonYapi.Web.Migrations
                     b.HasIndex("PollId");
 
                     b.ToTable("PollOptions");
+                });
+
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PollOptionImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("PollOptionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Room")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PollOptionId");
+
+                    b.ToTable("PollOptionImages");
+                });
+
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PollOptionMaterial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("ColorHex")
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PollOptionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SwatchPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PollOptionId");
+
+                    b.ToTable("PollOptionMaterials");
                 });
 
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PollVote", b =>
@@ -1934,6 +2019,28 @@ namespace BrikonYapi.Web.Migrations
                     b.Navigation("Poll");
                 });
 
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PollOptionImage", b =>
+                {
+                    b.HasOne("BrikonYapi.Web.Data.Entities.PollOption", "PollOption")
+                        .WithMany("Images")
+                        .HasForeignKey("PollOptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PollOption");
+                });
+
+            modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PollOptionMaterial", b =>
+                {
+                    b.HasOne("BrikonYapi.Web.Data.Entities.PollOption", "PollOption")
+                        .WithMany("Materials")
+                        .HasForeignKey("PollOptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PollOption");
+                });
+
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PollVote", b =>
                 {
                     b.HasOne("BrikonYapi.Web.Data.Entities.Owner", "Owner")
@@ -2232,6 +2339,10 @@ namespace BrikonYapi.Web.Migrations
 
             modelBuilder.Entity("BrikonYapi.Web.Data.Entities.PollOption", b =>
                 {
+                    b.Navigation("Images");
+
+                    b.Navigation("Materials");
+
                     b.Navigation("Votes");
                 });
 
