@@ -53,6 +53,9 @@ namespace BrikonYapi.Web.Areas.KatMaliki.Controllers
             // İstenen proje malikin projeleri arasında değilse ilk projeye düşülür.
             var selected = projects.FirstOrDefault(p => p.Id == projectId) ?? projects.First();
             ViewBag.SelectedProject = selected;
+            // Bilgilendirme bandı için: bu sohbeti görebilen kat maliki sayısı
+            ViewBag.ParticipantCount = await _db.OwnerProjectAccesses
+                .CountAsync(a => a.ProjectId == selected.Id && a.CanChat);
 
             var messages = await _db.ChatMessages
                 .Include(m => m.ChatPoll!).ThenInclude(p => p.Options)
