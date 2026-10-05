@@ -85,7 +85,9 @@
                 {
                     id = o.Id,
                     name = o.Text,
-                    images = o.Images.ToDictionary(i => i.Room, i => i.ImagePath)
+                    // Aynı oda için birden fazla kayıt olsa bile sayfa çökmesin: en son yükleneni kullan
+                    images = o.Images.GroupBy(i => i.Room)
+                        .ToDictionary(g => g.Key, g => g.OrderByDescending(i => i.Id).First().ImagePath)
                 })
             };
 
