@@ -69,7 +69,124 @@
             }
         </div>
 
-        @if (isOpen)
+        @if (poll.IsConcept)
+        {
+            var cRooms = (poll.ConceptRooms ?? "Salon,Mutfak,Banyo,Dış Cephe")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+            var cOpts = poll.Options.OrderBy(o => o.OrderIndex).ToList();
+            // Görseli olan odalar (hiçbir konseptte görseli olmayan oda sekmesi gösterilmez)
+            var usedRooms = cRooms.Where(r => cOpts.Any(o => o.Images.Any(i => i.Room == r))).ToList();
+            var startOpt = cOpts.FirstOrDefault(o => o.Id == myVote?.PollOptionId) ?? cOpts.FirstOrDefault();
+            var cData = new
+            {
+                rooms = usedRooms,
+                same = poll.SameCameraAngle,
+                options = cOpts.Select(o => new
+                {
+                    id = o.Id,
+                    name = o.Text,
+                    images = o.Images.ToDictionary(i => i.Room, i => i.ImagePath)
+                })
+            };
+
+            <div class="km-cv" data-same="@(poll.SameCameraAngle ? "1" : "0")">
+                <script type="application/json" class="km-cv-data">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(cData))</script>
+
+                <div class="km-cv-tabs" role="tablist">
+                    @foreach (var o in cOpts)
+                    {
+                        var cnt = poll.Votes.Count(v => v.PollOptionId == o.Id);
+                        var cpct = totalVotes > 0 ? (int)Math.Round(cnt * 100.0 / totalVotes) : 0;
+                        var cMine = myVote?.PollOptionId == o.Id;
+                        <button type="button" class="km-cv-tab km-poll-opt @(o.Id == startOpt?.Id ? "is-active" : "") @(cMine ? "is-mine" : "")"
+                                data-option-id="@o.Id" role="tab">
+                            <span class="km-cv-tab-name">@o.Text</span>
+                            <span class="km-cv-tab-meta">
+                                <iconify-icon icon="iconamoon:check-bold" class="km-cv-tab-check"></iconify-icon>
+                                <span class="km-poll-opt-pct">%@cpct</span>
+                            </span>
+                            <span class="km-poll-opt-bar"><span style="width:@(cpct)%"></span></span>
+                        </button>
+                    }
+                </div>
+
+                @if (usedRooms.Count > 1)
+                {
+                    <div class="km-cv-rooms">
+                        @for (var ri = 0; ri < usedRooms.Count; ri++)
+                        {
+                            <button type="button" class="km-cv-room @(ri == 0 ? "is-active" : "")" data-room="@usedRooms[ri]">@usedRooms[ri]</button>
+                        }
+                    </div>
+                }
+
+                <div class="km-cv-stage">
+                    @if (usedRooms.Any())
+                    {
+                        <img class="km-cv-img is-front" alt="" />
+                        <img class="km-cv-img" alt="" />
+                        <div class="km-cv-cmp" hidden>
+                            <img class="km-cv-cmp-img" alt="" />
+                            <div class="km-cv-cmp-line"><span class="km-cv-cmp-knob"><iconify-icon icon="mdi:arrow-left-right"></iconify-icon></span></div>
+                            <span class="km-cv-cmp-lbl is-l"></span>
+                            <span class="km-cv-cmp-lbl is-r"></span>
+                        </div>
+                        <span class="km-cv-badge"></span>
+                        <div class="km-cv-tools">
+                            @if (poll.SameCameraAngle && cOpts.Count > 1)
+                            {
+                                <button type="button" class="km-cv-tool km-cv-cmp-btn"><iconify-icon icon="mdi:compare-horizontal"></iconify-icon> Karşılaştır</button>
+                            }
+                            <button type="button" class="km-cv-tool km-cv-full" aria-label="Tam ekran"><iconify-icon icon="mdi:fullscreen"></iconify-icon></button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="km-cv-empty"><iconify-icon icon="mdi:image-outline"></iconify-icon> Render görselleri yakında eklenecek.</div>
+                    }
+                </div>
+
+                @foreach (var o in cOpts)
+                {
+                    <div class="km-cv-info" data-for="@o.Id" @(o.Id == startOpt?.Id ? "" : "hidden")>
+                        @if (!string.IsNullOrWhiteSpace(o.Description))
+                        {
+                            <div class="km-cv-desc">@o.Description</div>
+                        }
+                        @if (o.Materials.Any())
+                        {
+                            <div class="km-cv-mats">
+                                @foreach (var m in o.Materials.OrderBy(m => m.OrderIndex))
+                                {
+                                    <div class="km-cv-mat">
+                                        <span class="km-cv-mat-sw" style="@(m.SwatchPath != null ? $"background-image:url('{m.SwatchPath}')" : m.ColorHex != null ? $"background:{m.ColorHex}" : "")"></span>
+                                        <span class="km-cv-mat-tx">
+                                            <span class="km-cv-mat-cat">@m.Category</span>
+                                            <span class="km-cv-mat-name">@m.Name</span>
+                                            @if (!string.IsNullOrEmpty(m.Code))
+                                            {
+                                                <span class="km-cv-mat-code">@m.Code</span>
+                                            }
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (isOpen)
+                {
+                    <button type="button" class="km-cv-vote btn btn-primary w-100" data-option-id="@startOpt?.Id">
+                        <iconify-icon icon="iconamoon:check-circle-1-duotone" class="me-1"></iconify-icon>
+                        <span class="km-cv-vote-tx"></span>
+                    </button>
+                }
+            </div>
+        }
+        else
+        {
+        if (isOpen)
         {
             <div class="km-poll-hint">Oy vermek için bir seçeneğe dokunun — değiştirmek istersen başka birine dokunman yeterli.</div>
         }
@@ -102,6 +219,7 @@
                 </div>
             }
         </div>
+        }
 
         <div class="km-poll-foot @(hasVoted ? "is-voted" : "")">
             @if (isOpen)
@@ -179,6 +297,64 @@
     .km-poll-foot iconify-icon { font-size:1.15rem; }
     .km-poll-foot.km-poll-flash { color:#1e9e5a; }
 
+
+    /* ── Konsept (render) oylaması ─────────────────────────────── */
+    .km-cv { margin-top:.6rem; }
+    .km-cv-tabs { display:grid; grid-template-columns:repeat(auto-fit, minmax(0, 1fr)); gap:.45rem; margin-bottom:.7rem; }
+    .km-cv-tab { position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:.3rem; text-align:left;
+                 border:1.5px solid var(--km-border, #e6ebf0); background:#fff; border-radius:12px; padding:.55rem .65rem .6rem; min-width:0;
+                 transition:border-color .15s, background-color .15s, box-shadow .15s; }
+    .km-cv-tab.is-active { border-color:var(--c-navy, #0b1b2e); background:#f4f7fa; box-shadow:0 0 0 3px rgba(11,27,46,.08); }
+    .km-cv-tab-name { font-size:.88rem; font-weight:800; color:var(--c-navy, #0b1b2e); line-height:1.2; max-width:100%;
+                      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .km-cv-tab-meta { display:flex; align-items:center; gap:.25rem; }
+    .km-cv-tab .km-poll-opt-pct { font-size:.72rem; }
+    .km-cv-tab-check { display:none; color:#fff; background:#1e9e5a; border-radius:50%; font-size:.62rem; padding:.18rem; }
+    .km-cv-tab.is-mine .km-cv-tab-check { display:inline-block; }
+    .km-cv-tab.is-mine { border-color:#1e9e5a; }
+    .km-cv-tab .km-poll-opt-bar { width:100%; height:4px; }
+    .km-cv-tab.is-mine .km-poll-opt-bar span { background:#1e9e5a; }
+
+    .km-cv-rooms { display:flex; gap:.35rem; overflow-x:auto; padding-bottom:.15rem; margin-bottom:.6rem; }
+    .km-cv-rooms::-webkit-scrollbar { display:none; }
+    .km-cv-room { border:none; background:#eef2f6; color:#4b5866; font-size:.8rem; font-weight:700; padding:.4rem .8rem;
+                  border-radius:999px; white-space:nowrap; min-height:34px; }
+    .km-cv-room.is-active { background:var(--c-navy, #0b1b2e); color:#fff; }
+
+    .km-cv-stage { position:relative; aspect-ratio:16/10; border-radius:14px; overflow:hidden; background:#0d1520; touch-action:pan-y; }
+    .km-cv-img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity .45s ease; }
+    .km-cv-img.is-front { opacity:1; }
+    .km-cv-stage:fullscreen { border-radius:0; aspect-ratio:auto; }
+    .km-cv-badge { position:absolute; left:.7rem; top:.7rem; z-index:3; background:rgba(11,27,46,.72); color:#fff; font-size:.74rem; font-weight:700;
+                   padding:.3rem .65rem; border-radius:999px; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+    .km-cv-tools { position:absolute; right:.6rem; bottom:.6rem; z-index:4; display:flex; gap:.35rem; }
+    .km-cv-tool { border:none; background:rgba(255,255,255,.92); color:var(--c-navy, #0b1b2e); font-size:.78rem; font-weight:700;
+                  border-radius:999px; padding:.4rem .7rem; display:inline-flex; align-items:center; gap:.25rem; box-shadow:0 4px 12px rgba(0,0,0,.2); min-height:34px; }
+    .km-cv-tool.is-on { background:var(--c-primary); color:#fff; }
+    .km-cv-empty { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:.4rem; color:#9aa3ac; font-size:.88rem; }
+
+    /* Karşılaştırma sürgüsü: soldaki konsept üstte, kesme çizgisine kadar görünür */
+    .km-cv-cmp { position:absolute; inset:0; z-index:2; }
+    .km-cv-cmp-img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; clip-path:inset(0 calc(100% - var(--cut, 50%)) 0 0); }
+    .km-cv-cmp-line { position:absolute; top:0; bottom:0; left:var(--cut, 50%); width:2px; margin-left:-1px; background:#fff; box-shadow:0 0 8px rgba(0,0,0,.4); cursor:ew-resize; }
+    .km-cv-cmp-knob { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:38px; height:38px; border-radius:50%;
+                      background:#fff; color:var(--c-navy, #0b1b2e); display:flex; align-items:center; justify-content:center; font-size:1.1rem; box-shadow:0 4px 12px rgba(0,0,0,.3); }
+    .km-cv-cmp-lbl { position:absolute; bottom:.7rem; font-size:.72rem; font-weight:800; color:#fff; background:rgba(11,27,46,.72); padding:.25rem .55rem; border-radius:999px; }
+    .km-cv-cmp-lbl.is-l { left:.7rem; } .km-cv-cmp-lbl.is-r { right:.7rem; bottom:3.3rem; }
+    .km-cv.is-cmp .km-cv-badge { display:none; }
+
+    .km-cv-info { margin-top:.8rem; }
+    .km-cv-desc { font-size:.9rem; color:#4b5866; line-height:1.5; margin-bottom:.6rem; }
+    .km-cv-mats { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:.45rem; }
+    .km-cv-mat { display:flex; align-items:center; gap:.55rem; padding:.5rem .6rem; border:1px solid var(--km-border, #e6ebf0); border-radius:11px; background:#fafbfc; min-width:0; }
+    .km-cv-mat-sw { width:34px; height:34px; border-radius:8px; flex-shrink:0; background:#e9edf1 center/cover no-repeat; border:1px solid rgba(0,0,0,.06); }
+    .km-cv-mat-tx { display:flex; flex-direction:column; min-width:0; }
+    .km-cv-mat-cat { font-size:.62rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#8a939c; }
+    .km-cv-mat-name { font-size:.84rem; font-weight:700; color:var(--c-navy, #0b1b2e); line-height:1.25; }
+    .km-cv-mat-code { font-size:.7rem; color:#9aa3ac; }
+    .km-cv-vote { margin-top:.9rem; min-height:50px; border-radius:12px; font-weight:700; }
+    .km-cv-vote.is-done { background:#1e9e5a; border-color:#1e9e5a; }
+
     @@media (max-width: 576px) {
         .km-poll-hero-title { font-size:1.3rem; }
         .km-poll-title { font-size:1.05rem; }
@@ -198,6 +374,142 @@
         });
     });
 
+
+    // ── Konsept görüntüleyici ─────────────────────────────────────
+    document.querySelectorAll('.km-cv').forEach(function (cv) {
+        var dataEl = cv.querySelector('.km-cv-data');
+        if (!dataEl) return;
+        var data = JSON.parse(dataEl.textContent);
+        var card = cv.closest('.km-poll-card');
+        var tabs = Array.prototype.slice.call(cv.querySelectorAll('.km-cv-tab'));
+        var roomBtns = Array.prototype.slice.call(cv.querySelectorAll('.km-cv-room'));
+        var imgs = cv.querySelectorAll('.km-cv-img');
+        var badge = cv.querySelector('.km-cv-badge');
+        var voteBtn = cv.querySelector('.km-cv-vote');
+        var cmpBtn = cv.querySelector('.km-cv-cmp-btn');
+        var cmp = cv.querySelector('.km-cv-cmp');
+        var stage = cv.querySelector('.km-cv-stage');
+        var active = tabs.find(function (t) { return t.classList.contains('is-active'); }) || tabs[0];
+        var room = data.rooms[0];
+        var front = 0;
+
+        function opt(id) { return data.options.find(function (o) { return o.id === id; }); }
+        function imgFor(o, r) { return o && o.images ? (o.images[r] || null) : null; }
+        function activeId() { return parseInt(active.dataset.optionId, 10); }
+        function mineId() { var m = tabs.find(function (t) { return t.classList.contains('is-mine'); }); return m ? parseInt(m.dataset.optionId, 10) : null; }
+
+        // Önceden yükle: geçişler anında olsun
+        data.options.forEach(function (o) { Object.keys(o.images || {}).forEach(function (k) { var i = new Image(); i.src = o.images[k]; }); });
+
+        function show() {
+            var o = opt(activeId());
+            var src = imgFor(o, room);
+            if (imgs.length === 2) {
+                var next = imgs[1 - front];
+                if (src) {
+                    next.onload = function () { next.classList.add('is-front'); imgs[front].classList.remove('is-front'); front = 1 - front; };
+                    if (next.getAttribute('src') === src) next.onload();
+                    else next.src = src;
+                } else {
+                    imgs[front].classList.remove('is-front');
+                }
+            }
+            if (badge) badge.textContent = (o ? o.name : '') + (room ? ' · ' + room : '') + (src ? '' : ' · görsel yok');
+            cv.querySelectorAll('.km-cv-info').forEach(function (inf) { inf.hidden = parseInt(inf.dataset.for, 10) !== activeId(); });
+            updateVoteBtn();
+            if (cv.classList.contains('is-cmp')) updateCmp();
+        }
+
+        function updateVoteBtn() {
+            if (!voteBtn) return;
+            var o = opt(activeId());
+            var done = mineId() === activeId();
+            voteBtn.dataset.optionId = activeId();
+            voteBtn.classList.toggle('is-done', done);
+            voteBtn.querySelector('.km-cv-vote-tx').textContent = done ? (o.name + ' seçiminiz kaydedildi') : (o.name + ' konseptini seçiyorum');
+        }
+
+        tabs.forEach(function (t) {
+            t.addEventListener('click', function () {
+                active = t;
+                tabs.forEach(function (x) { x.classList.toggle('is-active', x === t); });
+                show();
+            });
+        });
+        roomBtns.forEach(function (b) {
+            b.addEventListener('click', function () {
+                room = b.dataset.room;
+                roomBtns.forEach(function (x) { x.classList.toggle('is-active', x === b); });
+                show();
+            });
+        });
+
+        // Parmakla kaydırarak konsept değiştirme (karşılaştırma kapalıyken)
+        if (stage) {
+            var sx = null;
+            stage.addEventListener('touchstart', function (e) { if (!cv.classList.contains('is-cmp')) sx = e.touches[0].clientX; }, { passive: true });
+            stage.addEventListener('touchend', function (e) {
+                if (sx === null) return;
+                var dx = e.changedTouches[0].clientX - sx; sx = null;
+                if (Math.abs(dx) < 50) return;
+                var idx = tabs.indexOf(active) + (dx < 0 ? 1 : -1);
+                if (idx >= 0 && idx < tabs.length) tabs[idx].click();
+            });
+        }
+
+        // Karşılaştırma: sol = bir önceki/sonraki konsept, sağ = seçili konsept
+        var cut = 50;
+        function cmpOther() {
+            var i = tabs.indexOf(active);
+            return opt(parseInt(tabs[i > 0 ? i - 1 : 1].dataset.optionId, 10));
+        }
+        function updateCmp() {
+            var other = cmpOther(), cur = opt(activeId());
+            cmp.querySelector('.km-cv-cmp-img').src = imgFor(other, room) || '';
+            cmp.querySelector('.is-l').textContent = other.name;
+            cmp.querySelector('.is-r').textContent = cur.name;
+            cmp.style.setProperty('--cut', cut + '%');
+        }
+        if (cmpBtn && cmp) {
+            cmpBtn.addEventListener('click', function () {
+                var on = !cv.classList.contains('is-cmp');
+                cv.classList.toggle('is-cmp', on);
+                cmpBtn.classList.toggle('is-on', on);
+                cmp.hidden = !on;
+                if (on) { cut = 50; updateCmp(); }
+            });
+            function setCut(clientX) {
+                var r = stage.getBoundingClientRect();
+                cut = Math.max(0, Math.min(100, (clientX - r.left) / r.width * 100));
+                cmp.style.setProperty('--cut', cut + '%');
+            }
+            var dragging = false;
+            cmp.addEventListener('pointerdown', function (e) { dragging = true; cmp.setPointerCapture(e.pointerId); setCut(e.clientX); });
+            cmp.addEventListener('pointermove', function (e) { if (dragging) setCut(e.clientX); });
+            cmp.addEventListener('pointerup', function () { dragging = false; });
+            cmp.style.touchAction = 'none';
+        }
+
+        var fullBtn = cv.querySelector('.km-cv-full');
+        if (fullBtn && stage) {
+            fullBtn.addEventListener('click', function () {
+                if (document.fullscreenElement) document.exitFullscreen();
+                else if (stage.requestFullscreen) stage.requestFullscreen();
+                else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
+            });
+        }
+
+        if (voteBtn) {
+            voteBtn.addEventListener('click', function () {
+                if (mineId() === activeId()) return;
+                castVote(active);
+            });
+        }
+
+        // Oy sonucu geldiğinde buton metnini güncelle
+        cv.addEventListener('km-voted', updateVoteBtn);
+        show();
+    });
     function castVote(optEl) {
         var card = optEl.closest('.km-poll-card');
         if (!card || card.dataset.busy === '1') return;
@@ -243,6 +555,8 @@
 
         var totalEl = card.querySelector('.km-poll-total-num');
         if (totalEl) totalEl.textContent = data.totalVotes;
+        var cvEl = card.querySelector('.km-cv');
+        if (cvEl) cvEl.dispatchEvent(new Event('km-voted'));
 
         showFoot(card, 'Oyunuz kaydedildi.', true);
     }
