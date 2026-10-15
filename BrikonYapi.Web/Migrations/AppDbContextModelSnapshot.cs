@@ -1134,8 +1134,25 @@ namespace BrikonYapi.Web.Migrations
                     b.Property<string>("ApprovedByUserId")
                         .HasColumnType("text");
 
+                    b.Property<string>("CardBin")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<decimal?>("ChargedAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int?>("InstallmentCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("InstallmentInterestAmount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Method")
                         .HasColumnType("integer");
@@ -1156,6 +1173,9 @@ namespace BrikonYapi.Web.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
 
                     b.HasIndex("PaymentScheduleId");
 
