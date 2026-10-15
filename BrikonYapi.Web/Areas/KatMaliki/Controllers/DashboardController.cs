@@ -44,7 +44,7 @@ namespace BrikonYapi.Web.Areas.KatMaliki.Controllers
 
         /// <summary>Tek bir taksidin detayı.
         /// GÜVENLİK: taksit, giriş yapan malikin bağımsız bölümlerinden birine ait değilse 404 döner (IDOR koruması).</summary>
-        public async Task<IActionResult> Detail(int id)
+        public async Task<IActionResult> Detail(int id, [FromServices] CardPaymentService cards)
         {
             var owner = await GetCurrentOwnerAsync();
             if (owner == null) return NotFound();
@@ -55,8 +55,49 @@ namespace BrikonYapi.Web.Areas.KatMaliki.Controllers
 
             if (schedule == null) return NotFound();
 
+            // Sonucu henüz bilinmeyen kart denemesi varsa (ör. malik TKPAY sayfasından dönmeden
+            // tarayıcıyı kapattıysa) sayfa açılırken TKPAY'den doğrula.
+            if (cards.IsAvailable)
+            {
+                foreach (var open in schedule.Transactions.Where(t => t.Method == PaymentMethod.CreditCard
+                                                                      && t.Status == PaymentTransactionStatus.Initiated).ToList())
+                {
+                    try { await cards.VerifyAsync(open, HttpContext.RequestAborted); }
+                    catch (Exception) { /* sayfa yine açılır; arka plan işi tekrar dener */ }
+                }
+            }
+
             ViewBag.Unit = owner.Units.First(u => u.PaymentSchedules.Any(s => s.Id == id));
+            ViewBag.CardAvailable = cards.IsAvailable && CardPaymentService.SupportsCurrency(schedule.Currency);
+            ViewBag.CardConfigured = cards.IsAvailable;
             return View(schedule);
+        }
+
+        /// <summary>Kredi kartı ile ödeme: TKPAY güvenli ödeme sayfasına yönlendirir.
+        /// Kart bilgisi bu siteye hiç girilmez. GÜVENLİK: taksit yalnızca giriş yapan malike aitse işlenir.</summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> PayByCard(int scheduleId, bool acceptTerms,
+            [FromServices] CardPaymentService cards)
+        {
+            var owner = await GetCurrentOwnerAsync();
+            if (owner == null) return NotFound();
+
+            var schedule = owner.Units.SelectMany(u => u.PaymentSchedules).FirstOrDefault(p => p.Id == scheduleId);
+            if (schedule == null) return NotFound();
+
+            if (!acceptTerms)
+            {
+                TempData["Error"] = "Devam etmek için Mesafeli Hizmet ve Ödeme Sözleşmesi ile Ön Bilgilendirme Formu'nu onaylayın.";
+                return RedirectToAction(nameof(Detail), new { id = scheduleId });
+            }
+
+            var (url, error) = await cards.StartAsync(owner, schedule, HttpContext.RequestAborted);
+            if (url == null)
+            {
+                TempData["Error"] = error ?? "Ödeme başlatılamadı.";
+                return RedirectToAction(nameof(Detail), new { id = scheduleId });
+            }
+            return Redirect(url); // TkpayClient yalnızca *.tkpay.com https adreslerine izin verir
         }
 
         [HttpPost, ValidateAntiForgeryToken]
