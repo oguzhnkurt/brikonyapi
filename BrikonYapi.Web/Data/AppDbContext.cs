@@ -154,6 +154,10 @@ namespace BrikonYapi.Web.Data
                 e.HasMany(p => p.Options).WithOne(o => o.Poll).HasForeignKey(o => o.PollId).OnDelete(DeleteBehavior.Cascade);
             });
 
+            // TKPAY kart ödemesi: bizim ürettiğimiz sipariş numarası tekil olmalı
+            builder.Entity<PaymentTransaction>()
+                .HasIndex(t => t.ExternalId).IsUnique();
+
             builder.Entity<PollOption>(e =>
             {
                 e.HasMany(o => o.Images).WithOne(i => i.PollOption).HasForeignKey(i => i.PollOptionId).OnDelete(DeleteBehavior.Cascade);
