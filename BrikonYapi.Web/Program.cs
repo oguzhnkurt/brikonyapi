@@ -147,6 +147,12 @@ builder.Services.AddScoped<WhatsAppService>();
 builder.Services.AddScoped<PaymentNotificationService>();
 builder.Services.AddHostedService<PaymentReminderBackgroundService>();
 
+// ── Kredi kartı ile ödeme: TKPAY Ödeme Formu (kimlik bilgileri Tkpay__* ortam değişkenlerinden) ──
+builder.Services.AddHttpClient("tkpay", c => c.Timeout = TimeSpan.FromSeconds(30));
+builder.Services.AddScoped<TkpayClient>();
+builder.Services.AddScoped<CardPaymentService>();
+builder.Services.AddHostedService<CardPaymentReconcileBackgroundService>();
+
 builder.Services.AddLocalization();
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o =>
 {
