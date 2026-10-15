@@ -21,6 +21,7 @@
         PaymentTransactionStatus.Rejected => "<span class=\"badge bg-danger-subtle text-danger\">Reddedildi</span>",
         PaymentTransactionStatus.Completed => "<span class=\"badge bg-success-subtle text-success\">Tamamlandı</span>",
         PaymentTransactionStatus.Failed   => "<span class=\"badge bg-danger-subtle text-danger\">Başarısız</span>",
+        PaymentTransactionStatus.Initiated => "<span class=\"badge bg-info-subtle text-info\">Kart · İşleniyor</span>",
         _                                   => "<span class=\"badge bg-warning-subtle text-warning\">Onay Bekliyor</span>"
     };
 }
@@ -145,6 +146,21 @@ else
                                             @if (!string.IsNullOrEmpty(t.ReceiptFilePath))
                                             {
                                                 <a href="@t.ReceiptFilePath" target="_blank">Dekontu Gör</a>
+                                            }
+                                            else if (t.Method == PaymentMethod.CreditCard)
+                                            {
+                                                <span class="small text-muted">
+                                                    @(t.ExternalId)
+                                                    @if (t.ChargedAmount.HasValue)
+                                                    {
+                                                        <br />@($"Çekilen: {s.CurrencySymbol}{t.ChargedAmount.Value.ToString("N2", tr)}")
+                                                        @(t.InstallmentCount > 1 ? $" · {t.InstallmentCount} taksit" : " · Tek çekim")
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(t.Note))
+                                                    {
+                                                        <br /><span class="text-danger">@t.Note</span>
+                                                    }
+                                                </span>
                                             }
                                             else
                                             {
