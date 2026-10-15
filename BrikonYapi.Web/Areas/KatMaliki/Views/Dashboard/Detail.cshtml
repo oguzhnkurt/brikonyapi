@@ -13,6 +13,12 @@
                  || (Model.Status == PaymentScheduleStatus.Pending && Model.DueDate.Date < DateTime.Today);
 
     var pendingTx  = Model.Transactions.FirstOrDefault(t => t.Status == PaymentTransactionStatus.PendingApproval);
+    var cardAvailable  = ViewBag.CardAvailable as bool? ?? false;
+    var cardConfigured = ViewBag.CardConfigured as bool? ?? false;
+    var cardFlag = Context.Request.Query["kart"].ToString();
+    var lastFailedCard = Model.Transactions.Where(t => t.Method == PaymentMethod.CreditCard && t.Status == PaymentTransactionStatus.Failed)
+                                           .OrderByDescending(t => t.CreatedAt).FirstOrDefault();
+    var openCard = Model.Transactions.FirstOrDefault(t => t.Method == PaymentMethod.CreditCard && t.Status == PaymentTransactionStatus.Initiated);
     var rejectedTx = Model.Transactions.FirstOrDefault(t => t.Status == PaymentTransactionStatus.Rejected);
     var approvedTx = Model.Transactions.FirstOrDefault(t => t.Status == PaymentTransactionStatus.Approved
                                                         || t.Status == PaymentTransactionStatus.Completed);
@@ -100,6 +106,27 @@
     </div>
 </div>
 
+@if (cardFlag == "basarisiz" && !isPaid)
+{
+    <div class="km-note is-warn mb-3">
+        <iconify-icon icon="iconamoon:attention-circle-duotone"></iconify-icon>
+        <div>
+            <div class="km-note-title">Kartla ödeme tamamlanamadı</div>
+            <div class="km-note-sub">@(lastFailedCard?.Note ?? "Ödeme banka tarafından onaylanmadı.") Kartınızdan tutar çekilmedi; tekrar deneyebilir veya havale ile ödeyebilirsiniz.</div>
+        </div>
+    </div>
+}
+else if ((cardFlag == "bekliyor" || openCard != null) && !isPaid)
+{
+    <div class="km-note is-info mb-3">
+        <iconify-icon icon="iconamoon:clock-duotone"></iconify-icon>
+        <div>
+            <div class="km-note-title">Kart ödemeniz kontrol ediliyor</div>
+            <div class="km-note-sub">Bankadan sonuç bekleniyor. Birkaç dakika içinde bu sayfayı yenilediğinizde güncel durumu görebilirsiniz. Lütfen tekrar ödeme yapmayın.</div>
+        </div>
+    </div>
+}
+
 @if (stageReady && !isPaid && approvedTx == null && pendingTx == null)
 {
     <div class="km-note is-stage mb-3">
@@ -117,7 +144,19 @@
         <iconify-icon icon="iconamoon:check-circle-1-duotone"></iconify-icon>
         <div>
             <div class="km-note-title">Ödeme tamamlandı</div>
-            <div class="km-note-sub">Bu taksit ödenmiştir. Teşekkür ederiz.</div>
+            <div class="km-note-sub">
+                @if (approvedTx?.Method == PaymentMethod.CreditCard)
+                {
+                    var cardMsg = approvedTx.InstallmentCount > 1
+                        ? $"Kredi kartı ödemeniz alındı ({approvedTx.InstallmentCount} taksit). Teşekkür ederiz."
+                        : "Kredi kartı ödemeniz alındı. Teşekkür ederiz.";
+                    @cardMsg
+                }
+                else
+                {
+                    <text>Bu taksit ödenmiştir. Teşekkür ederiz.</text>
+                }
+            </div>
         </div>
     </div>
 }
@@ -128,8 +167,15 @@ else if (pendingTx != null)
         <div>
             <div class="km-note-title">Bildiriminiz inceleniyor</div>
             <div class="km-note-sub">
-                @pendingTx.CreatedAt.ToString("dd MMMM yyyy HH:mm", tr) tarihinde gönderdiğiniz dekont
-                yönetim tarafından kontrol ediliyor. Onaylandığında taksit "Ödendi" olarak işaretlenir.
+                @if (pendingTx.Method == PaymentMethod.CreditCard)
+                {
+                    <text>Kartla yaptığınız ödeme alındı ve yönetim tarafından kontrol ediliyor. Tekrar ödeme yapmanıza gerek yoktur.</text>
+                }
+                else
+                {
+                    <text>@pendingTx.CreatedAt.ToString("dd MMMM yyyy HH:mm", tr) tarihinde gönderdiğiniz dekont
+                    yönetim tarafından kontrol ediliyor. Onaylandığında taksit "Ödendi" olarak işaretlenir.</text>
+                }
             </div>
         </div>
     </div>
@@ -179,15 +225,63 @@ else
         </form>
     </div>
 
-    <!-- 2) Kredi kartı (sanal POS entegrasyonu sonrası aktif olacak) -->
-    <div class="km-card km-paybox is-soon mb-4">
+    var cardReady = cardAvailable && openCard == null;
+    @* 2) Kredi kartı: TKPAY güvenli ödeme sayfası (kart bilgisi bu siteye girilmez) *@
+    <div class="km-card km-paybox @(cardReady ? "" : "is-soon") mb-4">
         <div class="km-paybox-head">
-            <span class="km-paybox-ic is-muted"><iconify-icon icon="mdi:credit-card-outline"></iconify-icon></span>
+            <span class="km-paybox-ic @(cardReady ? "" : "is-muted")"><iconify-icon icon="mdi:credit-card-outline"></iconify-icon></span>
             <div class="flex-grow-1">
-                <div class="km-paybox-title">Kredi kartı ile öde <span class="km-soon">Yakında</span></div>
-                <div class="km-paybox-sub">3D Secure ile güvenli online ödeme çok yakında burada olacak.</div>
+                @if (cardReady)
+                {
+                    <div class="km-paybox-title">Kredi kartı ile öde</div>
+                    <div class="km-paybox-sub">3D Secure ile güvenli ödeme. Kart bilgilerinizi TKPAY'in güvenli sayfasında girersiniz; bilgileriniz bizimle paylaşılmaz.</div>
+                }
+                else if (cardConfigured && Model.Currency != PaymentCurrency.TRY)
+                {
+                    <div class="km-paybox-title">Kredi kartı ile öde</div>
+                    <div class="km-paybox-sub">Döviz cinsinden taksitler kartla ödenemez; lütfen havale/EFT ile ödeyin.</div>
+                }
+                else if (openCard != null)
+                {
+                    <div class="km-paybox-title">Kredi kartı ile öde</div>
+                    <div class="km-paybox-sub">Başlattığınız kart ödemesi kontrol ediliyor. Sonuçlanınca bu alan güncellenir.</div>
+                }
+                else
+                {
+                    <div class="km-paybox-title">Kredi kartı ile öde <span class="km-soon">Yakında</span></div>
+                    <div class="km-paybox-sub">3D Secure ile güvenli online ödeme çok yakında burada olacak.</div>
+                }
             </div>
         </div>
+
+        @if (cardReady)
+        {
+            <div class="km-card-sum">
+                <div class="km-card-sum-row"><span>Taksit tutarı</span><strong>@Model.CurrencySymbol@Model.Amount.ToString("N2", tr)</strong></div>
+                <div class="km-card-sum-hint">
+                    <iconify-icon icon="mdi:information-outline"></iconify-icon>
+                    <span>Tek çekim veya taksit seçeneğini bir sonraki adımda seçersiniz. Taksitli ödemelerde bankanın vade farkı
+                    toplam tutara eklenir ve ödeme onayından önce size gösterilir.</span>
+                </div>
+            </div>
+
+            <form asp-area="KatMaliki" asp-controller="Dashboard" asp-action="PayByCard" method="post" id="kmCardForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="scheduleId" value="@Model.Id" />
+                <label class="km-terms">
+                    <input type="checkbox" name="acceptTerms" value="true" id="kmTerms" required />
+                    <span>
+                        <a href="/yasal/mesafeli-satis-sozlesmesi" target="_blank" rel="noopener">Mesafeli Hizmet ve Ödeme Sözleşmesi</a>'ni ve
+                        <a href="/yasal/on-bilgilendirme-formu" target="_blank" rel="noopener">Ön Bilgilendirme Formu</a>'nu okudum, kabul ediyorum.
+                    </span>
+                </label>
+                <button type="submit" class="btn btn-primary w-100 km-paybox-btn" id="kmCardBtn" disabled>
+                    <iconify-icon icon="mdi:lock-outline" class="me-1"></iconify-icon>
+                    Güvenli Ödemeye Geç
+                </button>
+            </form>
+        }
+
         <div class="km-paybox-logos">
             <span class="km-paylogo"><img src="/images/tkpay.png" alt="tkpay" /></span>
             <span class="km-paylogo is-visa">VISA</span>
@@ -214,6 +308,14 @@ else
                 <div class="flex-grow-1 min-w-0">
                     <div class="km-tx-title">@(t.Method == PaymentMethod.BankTransfer ? "Havale/EFT bildirimi" : "Kredi kartı ödemesi")</div>
                     <div class="km-tx-date">@t.CreatedAt.ToString("dd MMMM yyyy HH:mm", tr)</div>
+                    @if (t.Method == PaymentMethod.CreditCard && t.ChargedAmount.HasValue)
+                    {
+                        <div class="km-tx-sub">
+                            Karttan çekilen: @Model.CurrencySymbol@t.ChargedAmount.Value.ToString("N2", tr)
+                            @(t.InstallmentCount > 1 ? $"· {t.InstallmentCount} taksit" : "· Tek çekim")
+                            @(t.InstallmentInterestAmount > 0 ? $"· vade farkı {Model.CurrencySymbol}{t.InstallmentInterestAmount.Value.ToString("N2", tr)}" : "")
+                        </div>
+                    }
                 </div>
                 <span class="km-pay-chip @txCls">
                     @(t.Status switch {
@@ -221,6 +323,7 @@ else
                         PaymentTransactionStatus.Completed => "Tamamlandı",
                         PaymentTransactionStatus.Rejected  => "Reddedildi",
                         PaymentTransactionStatus.Failed    => "Başarısız",
+                        PaymentTransactionStatus.Initiated => "İşleniyor",
                         _ => "Onay bekliyor" })
                 </span>
             </div>
@@ -310,6 +413,15 @@ else
     .km-drop-sub { font-size:.76rem; color:#8a939c; }
     .km-paybox-btn { border-radius:12px; font-weight:700; min-height:50px; }
     .km-paybox-btn:disabled { opacity:.55; }
+    .km-card-sum { background:#f6f9fb; border:1px solid var(--km-border); border-radius:12px; padding:.7rem .85rem; margin:.2rem 0 .8rem; }
+    .km-card-sum-row { display:flex; justify-content:space-between; align-items:baseline; font-size:.9rem; color:#4b5866; }
+    .km-card-sum-row strong { font-size:1.1rem; color:var(--c-navy); }
+    .km-card-sum-hint { display:flex; gap:.4rem; margin-top:.45rem; font-size:.76rem; color:#6b7684; line-height:1.45; }
+    .km-card-sum-hint iconify-icon { color:var(--c-primary); flex-shrink:0; margin-top:.1rem; }
+    .km-terms { display:flex; gap:.55rem; align-items:flex-start; font-size:.8rem; color:#4b5866; line-height:1.45; margin-bottom:.75rem; cursor:pointer; }
+    .km-terms input { width:20px; height:20px; flex-shrink:0; margin-top:.05rem; accent-color:var(--c-primary); }
+    .km-terms a { color:var(--c-primary); font-weight:600; }
+    .km-tx-sub { font-size:.74rem; color:#8a939c; }
 
     .km-paybox-logos { display:flex; gap:.4rem; flex-wrap:wrap; }
     .km-paylogo { display:inline-flex; align-items:center; justify-content:center; height:28px; min-width:52px; padding:0 .55rem;
@@ -372,6 +484,17 @@ else
     });
     document.getElementById('kmReceiptForm').addEventListener('submit', function () {
         btn.disabled = true; btn.innerHTML = 'Gönderiliyor…';
+    });
+})();
+// Kartla ödeme: sözleşme onayı işaretlenmeden buton aktif olmaz; çift tıklamaya karşı gönderimde kilitlenir.
+(function () {
+    var terms = document.getElementById('kmTerms');
+    var btn = document.getElementById('kmCardBtn');
+    var form = document.getElementById('kmCardForm');
+    if (!terms || !btn || !form) return;
+    terms.addEventListener('change', function () { btn.disabled = !terms.checked; });
+    form.addEventListener('submit', function () {
+        btn.disabled = true; btn.innerHTML = 'Güvenli ödeme sayfasına yönlendiriliyorsunuz…';
     });
 })();
 </script>
